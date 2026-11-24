@@ -4,19 +4,22 @@ import type { ModeLanguage } from '#lib/music/scales.ts';
 import { isRecord, mergeDefaults, readStored, writeStored } from './persisted';
 
 export type Theme = 'auto' | 'light' | 'dark';
+export type DropCapColor = 'red' | 'black';
 
 export interface AppSettings extends Record<string, unknown> {
 	noteNames: NoteNameSystem;
 	chordStyle: ChordSymbolStyle;
 	modeLanguage: ModeLanguage;
 	theme: Theme;
+	dropCapColor: DropCapColor;
 }
 
 const DEFAULTS: AppSettings = {
 	noteNames: 'letters',
 	chordStyle: 'jazz',
 	modeLanguage: 'en',
-	theme: 'auto'
+	theme: 'auto',
+	dropCapColor: 'red'
 };
 
 class SettingsStore {

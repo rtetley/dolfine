@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { settings, type Theme } from '#lib/state/settings.svelte.ts';
+	import { type DropCapColor, settings, type Theme } from '#lib/state/settings.svelte.ts';
 	import type { ChordSymbolStyle } from '#lib/music/chords.ts';
 	import type { NoteNameSystem } from '#lib/music/pitch.ts';
 	import type { ModeLanguage } from '#lib/music/scales.ts';
@@ -53,6 +53,16 @@
 				<option value="auto">Follow the system</option>
 				<option value="light">Paper</option>
 				<option value="dark">Evening</option>
+			</select>
+		</label>
+		<label class="field">
+			<span class="label">Drop caps</span>
+			<select
+				value={settings.value.dropCapColor}
+				onchange={(e) => settings.update({ dropCapColor: e.currentTarget.value as DropCapColor })}
+			>
+				<option value="red">Red</option>
+				<option value="black">Black</option>
 			</select>
 		</label>
 	</div>

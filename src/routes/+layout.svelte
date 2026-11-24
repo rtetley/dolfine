@@ -1,4 +1,6 @@
 <script lang="ts">
+	import '@fontsource-variable/alegreya';
+	import '@fontsource-variable/alegreya/wght-italic.css';
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import SiteHeader from '#lib/components/SiteHeader.svelte';
