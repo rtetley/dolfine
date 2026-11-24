@@ -18,7 +18,7 @@
 
 <header class="site-header">
 	<a class="brand" href={resolve('/')} aria-label="D.O.lfine home">
-		<Logo size={30} />
+		<Logo size={38} />
 		<span class="name">D.O.lfine</span>
 	</a>
 	<nav aria-label="Main">

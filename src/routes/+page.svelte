@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import DropCap from '#lib/brand/DropCap.svelte';
 	import { continueStore, MODULE_ROUTES } from '#lib/state/modulePrefs.svelte.ts';
 
 	const modules = [
@@ -47,11 +48,11 @@
 			</a>
 		</section>
 	{:else}
-		<section class="prose welcome">
+		<section class="prose welcome" style="display: flow-root">
 			<p>
-				Welcome to D.O.lfine, a quiet place to practise reading, rhythm and harmony. Choose a module
-				below, set it exactly as you like, and start. Nothing here adapts on its own yet: every
-				level and setting is yours to pick.
+				<DropCap letter="W" />elcome to D.O.lfine, a quiet place to practise reading, rhythm and
+				harmony. Choose a module below, set it exactly as you like, and start. Nothing here adapts
+				on its own yet: every level and setting is yours to pick.
 			</p>
 		</section>
 	{/if}

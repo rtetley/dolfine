@@ -11,7 +11,7 @@
 	--late: #a8752a;
 	--focus: #2f5d8a;
 
-	--serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+	--serif: 'Alegreya Variable', 'Iowan Old Style', Palatino, Georgia, serif;
 	--measure: 44rem;
 	--wide: 64rem;
 	--radius: 4px;
@@ -172,27 +172,6 @@ hr {
 .prose {
 	max-width: var(--measure);
 	hyphens: auto;
-}
-
-.prose p:first-of-type::first-letter {
-	float: left;
-	font-size: 3.6em;
-	line-height: 0.85;
-	padding: 0.08em 0.12em 0 0;
-	margin-top: 0.05em;
-	color: var(--accent);
-	font-weight: 500;
-}
-
-@media (max-width: 40rem) {
-	.prose p:first-of-type::first-letter {
-		float: none;
-		font-size: inherit;
-		line-height: inherit;
-		padding: 0;
-		margin: 0;
-		color: inherit;
-	}
 }
 
 .good {

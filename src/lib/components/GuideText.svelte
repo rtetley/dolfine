@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DropCap from '#lib/brand/DropCap.svelte';
 	import type { Guide } from '#lib/content/guides.ts';
 
 	interface Props {
@@ -13,7 +14,11 @@
 	<summary>{guide.title}</summary>
 	<div class="prose">
 		{#each guide.paragraphs as paragraph, i (i)}
-			<p>{paragraph}</p>
+			{#if i === 0}
+				<p><DropCap letter={paragraph.charAt(0)} />{paragraph.slice(1)}</p>
+			{:else}
+				<p>{paragraph}</p>
+			{/if}
 		{/each}
 	</div>
 </details>
@@ -33,5 +38,6 @@
 
 	.guide .prose {
 		margin-top: 0.6rem;
+		display: flow-root;
 	}
 </style>
