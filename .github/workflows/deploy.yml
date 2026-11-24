@@ -1,0 +1,68 @@
+name: Deploy
+
+# Production: GitHub Pages (https://<owner>.github.io/<repo>/), in the github-pages environment
+# that Pages requires. Staging: GitHub Pages hosts a single site per repo, so a staging deploy
+# builds the site for local preview and keeps it as a downloadable artifact until a real
+# staging host is chosen.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: staging or production
+        required: true
+        type: string
+      ref:
+        description: Tag to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  deployments: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: deploy-${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment == 'production' && 'github-pages' || inputs.environment }}
+      url: ${{ steps.pages.outputs.page_url }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+        env:
+          BASE_PATH: ${{ inputs.environment == 'production' && format('/{0}', github.event.repository.name) || '' }}
+
+      - name: Keep the staging build
+        if: inputs.environment != 'production'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site-${{ inputs.ref }}
+          path: build
+          retention-days: 30
+
+      - name: Package for GitHub Pages
+        if: inputs.environment == 'production'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build
+      - name: Publish to GitHub Pages
+        if: inputs.environment == 'production'
+        id: pages
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
