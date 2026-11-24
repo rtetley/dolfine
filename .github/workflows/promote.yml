@@ -1,0 +1,23 @@
+name: Promote to production
+
+# Flow A: a person unticks "Set as a pre-release" (or publishes a full release) in GitHub.
+# That user action fires `release: released`, which deploys the release's tag to production.
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: read
+  deployments: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy-production:
+    name: deploy-production
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      ref: ${{ github.event.release.tag_name }}
+    secrets: inherit

@@ -1,0 +1,45 @@
+{
+	"categories": [
+		{
+			"title": "## ⚠️ Breaking changes",
+			"mode": "PR",
+			"consume": true,
+			"rules": [{ "pattern": "^[a-z]+(\\([^)]*\\))?!:", "on_property": "title" }]
+		},
+		{
+			"title": "## ✨ What's new",
+			"mode": "PR",
+			"rules": [{ "pattern": "^feat(\\([^)]*\\))?:", "on_property": "title" }]
+		},
+		{
+			"title": "## 🐛 Bug fixes",
+			"mode": "PR",
+			"rules": [{ "pattern": "^fix(\\([^)]*\\))?:", "on_property": "title" }]
+		},
+		{
+			"title": "## ⚡ Performance",
+			"mode": "PR",
+			"rules": [{ "pattern": "^perf(\\([^)]*\\))?:", "on_property": "title" }]
+		},
+		{
+			"title": "## 📚 Documentation",
+			"mode": "PR",
+			"rules": [{ "pattern": "^docs(\\([^)]*\\))?:", "on_property": "title" }]
+		},
+		{
+			"title": "## 🧹 Chores",
+			"mode": "PR",
+			"rules": [
+				{
+					"pattern": "^(chore|ci|build|refactor|test|style|revert)(\\([^)]*\\))?:",
+					"on_property": "title"
+				}
+			]
+		}
+	],
+	"ignore_labels": ["ignore-changelog"],
+	"sort": { "order": "ASC", "on_property": "mergedAt" },
+	"template": "#{{CHANGELOG}}\n\n## Other changes\n\n#{{UNCATEGORIZED}}\n\n**Full diff**: #{{RELEASE_DIFF}}",
+	"pr_template": "- #{{TITLE}} (##{{NUMBER}}) by @#{{AUTHOR}}",
+	"empty_template": "No pull requests merged since the previous release."
+}
