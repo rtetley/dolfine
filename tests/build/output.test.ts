@@ -22,7 +22,12 @@ const INITIAL_JS_BUDGET_KB: Record<string, number> = {
 	'sight-reading.html': 500,
 	'rhythm.html': 500,
 	'theory.html': 500,
-	'ear.html': 500
+	'ear.html': 500,
+	'theory/lessons.html': 220,
+	'theory/lessons/major.html': 500,
+	'theory/lessons/melodic-minor.html': 500,
+	'theory/lessons/harmonic-minor.html': 500,
+	'theory/lessons/voicings.html': 500
 };
 
 describe.each(Object.entries(BUILDS))('%s build', (_, { dir, basePath }) => {
@@ -36,7 +41,7 @@ describe.each(Object.entries(BUILDS))('%s build', (_, { dir, basePath }) => {
 	it.each(ROUTES)('%s boots the SvelteKit client', (route) => {
 		const html = read(join(dir, `${route}.html`));
 		expect(html).toContain('<html lang="en">');
-		expect(html).toMatch(/import\("\.\/_app\/immutable\/entry\/start\.[\w-]+\.js"\)/);
+		expect(html).toMatch(/import\("(?:\.\.?\/)+_app\/immutable\/entry\/start\.[\w-]+\.js"\)/);
 		expect(html).toContain('kit.start(app, element)');
 	});
 

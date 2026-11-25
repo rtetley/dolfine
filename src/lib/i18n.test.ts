@@ -44,7 +44,12 @@ const IDENTICAL_ON_PURPOSE = new Set([
 	'mode_label',
 	'interval_octave',
 	'name_chord_prompt_end',
-	'midi_ready_devices'
+	'midi_ready_devices',
+	'voicing_drop2',
+	'voicing_shell_37',
+	'voicing_shell_73',
+	'voicing_type_a',
+	'voicing_type_b'
 ]);
 
 describe('message catalogues', () => {

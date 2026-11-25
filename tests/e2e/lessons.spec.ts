@@ -1,0 +1,80 @@
+import { expect, test } from './fixtures';
+
+test.describe('theory lessons', () => {
+	test('the theory module leads to four lessons', async ({ page }) => {
+		await page.goto('theory');
+		await page.getByRole('link', { name: 'Theory lessons →' }).click();
+		await expect(page).toHaveTitle('Theory lessons · D.O.lfine');
+		const lessons = page.getByRole('listitem');
+		await expect(lessons).toHaveCount(4);
+		await expect(lessons.first()).toContainText('Harmonising the major scale');
+		await expect(page.getByRole('link', { name: /Music theory/ }).first()).toHaveAttribute(
+			'aria-current',
+			'page'
+		);
+	});
+
+	test('the major-scale lesson walks through seven modes in any key', async ({ page, samples }) => {
+		await page.goto('theory/lessons/major');
+		await expect(page.getByRole('heading', { name: 'Harmonising the major scale' })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 3 })).toHaveText([
+			'C Ionian',
+			'D Dorian',
+			'E Phrygian',
+			'F Lydian',
+			'G Mixolydian',
+			'A Aeolian',
+			'B Locrian'
+		]);
+		await expect(page.locator('figure.score svg')).toHaveCount(15);
+
+		await page.getByRole('combobox', { name: 'Root' }).selectOption('E♭');
+		await expect(page.getByRole('heading', { name: /The scale · E♭ major/ })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 3 }).nth(4)).toHaveText('B♭ Mixolydian');
+
+		await page.getByRole('button', { name: 'Hear the chord' }).first().click();
+		await expect.poll(() => samples.length).toBeGreaterThan(0);
+	});
+
+	test('a mode links to the voicings of its chord', async ({ page }) => {
+		await page.goto('theory/lessons/harmonic-minor');
+		await page.getByRole('combobox', { name: 'Root' }).selectOption('A');
+		await page.getByRole('link', { name: 'See its voicings →' }).nth(4).click();
+		await expect(page).toHaveTitle('Chord voicings · D.O.lfine');
+		await expect(page.getByRole('heading', { name: 'E7(♭9 ♭13)' })).toBeVisible();
+		await expect(page.getByRole('combobox', { name: 'Parent scale' })).toHaveValue('harmonicMinor');
+		await expect(page.getByRole('combobox', { name: 'Degree' })).toHaveValue('5');
+	});
+
+	test('the voicings lesson shows and plays eight voicings', async ({ page, samples }) => {
+		await page.goto('theory/lessons/voicings');
+		await expect(page.getByRole('heading', { name: 'D-7' })).toBeVisible();
+		await expect(page.getByRole('button', { name: /^Hear · / })).toHaveCount(8);
+		await expect(page.locator('.voicings .name').first()).toContainText('Close position');
+		await expect(page.getByText('1 ♭3 5 ♭7', { exact: true })).toBeVisible();
+
+		await page.getByRole('combobox', { name: 'Degree' }).selectOption({ index: 4 });
+		await expect(page.getByRole('heading', { name: 'G7' })).toBeVisible();
+		await page.getByRole('button', { name: 'Hear them all' }).click();
+		await expect.poll(() => samples.length).toBeGreaterThan(0);
+	});
+
+	test('unknown lessons are not served', async ({ page, errors }) => {
+		const response = await page.goto('theory/lessons/blues');
+		expect(response?.status()).toBe(404);
+		errors.splice(0);
+	});
+});
+
+test.describe('lessons in French', () => {
+	test.use({ locale: 'fr-FR' });
+
+	test('use French names and solfège', async ({ page }) => {
+		await page.goto('theory/lessons/melodic-minor');
+		await expect(
+			page.getByRole('heading', { name: 'Harmoniser la gamme mineure mélodique' })
+		).toBeVisible();
+		await expect(page.getByRole('heading', { level: 3 }).last()).toHaveText('Si altéré');
+		await expect(page.getByText('Notes caractéristiques').first()).toBeVisible();
+	});
+});
