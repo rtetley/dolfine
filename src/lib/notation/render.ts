@@ -211,6 +211,9 @@ export function renderScore(
 					staveNote.setStemStyle(paint);
 					staveNote.setFlagStyle(paint);
 					staveNote.setLedgerLineStyle(paint);
+					expanded[i]?.keyStyles?.forEach((key, k) => {
+						if (key) staveNote.setKeyStyle(k, { fillStyle: colors[key], strokeStyle: colors[key] });
+					});
 				});
 				const tuplets = tripletGroups(expanded).map((group) => group.map((i) => notes[i]));
 				tuplets.forEach(
