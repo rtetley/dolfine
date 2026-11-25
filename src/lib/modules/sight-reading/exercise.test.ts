@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createExercise, exerciseScore, metronomeBeat } from './exercise';
+import { createExercise, exerciseScore, exerciseSummary, metronomeBeat } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
 
 describe('sight-reading exercise', () => {
@@ -32,5 +32,20 @@ describe('sight-reading exercise', () => {
 
 	it('clicks eighths in x/8 meters', () => {
 		expect(metronomeBeat({ beats: 6, unit: 8 }, 60)).toEqual({ bpm: 120, beatsPerBar: 6 });
+	});
+});
+
+describe('exerciseSummary', () => {
+	const prefs = { ...SIGHT_READING_DEFAULTS, keyFifths: '1', keyMode: 'major' as const };
+	const exercise = createExercise(prefs, 3);
+
+	it('names the key with the chosen note names', () => {
+		expect(exerciseSummary(exercise, prefs)).toContain('G major');
+		expect(exerciseSummary(exercise, prefs, 'solfege')).toContain('Sol major');
+	});
+
+	it('describes the mode being run, not the one in the setup', () => {
+		expect(exerciseSummary(exercise, prefs)).toMatch(/· Performance$/);
+		expect(exerciseSummary(exercise, prefs, 'letters', 'practice')).toMatch(/· Practice$/);
 	});
 });

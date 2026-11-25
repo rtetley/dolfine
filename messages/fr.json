@@ -136,7 +136,6 @@
 	"results_score_label": "Exercice avec résultats",
 	"results_unscored": "Terminé. Sans clavier MIDI, ce passage n’a pas été évalué ; enchaînez le suivant tant que vous êtes chaud.",
 	"results_new_at_level": "Nouvel exercice à ce niveau",
-	"results_retry": "Recommencer le même exercice",
 	"commentary_clean": "Propre et régulier. Essayez le niveau suivant, ou montez le tempo ici.",
 	"commentary_pitches": "La plupart des erreurs portaient sur les notes. Profitez de l’aperçu pour repérer les mesures délicates, et lisez un temps en avance.",
 	"commentary_late": "Les notes arrivaient souvent en retard. Continuez après une erreur plutôt que de la corriger.",
@@ -385,5 +384,12 @@
 				"countPlural=other": "{count} bémols"
 			}
 		}
-	]
+	],
+	"action_restart": "Recommencer",
+	"results_restart": "Recommencer depuis le début",
+	"practise_this": "Travailler cet exercice",
+	"perform_this": "Le jouer en mesure",
+	"results_stopped": "Arrêté. Recommencez depuis le début, ou travaillez-le à votre rythme.",
+	"practice_target": "objectif ♩ = {tempo}",
+	"practice_tempo_label": "Tempo de travail"
 }

@@ -8,21 +8,38 @@
 		exercise: SightReadingExercise;
 		played: PlayedNote[];
 		scored: boolean;
+		stopped?: boolean;
+		showReferences?: boolean;
 		canLevelUp: boolean;
-		onretry: () => void;
+		onrestart: () => void;
+		onpractise: () => void;
 		onnext: () => void;
 		onlevelup: () => void;
 		onsetup: () => void;
 	}
 
-	let { exercise, played, scored, canLevelUp, onretry, onnext, onlevelup, onsetup }: Props =
-		$props();
+	let {
+		exercise,
+		played,
+		scored,
+		stopped = false,
+		showReferences = false,
+		canLevelUp,
+		onrestart,
+		onpractise,
+		onnext,
+		onlevelup,
+		onsetup
+	}: Props = $props();
 
 	const summary = $derived(
-		scored ? scorePerformance(exercise.expected, played, exercise.toleranceMs) : null
+		scored && !stopped ? scorePerformance(exercise.expected, played, exercise.toleranceMs) : null
 	);
 	const score = $derived(
-		exerciseScore(exercise, { showReferences: false, outcomes: summary?.notes })
+		exerciseScore(exercise, {
+			showReferences: !summary && showReferences,
+			outcomes: summary?.notes
+		})
 	);
 	const counts = $derived(
 		summary?.notes.reduce<Record<string, number>>((acc, note) => {
@@ -62,17 +79,19 @@
 					{m.results_extra_notes({ count: summary.extras.length })}
 				</span>{/if}
 		</p>
-		<Score {score} label={m.results_score_label()} />
 	{:else}
-		<p class="result-line">{m.results_unscored()}</p>
+		<p class="result-line">{stopped ? m.results_stopped() : m.results_unscored()}</p>
 	{/if}
 
 	<div class="actions">
-		<button type="button" class="primary" onclick={onnext}>{m.results_new_at_level()}</button>
-		<button type="button" onclick={onretry}>{m.results_retry()}</button>
+		<button type="button" class="primary" onclick={onrestart}>{m.results_restart()}</button>
+		<button type="button" onclick={onpractise}>{m.practise_this()}</button>
+		<button type="button" onclick={onnext}>{m.results_new_at_level()}</button>
 		{#if canLevelUp}<button type="button" onclick={onlevelup}>{m.action_level_up()}</button>{/if}
 		<button type="button" onclick={onsetup}>{m.action_back_to_setup()}</button>
 	</div>
+
+	<Score {score} label={m.results_score_label()} />
 </section>
 
 <style>

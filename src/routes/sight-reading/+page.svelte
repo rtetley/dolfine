@@ -26,13 +26,15 @@
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 
-	type View = 'setup' | 'performance' | 'practice' | 'results';
+	type View = 'setup' | 'performance' | 'practice' | 'results' | 'stopped';
+	type Run = 'performance' | 'practice';
 
 	let prefs = $state<SightReadingPrefs>(loadModulePrefs('sight-reading', SIGHT_READING_DEFAULTS));
 	let view = $state<View>('setup');
 	let exercise = $state<SightReadingExercise | null>(null);
 	let played = $state<PlayedNote[]>([]);
 	let runKey = $state(0);
+	let skipPreview = $state(false);
 
 	function updatePrefs(patch: Partial<SightReadingPrefs>): void {
 		prefs = { ...prefs, ...patch };
@@ -45,8 +47,14 @@
 			module: 'sight-reading',
 			summary: exerciseSummary(exercise, prefs, settings.noteNames)
 		});
+		run(prefs.mode === 'performance' ? 'performance' : 'practice', false);
+	}
+
+	function run(next: Run, alreadyPreviewed = true): void {
+		played = [];
+		skipPreview = alreadyPreviewed;
 		runKey++;
-		view = prefs.mode === 'performance' ? 'performance' : 'practice';
+		view = next;
 	}
 
 	function finish(notes: PlayedNote[]): void {
@@ -75,19 +83,42 @@
 		<GuideText guide={SIGHT_READING_GUIDES.technique} />
 		<GuideText guide={SIGHT_READING_GUIDES.modes} />
 	{:else if exercise}
-		<p class="label summary">{exerciseSummary(exercise, prefs, settings.noteNames)}</p>
+		<p class="label summary">
+			{exerciseSummary(
+				exercise,
+				prefs,
+				settings.noteNames,
+				view === 'practice' ? 'practice' : 'performance'
+			)}
+		</p>
 		{#key runKey}
 			{#if view === 'performance'}
-				<PerformanceRun {exercise} {prefs} onfinish={finish} oncancel={() => (view = 'setup')} />
+				<PerformanceRun
+					{exercise}
+					{prefs}
+					{skipPreview}
+					onfinish={finish}
+					onrestart={() => run('performance')}
+					onstop={() => (view = 'stopped')}
+				/>
 			{:else if view === 'practice'}
-				<PracticeRun {exercise} {prefs} onnext={() => start()} onsetup={() => (view = 'setup')} />
-			{:else if view === 'results'}
+				<PracticeRun
+					{exercise}
+					{prefs}
+					onperform={() => run('performance')}
+					onnext={() => start()}
+					onsetup={() => (view = 'setup')}
+				/>
+			{:else if view === 'results' || view === 'stopped'}
 				<Results
 					{exercise}
 					{played}
 					scored={midi.status === 'ready'}
+					stopped={view === 'stopped'}
+					showReferences={prefs.referenceNotes}
 					canLevelUp={prefs.level < 10}
-					onretry={() => start(exercise?.seed)}
+					onrestart={() => run('performance')}
+					onpractise={() => run('practice')}
 					onnext={() => start()}
 					onlevelup={levelUp}
 					onsetup={() => (view = 'setup')}

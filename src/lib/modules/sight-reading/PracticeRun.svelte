@@ -15,11 +15,12 @@
 	interface Props {
 		exercise: SightReadingExercise;
 		prefs: SightReadingPrefs;
+		onperform: () => void;
 		onnext: () => void;
 		onsetup: () => void;
 	}
 
-	let { exercise, prefs, onnext, onsetup }: Props = $props();
+	let { exercise, prefs, onperform, onnext, onsetup }: Props = $props();
 
 	let handle: MetronomeHandle | null = null;
 	let running = $state(false);
@@ -36,6 +37,10 @@
 			return;
 		}
 		await ensureAudio();
+		play();
+	}
+
+	function play(): void {
 		handle = startMetronome({
 			bpm: beat.bpm,
 			beatsPerBar: beat.beatsPerBar,
@@ -49,6 +54,15 @@
 			onTick: (value) => (tick = value)
 		});
 		running = true;
+	}
+
+	function setTempo(value: number): void {
+		if (!Number.isFinite(value) || value < 30 || value > 240) return;
+		tempoOverride = value;
+		if (running) {
+			handle?.stop();
+			play();
+		}
 	}
 
 	function stop(): void {
@@ -66,16 +80,17 @@
 		{running ? m.metronome_stop() : m.metronome_start()}
 	</button>
 	<label class="field inline">
-		<span class="label">♩ =</span>
+		<span class="label">{m.practice_tempo_label()} ♩ =</span>
 		<input
 			type="number"
 			min="30"
 			max="240"
+			step="2"
 			value={tempo}
-			disabled={running}
-			onchange={(e) => (tempoOverride = Number(e.currentTarget.value))}
+			onchange={(e) => setTempo(Number(e.currentTarget.value))}
 		/>
 	</label>
+	<span class="label">{m.practice_target({ tempo: exercise.tempo })}</span>
 	<MetronomePulse
 		beat={tick?.beat ?? 0}
 		beatsPerBar={beat.beatsPerBar}
@@ -87,7 +102,8 @@
 <Score {score} label={m.practice_exercise_label()} />
 
 <div class="actions">
-	<button type="button" class="primary" onclick={onnext}>{m.action_new_exercise()}</button>
+	<button type="button" class="primary" onclick={onperform}>{m.perform_this()}</button>
+	<button type="button" onclick={onnext}>{m.action_new_exercise()}</button>
 	<button type="button" onclick={onsetup}>{m.action_back_to_setup()}</button>
 </div>
 

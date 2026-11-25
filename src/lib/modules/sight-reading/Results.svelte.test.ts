@@ -8,11 +8,14 @@ const exercise = createExercise({ ...SIGHT_READING_DEFAULTS, bars: 2 }, 5);
 const perfect = exercise.expected.map(({ midi, time }) => ({ midi, time }));
 
 const handlers = () => ({
-	onretry: vi.fn(),
+	onrestart: vi.fn(),
+	onpractise: vi.fn(),
 	onnext: vi.fn(),
 	onlevelup: vi.fn(),
 	onsetup: vi.fn()
 });
+
+const notation = (container: HTMLElement) => container.querySelector('figure.score');
 
 describe('Results', () => {
 	it('scores a clean run and suggests moving on', async () => {
@@ -26,20 +29,56 @@ describe('Results', () => {
 		await expect.element(screen.getByText('100%').first()).toBeVisible();
 		await expect.element(screen.getByText(/Clean and steady/)).toBeVisible();
 		await expect.element(screen.getByText(`● correct ${perfect.length}`)).toBeVisible();
+		await expect
+			.element(screen.getByRole('figure', { name: 'Exercise with results' }))
+			.toBeVisible();
 	});
 
-	it('explains an unscored run and hides level up at the top', async () => {
-		const actions = handlers();
+	it('keeps the staff on screen after an unscored run', async () => {
 		const screen = await render(Results, {
 			exercise,
 			played: [],
 			scored: false,
 			canLevelUp: false,
-			...actions
+			...handlers()
 		});
 		await expect.element(screen.getByText(/this run was not scored/)).toBeVisible();
+		await expect
+			.element(screen.getByRole('figure', { name: 'Exercise with results' }))
+			.toBeVisible();
 		await expect.element(screen.getByRole('button', { name: 'Level up' })).not.toBeInTheDocument();
-		await screen.getByRole('button', { name: 'Retry the same exercise' }).click();
-		expect(actions.onretry).toHaveBeenCalledOnce();
+		expect(notation(screen.container)).not.toBeNull();
+	});
+
+	it('does not score a stopped run, even with MIDI', async () => {
+		const screen = await render(Results, {
+			exercise,
+			played: perfect,
+			scored: true,
+			stopped: true,
+			canLevelUp: true,
+			...handlers()
+		});
+		await expect.element(screen.getByText(/^Stopped\./)).toBeVisible();
+		await expect.element(screen.getByText('pitch accuracy')).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('figure', { name: 'Exercise with results' }))
+			.toBeVisible();
+	});
+
+	it('restarts or switches to practice on the same exercise', async () => {
+		const actions = handlers();
+		const screen = await render(Results, {
+			exercise,
+			played: [],
+			scored: false,
+			canLevelUp: true,
+			...actions
+		});
+		await screen.getByRole('button', { name: 'Restart from the beginning' }).click();
+		await screen.getByRole('button', { name: 'Practise this exercise' }).click();
+		expect(actions.onrestart).toHaveBeenCalledOnce();
+		expect(actions.onpractise).toHaveBeenCalledOnce();
+		expect(actions.onnext).not.toHaveBeenCalled();
 	});
 });

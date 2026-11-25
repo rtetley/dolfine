@@ -19,11 +19,13 @@
 	interface Props {
 		exercise: SightReadingExercise;
 		prefs: SightReadingPrefs;
+		skipPreview?: boolean;
 		onfinish: (played: PlayedNote[]) => void;
-		oncancel: () => void;
+		onrestart: () => void;
+		onstop: () => void;
 	}
 
-	let { exercise, prefs, onfinish, oncancel }: Props = $props();
+	let { exercise, prefs, skipPreview = false, onfinish, onrestart, onstop }: Props = $props();
 
 	type Phase = 'preview' | 'starting' | 'running';
 	let phase = $state<Phase>('preview');
@@ -44,7 +46,7 @@
 	const played: PlayedNote[] = [];
 
 	onMount(() => {
-		remaining = prefs.previewSeconds;
+		remaining = skipPreview ? 0 : prefs.previewSeconds;
 		if (remaining <= 0) {
 			void begin();
 			return;
@@ -111,9 +113,14 @@
 		onfinish([...played]);
 	}
 
-	function cancel(): void {
+	function stop(): void {
 		teardown();
-		oncancel();
+		onstop();
+	}
+
+	function restart(): void {
+		teardown();
+		onrestart();
 	}
 
 	onDestroy(teardown);
@@ -135,7 +142,12 @@
 				active={tick !== null}
 			/>
 		{/if}
-		<button type="button" onclick={cancel}>{m.action_stop()}</button>
+		<div class="controls">
+			{#if phase !== 'preview'}
+				<button type="button" onclick={restart}>{m.action_restart()}</button>
+			{/if}
+			<button type="button" onclick={stop}>{m.action_stop()}</button>
+		</div>
 	</div>
 
 	<div class="sheet" bind:this={overlay}>
@@ -163,6 +175,11 @@
 		padding: var(--space-3) 0;
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
+	}
+
+	.controls {
+		display: flex;
+		gap: var(--space-3);
 	}
 
 	.status {
