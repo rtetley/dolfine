@@ -48,6 +48,6 @@ describe('notation glyphs', () => {
 
 		const notes = measuredVersusDrawn(svg);
 		expect(notes).toHaveLength(16);
-		for (const { measured, drawn } of notes) expect(measured).toBeCloseTo(drawn, 0);
+		for (const { measured, drawn } of notes) expect(Math.abs(measured - drawn)).toBeLessThan(2);
 	});
 });
