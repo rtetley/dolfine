@@ -1,0 +1,30 @@
+name: Deploy to staging
+
+# A person publishes the draft release with "Set as a pre-release" ticked (the default).
+# That fires `release: prereleased`, which runs CI on the tag and then deploys it to staging.
+
+on:
+  release:
+    types: [prereleased]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: ci
+    uses: ./.github/workflows/ci.yml
+
+  deploy-staging:
+    name: deploy-staging
+    needs: ci
+    permissions:
+      contents: read
+      deployments: write
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      ref: ${{ github.event.release.tag_name }}
+    secrets: inherit
