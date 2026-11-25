@@ -53,10 +53,10 @@ export interface RenderOptions {
 
 // The vexflow/bravura entry registers its fonts without waiting for them; measuring
 // glyphs before they load sizes every notehead with a fallback font.
-const NOTATION_FONTS = ['30pt Bravura', '12pt Academico'];
+const NOTATION_FONTS = ['30pt Bravura', '12pt Academico', '13pt "Dolfine Accidentals"'];
 
 export const notationFontsReady: Promise<void> = Promise.all(
-	NOTATION_FONTS.map((font) => document.fonts.load(font))
+	NOTATION_FONTS.map((font) => document.fonts.load(font, '♭♯♮'))
 ).then(() => undefined);
 
 const PART_HEIGHT = 96;
@@ -65,28 +65,29 @@ const TOP_PADDING = 34;
 const SIDE_PADDING = 10;
 const REST_KEYS: Record<StaffClef, string> = { treble: 'b/4', bass: 'd/3', percussion: 'b/4' };
 
-function cssColor(element: HTMLElement, name: string, fallback: string): string {
+function cssValue(element: HTMLElement, name: string, fallback: string): string {
 	return getComputedStyle(element).getPropertyValue(name).trim() || fallback;
 }
 
 function styleColors(element: HTMLElement): Record<NoteStyle | 'ink', string> {
-	const ink = cssColor(element, '--ink', '#222');
+	const ink = cssValue(element, '--ink', '#222');
 	return {
 		ink,
-		correct: cssColor(element, '--good', '#3e6b4a'),
-		wrong: cssColor(element, '--bad', '#a23b3b'),
-		missed: cssColor(element, '--bad', '#a23b3b'),
-		early: cssColor(element, '--late', '#a8752a'),
-		late: cssColor(element, '--late', '#a8752a'),
-		reference: cssColor(element, '--accent', '#8a3b2e'),
-		current: cssColor(element, '--accent', '#8a3b2e')
+		correct: cssValue(element, '--good', '#3e6b4a'),
+		wrong: cssValue(element, '--bad', '#a23b3b'),
+		missed: cssValue(element, '--bad', '#a23b3b'),
+		early: cssValue(element, '--late', '#a8752a'),
+		late: cssValue(element, '--late', '#a8752a'),
+		reference: cssValue(element, '--accent', '#8a3b2e'),
+		current: cssValue(element, '--accent', '#8a3b2e')
 	};
 }
 
 function buildNote(
 	note: RenderableNote,
 	clef: StaffClef,
-	accidentals: (number | null)[] | undefined
+	accidentals: (number | null)[] | undefined,
+	textFont: string
 ): StaveNote {
 	const keys =
 		note.rest || note.pitches.length === 0 ? [REST_KEYS[clef]] : note.pitches.map(vexKey);
@@ -105,14 +106,14 @@ function buildNote(
 	});
 	if (note.above) {
 		staveNote.addModifier(
-			new Annotation(note.above).setFont('serif', 13).setVerticalJustification('top'),
+			new Annotation(note.above).setFont(textFont, 13).setVerticalJustification('top'),
 			0
 		);
 	}
 	if (note.below) {
 		staveNote.addModifier(
 			new Annotation(note.below)
-				.setFont('serif', 12, 'normal', 'italic')
+				.setFont(textFont, 12, 'normal', 'italic')
 				.setVerticalJustification('bottom'),
 			0
 		);
@@ -131,6 +132,7 @@ export function renderScore(
 ): ScoreLayout {
 	container.replaceChildren();
 	const colors = styleColors(container);
+	const textFont = cssValue(container, '--serif', 'serif');
 	const measureCount = Math.max(0, ...score.parts.map((part) => part.measures.length));
 	const perLine = measuresPerLine(
 		options.width - SIDE_PADDING * 2,
@@ -197,7 +199,8 @@ export function renderScore(
 					buildNote(
 						note,
 						part.clef,
-						note.id === note.sourceId ? accidentals.get(note.id) : undefined
+						note.id === note.sourceId ? accidentals.get(note.id) : undefined,
+						textFont
 					)
 				);
 				notes.forEach((staveNote, i) => {

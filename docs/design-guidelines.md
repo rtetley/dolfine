@@ -106,6 +106,7 @@ Measured with the WCAG 2 formula; `src/lib/styles/tokens.test.ts` checks every r
 ## Typography
 
 - **Typeface:** Alegreya (variable, served from the app), with Iowan Old Style, Palatino and Georgia as fallbacks. One family throughout; hierarchy comes from size, small caps and italics, not from a second face.
+- **Accidentals:** Alegreya has no ♭ ♯ ♮ 𝄫 𝄪, so the stack starts with _Dolfine Accidentals_: the music subset of Noto Music (56 KB, bundled), limited to those five characters by `unicode-range` and enlarged 110% to match Alegreya. Browsers download it only on pages that show an accidental. Always write accidentals with these Unicode characters, never `b` or `#`.
 - **Base size:** 112.5% of the browser default (18 px), line height `--leading` 1.6.
 - **Numbers:** Alegreya's default old-style figures suit running text. Inputs, stats, tempo and anything tabular use `font-variant-numeric: lining-nums tabular-nums`. Otherwise a zero reads as the letter o.
 - **French:** use a narrow no-break space before `? ! ;` and a no-break space before `:` (see `messages/fr.json`).

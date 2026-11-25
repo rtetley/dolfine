@@ -1,5 +1,14 @@
 @import './lib/styles/tokens.css';
 
+/* Alegreya has no music accidentals, so take only those characters from Noto Music. */
+@font-face {
+	font-family: 'Dolfine Accidentals';
+	src: url('@fontsource/noto-music/files/noto-music-music-400-normal.woff2') format('woff2');
+	unicode-range: U+266D-266F, U+1D12A-1D12B;
+	size-adjust: 110%;
+	font-display: swap;
+}
+
 *,
 *::before,
 *::after {
