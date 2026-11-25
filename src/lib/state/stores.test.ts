@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { memoryStorage } from './testStorage';
 
 let storage: Storage;
@@ -9,6 +9,12 @@ const useLocale = async (locale: 'en' | 'fr') => {
 	overwriteGetLocale(() => locale);
 };
 const loadModulePrefs = () => import('./modulePrefs.svelte');
+
+// The stores pull in every compiled message; transform them once so the per-test
+// re-imports below only re-evaluate modules.
+beforeAll(async () => {
+	await Promise.all([loadSettings(), loadModulePrefs()]);
+}, 60_000);
 
 beforeEach(() => {
 	vi.resetModules();
