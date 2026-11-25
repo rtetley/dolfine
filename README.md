@@ -1,6 +1,6 @@
 # D.O.lfine
 
-Sight reading, inner rhythm, jazz theory and ear training for serious musicians. The product spec is in [PRD.md](PRD.md).
+Sight reading, inner rhythm, jazz theory and ear training for serious musicians. The product spec is in [PRD.md](PRD.md); the look and the design tokens are in [docs/design-guidelines.md](docs/design-guidelines.md).
 
 v1 is an MVP: every setting is selectable, nothing adapts to the user, and everything is stored in the browser (no accounts).
 
