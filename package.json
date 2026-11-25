@@ -25,7 +25,7 @@
 		"test:all": "pnpm test && pnpm test:build && pnpm test:e2e"
 	},
 	"devDependencies": {
-		"@axe-core/playwright": "^4.14.1",
+		"@axe-core/playwright": "~4.14.0",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.65.1",
 		"@sveltejs/adapter-static": "^4.0.1",
