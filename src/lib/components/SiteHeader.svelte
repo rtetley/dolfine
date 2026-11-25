@@ -13,7 +13,7 @@
 	] as const;
 
 	const isCurrent = (href: string): boolean =>
-		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+		href === '/' ? page.route.id === '/' : (page.route.id?.startsWith(href) ?? false);
 </script>
 
 <header class="site-header">
