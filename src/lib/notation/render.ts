@@ -62,6 +62,7 @@ export const notationFontsReady: Promise<void> = Promise.all(
 const PART_HEIGHT = 96;
 const SYSTEM_GAP = 36;
 const TOP_PADDING = 34;
+const CURSOR_OVERHANG = 10;
 const SIDE_PADDING = 10;
 const REST_KEYS: Record<StaffClef, string> = { treble: 'b/4', bass: 'd/3', percussion: 'b/4' };
 
@@ -158,7 +159,6 @@ export function renderScore(
 
 	for (let line = 0; line < lineCount; line++) {
 		const top = TOP_PADDING + line * systemHeight;
-		layout.systems.push({ top: top - 10, bottom: top + score.parts.length * PART_HEIGHT - 20 });
 		const first = line * perLine;
 		const last = Math.min(measureCount, first + perLine);
 		const usable = options.width - SIDE_PADDING * 2;
@@ -179,6 +179,15 @@ export function renderScore(
 				}
 				return stave;
 			});
+			if (isFirst) {
+				const [upper, lower] = [staves[0], staves.at(-1)];
+				if (upper && lower) {
+					layout.systems.push({
+						top: upper.getTopLineTopY() - CURSOR_OVERHANG,
+						bottom: lower.getBottomLineBottomY() + CURSOR_OVERHANG
+					});
+				}
+			}
 			const noteStart = Math.max(...staves.map((stave) => stave.getNoteStartX()));
 			staves.forEach((stave) => stave.setNoteStartX(noteStart).setContext(context).draw());
 			if (isFirst && staves.length > 1) {
