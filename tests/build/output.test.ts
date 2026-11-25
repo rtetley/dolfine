@@ -14,21 +14,24 @@ import {
 	ROUTES
 } from './builds';
 
-// Tone.js (~235 kB) is preloaded by every module page; lazy-loading it in the audio engine
-// would let the module budgets drop to the dashboard's.
 const INITIAL_JS_BUDGET_KB: Record<string, number> = {
-	'index.html': 220,
-	'settings.html': 180,
-	'sight-reading.html': 500,
-	'rhythm.html': 500,
-	'theory.html': 520,
-	'ear.html': 500,
-	'theory/lessons.html': 220,
-	'theory/lessons/major.html': 500,
-	'theory/lessons/melodic-minor.html': 500,
-	'theory/lessons/harmonic-minor.html': 500,
-	'theory/lessons/voicings.html': 500
+	'index.html': 200,
+	'settings.html': 160,
+	'sight-reading.html': 270,
+	'rhythm.html': 260,
+	'theory.html': 280,
+	'ear.html': 280,
+	'theory/lessons.html': 200,
+	'theory/lessons/major.html': 250,
+	'theory/lessons/melodic-minor.html': 250,
+	'theory/lessons/harmonic-minor.html': 250,
+	'theory/lessons/voicings.html': 250
 };
+
+const LAZY_LIBRARIES = [
+	['VexFlow', 'VexFlow'],
+	['Tone.js', 'Tone.js']
+] as const;
 
 describe.each(Object.entries(BUILDS))('%s build', (_, { dir, basePath }) => {
 	const files = listFiles(dir);
@@ -70,15 +73,15 @@ describe.each(Object.entries(BUILDS))('%s build', (_, { dir, basePath }) => {
 		expect(leaked).toEqual([]);
 	});
 
-	it('keeps VexFlow out of the first load', () => {
-		const vexflowChunks = files
+	it.each(LAZY_LIBRARIES)('keeps %s out of the first load', (_library, marker) => {
+		const chunks = files
 			.filter((file) => file.endsWith('.js'))
-			.filter((file) => read(file).includes('VexFlow'))
+			.filter((file) => read(file).includes(marker))
 			.map((file) => relativeTo(dir, file));
-		expect(vexflowChunks.length).toBeGreaterThan(0);
+		expect(chunks.length).toBeGreaterThan(0);
 		for (const file of htmlFiles) {
 			const preloaded = localReferences(read(file));
-			for (const chunk of vexflowChunks) {
+			for (const chunk of chunks) {
 				expect(
 					preloaded.some((url) => url.endsWith(chunk)),
 					`${relativeTo(dir, file)} preloads ${chunk}`
