@@ -73,5 +73,10 @@ describe('chord tones', () => {
 		expect(formatSuffix('-7', 'classic')).toBe('m7');
 		expect(formatSuffix('ø7', 'classic')).toBe('m7♭5');
 		expect(formatSuffix('-Δ7', 'classic')).toBe('m(maj7)');
+		expect(formatSuffix('-Δ9', 'classic')).toBe('m(maj9)');
+		expect(formatSuffix('Δ9(♯11)', 'classic')).toBe('maj9(♯11)');
+		expect(formatSuffix('ø9', 'classic')).toBe('m9♭5');
+		expect(formatSuffix('°7(♭13)', 'classic')).toBe('dim7(♭13)');
+		expect(formatSuffix('-6/9', 'classic')).toBe('m6/9');
 	});
 });

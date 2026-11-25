@@ -73,10 +73,10 @@ export function seventhChordTones(chord: ChordRef): ChordTone[] {
 export function formatSuffix(suffix: string, style: ChordSymbolStyle): string {
 	if (style === 'jazz') return suffix;
 	return suffix
-		.replace('-Δ7', 'm(maj7)')
-		.replace('Δ7', 'maj7')
-		.replace('ø7', 'm7♭5')
-		.replace('°7', 'dim7')
+		.replace(/^-Δ(\d+)/, 'm(maj$1)')
+		.replace(/Δ/g, 'maj')
+		.replace(/ø(\d+)/, 'm$1♭5')
+		.replace(/°(\d+)/, 'dim$1')
 		.replace(/^-/, 'm');
 }
 
