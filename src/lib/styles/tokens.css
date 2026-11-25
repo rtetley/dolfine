@@ -1,0 +1,203 @@
+/*
+ * Design tokens. See docs/design-guidelines.md for how to use them.
+ * Palette ramps are OKLCH: equal steps look equally far apart, and every
+ * semantic pairing below meets WCAG AA in both themes.
+ */
+
+:root {
+	--sepia-50: oklch(0.962 0.014 80);
+	--sepia-100: oklch(0.925 0.018 80);
+	--sepia-200: oklch(0.855 0.022 80);
+	--sepia-300: oklch(0.79 0.026 80);
+	--sepia-400: oklch(0.715 0.024 80);
+	--sepia-500: oklch(0.63 0.021 80);
+	--sepia-600: oklch(0.545 0.018 80);
+	--sepia-700: oklch(0.462 0.016 80);
+	--sepia-800: oklch(0.37 0.014 80);
+	--sepia-900: oklch(0.275 0.011 80);
+	--sepia-950: oklch(0.225 0.01 80);
+
+	--oxblood-50: oklch(0.962 0.014 31);
+	--oxblood-100: oklch(0.925 0.026 31);
+	--oxblood-200: oklch(0.855 0.05 31);
+	--oxblood-300: oklch(0.79 0.073 31);
+	--oxblood-400: oklch(0.715 0.097 31);
+	--oxblood-500: oklch(0.63 0.112 31);
+	--oxblood-600: oklch(0.545 0.118 31);
+	--oxblood-700: oklch(0.462 0.116 31);
+	--oxblood-800: oklch(0.37 0.1 31);
+	--oxblood-900: oklch(0.275 0.077 31);
+	--oxblood-950: oklch(0.225 0.059 31);
+
+	--moss-50: oklch(0.962 0.01 151);
+	--moss-100: oklch(0.925 0.018 151);
+	--moss-200: oklch(0.855 0.034 151);
+	--moss-300: oklch(0.79 0.05 151);
+	--moss-400: oklch(0.715 0.066 151);
+	--moss-500: oklch(0.63 0.076 151);
+	--moss-600: oklch(0.545 0.08 151);
+	--moss-700: oklch(0.462 0.078 151);
+	--moss-800: oklch(0.37 0.068 151);
+	--moss-900: oklch(0.275 0.052 151);
+	--moss-950: oklch(0.225 0.04 151);
+
+	--vermilion-50: oklch(0.962 0.017 24);
+	--vermilion-100: oklch(0.925 0.032 24);
+	--vermilion-200: oklch(0.855 0.061 24);
+	--vermilion-300: oklch(0.79 0.09 24);
+	--vermilion-400: oklch(0.715 0.119 24);
+	--vermilion-500: oklch(0.63 0.138 24);
+	--vermilion-600: oklch(0.545 0.145 24);
+	--vermilion-700: oklch(0.462 0.142 24);
+	--vermilion-800: oklch(0.37 0.123 24);
+	--vermilion-900: oklch(0.275 0.094 24);
+	--vermilion-950: oklch(0.225 0.072 24);
+
+	--crimson-50: oklch(0.962 0.018 8);
+	--crimson-100: oklch(0.925 0.033 8);
+	--crimson-200: oklch(0.855 0.063 8);
+	--crimson-300: oklch(0.79 0.093 8);
+	--crimson-400: oklch(0.715 0.123 8);
+	--crimson-500: oklch(0.63 0.142 8);
+	--crimson-600: oklch(0.545 0.15 8);
+	--crimson-700: oklch(0.462 0.147 8);
+	--crimson-800: oklch(0.37 0.128 8);
+	--crimson-900: oklch(0.275 0.098 8);
+	--crimson-950: oklch(0.225 0.075 8);
+
+	--ochre-50: oklch(0.962 0.014 73);
+	--ochre-100: oklch(0.925 0.025 73);
+	--ochre-200: oklch(0.855 0.048 73);
+	--ochre-300: oklch(0.79 0.071 73);
+	--ochre-400: oklch(0.715 0.094 73);
+	--ochre-500: oklch(0.63 0.109 73);
+	--ochre-600: oklch(0.545 0.115 73);
+	--ochre-700: oklch(0.462 0.098 73);
+	--ochre-800: oklch(0.37 0.079 73);
+	--ochre-900: oklch(0.275 0.059 73);
+	--ochre-950: oklch(0.225 0.048 73);
+
+	--slate-50: oklch(0.962 0.011 250);
+	--slate-100: oklch(0.925 0.021 250);
+	--slate-200: oklch(0.855 0.04 250);
+	--slate-300: oklch(0.79 0.059 250);
+	--slate-400: oklch(0.715 0.078 250);
+	--slate-500: oklch(0.63 0.09 250);
+	--slate-600: oklch(0.545 0.095 250);
+	--slate-700: oklch(0.462 0.093 250);
+	--slate-800: oklch(0.37 0.081 250);
+	--slate-900: oklch(0.275 0.062 250);
+	--slate-950: oklch(0.225 0.048 250);
+
+	/* Scale: the golden ratio φ ≈ 1.618, in half steps of √φ ≈ 1.272. */
+	--step--2: 0.618rem;
+	--step--1: 0.786rem;
+	--step-0: 1rem;
+	--step-1: 1.272rem;
+	--step-2: 1.618rem;
+	--step-3: 2.058rem;
+	--step-4: 2.618rem;
+
+	--space-1: 0.236rem;
+	--space-2: 0.382rem;
+	--space-3: 0.618rem;
+	--space-4: 1rem;
+	--space-5: 1.618rem;
+	--space-6: 2.618rem;
+	--space-7: 4.236rem;
+
+	--leading: 1.6;
+	--leading-tight: 1.2;
+	--control-height: 2.382rem;
+	--radius: 4px;
+	--border: 1px;
+	--measure: 44rem;
+	--wide: 64rem;
+	--duration: 120ms;
+
+	--serif: 'Alegreya Variable', 'Iowan Old Style', Palatino, Georgia, serif;
+
+	--paper: var(--sepia-50);
+	--paper-deep: var(--sepia-100);
+	--rule: var(--sepia-200);
+	--rule-strong: var(--sepia-500);
+	--ink: var(--sepia-900);
+	--ink-soft: var(--sepia-700);
+	--ink-faint: var(--sepia-500);
+	--on-ink: var(--sepia-50);
+	--accent: var(--oxblood-700);
+	--accent-strong: var(--oxblood-800);
+	--accent-soft: oklch(from var(--oxblood-700) l c h / 12%);
+	--on-accent: var(--sepia-50);
+	--good: var(--moss-700);
+	--good-soft: var(--moss-100);
+	--bad: var(--crimson-700);
+	--bad-soft: var(--crimson-100);
+	--late: var(--ochre-700);
+	--focus: var(--slate-700);
+	--key-white: var(--sepia-50);
+	--key-black: var(--sepia-900);
+	--key-edge: var(--sepia-500);
+	--key-white-hover: var(--sepia-100);
+	--key-black-hover: var(--sepia-700);
+	--chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%235d584f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--paper: var(--sepia-950);
+		--paper-deep: var(--sepia-900);
+		--rule: var(--sepia-800);
+		--rule-strong: var(--sepia-600);
+		--ink: var(--sepia-100);
+		--ink-soft: var(--sepia-300);
+		--ink-faint: var(--sepia-500);
+		--on-ink: var(--sepia-950);
+		--accent: var(--oxblood-400);
+		--accent-strong: var(--oxblood-300);
+		--accent-soft: oklch(from var(--oxblood-400) l c h / 14%);
+		--on-accent: var(--sepia-950);
+		--good: var(--moss-400);
+		--good-soft: var(--moss-900);
+		--bad: var(--crimson-400);
+		--bad-soft: var(--crimson-900);
+		--late: var(--ochre-300);
+		--focus: var(--slate-400);
+		--key-white: var(--sepia-200);
+		--key-black: var(--sepia-950);
+		--key-edge: var(--sepia-700);
+		--key-white-hover: var(--sepia-300);
+		--key-black-hover: var(--sepia-800);
+		--chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23c3b9a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+		color-scheme: dark;
+	}
+}
+
+:root[data-theme='dark'] {
+	--paper: var(--sepia-950);
+	--paper-deep: var(--sepia-900);
+	--rule: var(--sepia-800);
+	--rule-strong: var(--sepia-600);
+	--ink: var(--sepia-100);
+	--ink-soft: var(--sepia-300);
+	--ink-faint: var(--sepia-500);
+	--on-ink: var(--sepia-950);
+	--accent: var(--oxblood-400);
+	--accent-strong: var(--oxblood-300);
+	--accent-soft: oklch(from var(--oxblood-400) l c h / 14%);
+	--on-accent: var(--sepia-950);
+	--good: var(--moss-400);
+	--good-soft: var(--moss-900);
+	--bad: var(--crimson-400);
+	--bad-soft: var(--crimson-900);
+	--late: var(--ochre-300);
+	--focus: var(--slate-400);
+	--key-white: var(--sepia-200);
+	--key-black: var(--sepia-950);
+	--key-edge: var(--sepia-700);
+	--key-white-hover: var(--sepia-300);
+	--key-black-hover: var(--sepia-800);
+	--chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23c3b9a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	color-scheme: dark;
+}
