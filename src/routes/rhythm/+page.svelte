@@ -22,6 +22,7 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { onResume } from '#lib/state/resume.ts';
 
 	let prefs = $state<RhythmPrefs>(loadModulePrefs('rhythm', RHYTHM_DEFAULTS));
 	let view = $state<'setup' | 'run'>('setup');
@@ -68,6 +69,9 @@
 		if (prefs.level < 10) update({ level: (prefs.level + 1) as Level });
 		start();
 	}
+
+	// Opened from Continue on the dashboard: go straight back to an exercise.
+	onResume(() => start());
 </script>
 
 <svelte:head>

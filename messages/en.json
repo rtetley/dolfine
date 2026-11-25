@@ -66,7 +66,7 @@
 	"higher_education_jazz": "Higher education in jazz",
 	"professional_level": "Professional / concert level",
 	"continue_heading": "Continue",
-	"continue_action": "Resume with your last settings",
+	"continue_action": "Pick up where you left off, with the same settings",
 	"welcome": "Welcome to D.O.lfine, a quiet place to practise reading, rhythm and harmony. Choose a module below, set it as you like, and start. In music theory and ear training, levels open one by one as your answers improve.",
 	"modules_heading": "Modules",
 	"module_open": "Open setup →",
@@ -520,5 +520,17 @@
 	"achievement_all_ears_detail": "Answer in all five ear-training sub-modules.",
 	"achievement_theory_and_ear": "Head and ear",
 	"achievement_theory_and_ear_detail": "Practise both music theory and ear training.",
-	"progress_first_level": "Level 1 is open"
+	"progress_first_level": "Level 1 is open",
+	"continue_setup": "Or change the settings first",
+	"dashboard_progress_heading": "Your progress",
+	"dashboard_achievements": "achievements",
+	"dashboard_of": "{count} of {total}",
+	"dashboard_see_progress": "See your progress",
+	"dashboard_badge_label": "Estimated level: {level}",
+	"dashboard_level_towards": "Level {level} · {percent}% towards Level {next}",
+	"dashboard_level_top": "Level 10 · top of the ladder",
+	"dashboard_start_here": "Level {level} · start here",
+	"dashboard_track_detail": "{track} · {detail}",
+	"dashboard_ungraded": "Not graded yet",
+	"dashboard_ungraded_level": "Level {level} · not graded yet"
 }

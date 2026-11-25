@@ -66,7 +66,7 @@
 	"higher_education_jazz": "Enseignement supérieur jazz",
 	"professional_level": "Niveau professionnel / concertiste",
 	"continue_heading": "Reprendre",
-	"continue_action": "Reprendre avec vos derniers réglages",
+	"continue_action": "Reprendre là où vous en étiez, avec les mêmes réglages",
 	"welcome": "Bienvenue sur D.O.lfine, un lieu calme pour travailler la lecture, le rythme et l’harmonie. Choisissez un module ci-dessous, réglez-le comme vous le souhaitez, et lancez-vous. En théorie et en oreille, les niveaux s’ouvrent un à un à mesure que vos réponses s’améliorent.",
 	"modules_heading": "Modules",
 	"module_open": "Ouvrir la configuration →",
@@ -520,5 +520,17 @@
 	"achievement_all_ears_detail": "Répondre dans les cinq sous-modules d’oreille.",
 	"achievement_theory_and_ear": "La tête et l’oreille",
 	"achievement_theory_and_ear_detail": "Travailler à la fois la théorie et l’oreille.",
-	"progress_first_level": "Le niveau 1 est ouvert"
+	"progress_first_level": "Le niveau 1 est ouvert",
+	"continue_setup": "Ou modifier d’abord les réglages",
+	"dashboard_progress_heading": "Vos progrès",
+	"dashboard_achievements": "distinctions",
+	"dashboard_of": "{count} sur {total}",
+	"dashboard_see_progress": "Voir vos progrès",
+	"dashboard_badge_label": "Niveau estimé : {level}",
+	"dashboard_level_towards": "Niveau {level} · {percent} % vers le niveau {next}",
+	"dashboard_level_top": "Niveau 10 · sommet de l’échelle",
+	"dashboard_start_here": "Niveau {level} · commencez ici",
+	"dashboard_track_detail": "{track} · {detail}",
+	"dashboard_ungraded": "Pas encore noté",
+	"dashboard_ungraded_level": "Niveau {level} · pas encore noté"
 }

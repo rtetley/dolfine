@@ -44,6 +44,10 @@ export function loadModulePrefs<T extends Record<string, unknown>>(
 	return mergeDefaults(defaults, readStored(`prefs:${module}`, {}, isRecord));
 }
 
+/** A module's saved setup as stored, without defaults (empty if never saved). */
+export const readSavedPrefs = (module: ModuleId): Record<string, unknown> =>
+	readStored(`prefs:${module}`, {}, isRecord);
+
 export function saveModulePrefs(module: ModuleId, prefs: Record<string, unknown>): void {
 	writeStored(`prefs:${module}`, prefs);
 }

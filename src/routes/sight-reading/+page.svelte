@@ -24,6 +24,7 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { onResume } from '#lib/state/resume.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 
 	type View = 'setup' | 'performance' | 'practice' | 'results' | 'stopped';
@@ -66,6 +67,9 @@
 		if (prefs.level < 10) updatePrefs({ level: (prefs.level + 1) as Level });
 		start();
 	}
+
+	// Opened from Continue on the dashboard: go straight back to an exercise.
+	onResume(() => start());
 </script>
 
 <svelte:head>
