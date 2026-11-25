@@ -443,5 +443,9 @@
 	"voicing_rootless_b_about": "Les mêmes notes en partant de la septième. Alterner A et B garde la main au même endroit sur un II–V–I.",
 	"voicing_type_a_about": "Le voicing à deux mains des exercices : fondamentale et septième à gauche, tierce, quinte et une tension à droite.",
 	"voicing_type_b_about": "Fondamentale, tierce et septième à gauche, une tension et la quinte à droite.",
-	"voicing_alternative": "Variante pour ce mode"
+	"voicing_alternative": "Variante pour ce mode",
+	"your_scale_label": "Votre gamme",
+	"your_chord_label": "Votre accord",
+	"write_hint": "Les notes s’inscrivent sur la portée au fur et à mesure.",
+	"live_rules_label": "Signaler les erreurs de disposition pendant que je joue"
 }

@@ -8,6 +8,7 @@
 	import Score from '#lib/notation/Score.svelte';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { scaleScore } from './display';
+	import { writtenScaleScore } from './liveStaff';
 	import ModeAnswer from './ModeAnswer.svelte';
 	import ParentAnswer from './ParentAnswer.svelte';
 	import {
@@ -85,6 +86,11 @@
 		<strong>{noteName(question.modeRoot, names)} {modeLabel(question.mode, language)}</strong>
 		{m.write_mode_prompt_end({ root: noteName(question.modeRoot, names) })}
 	</p>
+	<Score
+		score={writtenScaleScore(question, written, revealed ? scaleCheck?.notes : undefined)}
+		label={m.your_scale_label()}
+	/>
+	{#if !revealed && written.size === 0}<p class="hint">{m.write_hint()}</p>{/if}
 	<NoteInput
 		selected={written}
 		low={55}
@@ -134,6 +140,12 @@
 {/if}
 
 <style>
+	.hint {
+		margin: 0;
+		color: var(--ink-soft);
+		font-style: italic;
+	}
+
 	.prompt {
 		font-size: var(--step-1);
 	}

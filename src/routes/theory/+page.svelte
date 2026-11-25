@@ -124,6 +124,14 @@
 					<option value="B">Type B · 1 3 7 / 9 5</option>
 				</select>
 			</label>
+			<label class="field inline">
+				<input
+					type="checkbox"
+					checked={prefs.liveRules}
+					onchange={(e) => update({ liveRules: e.currentTarget.checked })}
+				/>
+				<span>{m.live_rules_label()}</span>
+			</label>
 		</section>
 		<div class="actions">
 			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
@@ -142,9 +150,9 @@
 			{:else if question.kind === 'mode-in-context'}
 				<ContextExercise {question} {format} onnext={next} />
 			{:else if question.kind === 'voice-leading'}
-				<SheetExercise {question} onnext={next} />
+				<SheetExercise {question} liveRules={prefs.liveRules} onnext={next} />
 			{:else if question.kind === 'name-chord' || question.kind === 'build-chord' || question.kind === 'voice-chord'}
-				<ChordExercise {question} {format} onnext={next} />
+				<ChordExercise {question} {format} liveRules={prefs.liveRules} onnext={next} />
 			{/if}
 		{/key}
 		<div class="actions">

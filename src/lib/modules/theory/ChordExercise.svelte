@@ -12,15 +12,17 @@
 	import Score from '#lib/notation/Score.svelte';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { closeChord, grandStaff, spellChord } from './display';
+	import { voicingRuleIssues, writtenChordColumn } from './liveStaff';
 	import { checkBuiltChord, type ChordQuestion } from './questions';
 
 	interface Props {
 		question: ChordQuestion;
 		format: 'choice' | 'naming';
+		liveRules?: boolean;
 		onnext: () => void;
 	}
 
-	let { question, format, onnext }: Props = $props();
+	let { question, format, liveRules = true, onnext }: Props = $props();
 
 	let chosen = $state<string | null>(null);
 	let namedSuffix = $state<string | null>(null);
@@ -73,6 +75,18 @@
 	const close = $derived(closeChord(question.chord));
 	const answerMidis = $derived(question.kind === 'voice-chord' ? model.midis : close.map(toMidi));
 	const parent = $derived(modeInfo(question.chord.mode).parent);
+	const handSplit = $derived(question.kind === 'voice-chord' ? spec.lh.length : undefined);
+	const ruleIssues = $derived(
+		liveRules ? voicingRuleIssues(entered, handSplit) : { flagged: new Set<number>(), messages: [] }
+	);
+	const liveScore = $derived(
+		grandStaff([
+			writtenChordColumn('live', question.chord, entered, {
+				lhCount: entered.size > (handSplit ?? 0) ? handSplit : undefined,
+				flagged: ruleIssues.flagged
+			})
+		])
+	);
 
 	const play = async (midis: readonly number[]): Promise<void> => {
 		await ensureAudio();
@@ -119,6 +133,7 @@
 		{m.build_chord_prompt_start()}
 		<strong>{displaySymbol}</strong>{m.build_chord_prompt_end()}
 	</p>
+	{#if !revealed}{@render live()}{/if}
 	<NoteInput
 		selected={entered}
 		low={48}
@@ -135,6 +150,7 @@
 			? m.voice_chord_alternative()
 			: ''}.
 	</p>
+	{#if !revealed}{@render live()}{/if}
 	<NoteInput selected={entered} low={40} high={84} disabled={revealed} maxNotes={5} />
 {/if}
 
@@ -185,7 +201,31 @@
 	</div>
 {/if}
 
+{#snippet live()}
+	<div class="live">
+		<Score score={liveScore} preferredPerLine={1} label={m.your_chord_label()} />
+		{#if entered.size === 0}
+			<p class="hint">{m.write_hint()}</p>
+		{:else}
+			{#each ruleIssues.messages as message (message)}<p class="bad">{message}</p>{/each}
+		{/if}
+	</div>
+{/snippet}
+
 <style>
+	.live {
+		max-width: 22rem;
+	}
+
+	.live p {
+		margin: 0;
+	}
+
+	.hint {
+		color: var(--ink-soft);
+		font-style: italic;
+	}
+
 	.prompt {
 		font-size: var(--step-1);
 	}
