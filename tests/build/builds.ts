@@ -9,7 +9,19 @@ export const BUILDS = {
 	pages: { dir: join(BUILDS_ROOT, 'pages'), basePath: BASE_PATH }
 } as const;
 
-export const ROUTES = ['index', 'settings', 'sight-reading', 'rhythm', 'theory', 'ear'] as const;
+export const ROUTES = [
+	'index',
+	'settings',
+	'sight-reading',
+	'rhythm',
+	'theory',
+	'ear',
+	'theory/lessons',
+	'theory/lessons/major',
+	'theory/lessons/melodic-minor',
+	'theory/lessons/harmonic-minor',
+	'theory/lessons/voicings'
+] as const;
 
 export const read = (file: string): string => readFileSync(file, 'utf8');
 

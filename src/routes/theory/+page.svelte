@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
 	import { m } from '#lib/i18n.ts';
@@ -63,6 +64,9 @@
 <div class="page">
 	<h1>{m.nav_theory()}</h1>
 	<p class="lede">{m.theory_lede()}</p>
+	<p class="lessons-link">
+		<a href={resolve('/theory/lessons')}>{m.lessons_title()} →</a>
+	</p>
 
 	{#if !question}
 		<section class="setup" aria-label={m.setup_label()}>
@@ -148,3 +152,9 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.lessons-link {
+		margin: 0 0 var(--space-4);
+	}
+</style>
