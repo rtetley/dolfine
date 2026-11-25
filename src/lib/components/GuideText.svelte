@@ -26,7 +26,7 @@
 <style>
 	.guide {
 		border-top: 1px solid var(--rule);
-		padding: 0.6rem 0;
+		padding: var(--space-3) 0;
 	}
 
 	.guide summary {
@@ -37,7 +37,7 @@
 	}
 
 	.guide .prose {
-		margin-top: 0.6rem;
+		margin-top: var(--space-3);
 		display: flow-root;
 	}
 </style>

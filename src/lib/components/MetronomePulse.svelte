@@ -22,7 +22,7 @@
 	.pulse {
 		display: flex;
 		align-items: center;
-		gap: 0.45rem;
+		gap: var(--space-2);
 		min-height: 1.5rem;
 	}
 
@@ -44,9 +44,9 @@
 	}
 
 	.caption {
-		font-size: 0.8rem;
+		font-size: var(--step--1);
 		color: var(--ink-soft);
 		font-style: italic;
-		margin-left: 0.3rem;
+		margin-left: var(--space-1);
 	}
 </style>

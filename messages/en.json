@@ -118,7 +118,7 @@
 	"key_mode_either": "Either",
 	"key_name_major": "{tonic} major",
 	"key_name_minor": "{tonic} minor",
-	"tempo_from_level": "Tempo (♩ = , 0 = level {tempo})",
+	"tempo_from_level": "Tempo (♩, 0 = level {tempo})",
 	"bars_from_level": "Bars (0 = level {bars})",
 	"sight_reading_summary": "Sight reading · Level {level} · {staff} · {key} · {meter} · {tempo} bpm · {mode}",
 	"practice_exercise_label": "Practice exercise",

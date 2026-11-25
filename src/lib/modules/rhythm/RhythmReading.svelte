@@ -102,7 +102,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.8rem 1.2rem;
-		margin: 1rem 0;
+		gap: var(--space-3) var(--space-4);
+		margin: var(--space-4) 0;
 	}
 </style>

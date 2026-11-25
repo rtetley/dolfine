@@ -73,7 +73,7 @@
 
 <style>
 	.prompt {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 	}
 
 	.slots {
@@ -81,11 +81,11 @@
 		padding: 0;
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-		gap: 0.8rem;
+		gap: var(--space-3);
 	}
 
 	.slots li {
 		display: grid;
-		gap: 0.3rem;
+		gap: var(--space-1);
 	}
 </style>

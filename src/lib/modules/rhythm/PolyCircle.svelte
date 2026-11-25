@@ -83,9 +83,9 @@
 	.views {
 		display: grid;
 		grid-template-columns: minmax(10rem, 16rem) 1fr;
-		gap: 2rem;
+		gap: var(--space-5);
 		align-items: center;
-		margin: 1.5rem 0;
+		margin: var(--space-5) 0;
 	}
 
 	@media (max-width: 40rem) {
@@ -121,7 +121,7 @@
 	.lanes {
 		position: relative;
 		display: grid;
-		gap: 1.2rem;
+		gap: var(--space-4);
 	}
 
 	.lane {
@@ -131,7 +131,7 @@
 	}
 
 	.lane-label {
-		font-size: 0.85rem;
+		font-size: var(--step--1);
 		color: var(--ink-soft);
 	}
 

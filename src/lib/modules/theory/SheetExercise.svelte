@@ -139,11 +139,11 @@
 
 <style>
 	.prompt {
-		font-size: 1.05rem;
+		font-size: var(--step-1);
 		max-width: var(--measure);
 	}
 
 	.violations {
-		padding-left: 1.2rem;
+		padding-left: var(--space-4);
 	}
 </style>

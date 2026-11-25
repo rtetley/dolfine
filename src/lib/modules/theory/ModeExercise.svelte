@@ -135,11 +135,11 @@
 
 <style>
 	.prompt {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 	}
 
 	.feedback {
 		border-top: 1px solid var(--rule);
-		padding-top: 0.5rem;
+		padding-top: var(--space-2);
 	}
 </style>

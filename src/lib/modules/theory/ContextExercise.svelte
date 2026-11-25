@@ -64,13 +64,13 @@
 
 <style>
 	.prompt {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 	}
 
 	.grid {
 		list-style: none;
 		padding: 0;
-		margin: 1rem 0 1.5rem;
+		margin: var(--space-4) 0 var(--space-5);
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
 		border-left: 1px solid var(--ink-soft);
@@ -78,8 +78,8 @@
 
 	.grid li {
 		display: grid;
-		gap: 0.2rem;
-		padding: 0.8rem 0.9rem;
+		gap: var(--space-1);
+		padding: var(--space-3) var(--space-4);
 		border-right: 1px solid var(--ink-soft);
 		border-top: 1px solid var(--rule);
 		border-bottom: 1px solid var(--rule);
@@ -90,11 +90,11 @@
 	}
 
 	.symbol {
-		font-size: 1.15rem;
+		font-size: var(--step-1);
 	}
 
 	.roman {
-		font-size: 0.8rem;
+		font-size: var(--step--1);
 		color: var(--ink-soft);
 	}
 </style>
