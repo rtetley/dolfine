@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ensureAudio, playArpeggio } from '#lib/audio/engine.ts';
 	import NoteInput from '#lib/components/NoteInput.svelte';
@@ -33,8 +34,8 @@
 	let revealed = $state(false);
 	const written = new SvelteSet<number>();
 
-	const names = $derived(settings.value.noteNames);
-	const language = $derived(settings.value.modeLanguage);
+	const names = $derived(settings.noteNames);
+	const language = $derived(settings.modeLanguage);
 	const expectedParent = $derived(parentOf(question.mode, question.modeRoot));
 	const scaleCheck = $derived(
 		question.kind === 'write-mode' ? checkWrittenScale(question, [...written]) : null
@@ -65,9 +66,11 @@
 </script>
 
 {#if question.kind === 'name-mode'}
-	<p class="prompt">Which mode is this, and what is its parent scale?</p>
-	<Score score={scaleScore(question.notes)} label="Scale to name" />
-	<div class="actions"><button type="button" onclick={() => void hear()}>Hear it</button></div>
+	<p class="prompt">{m.name_mode_prompt()}</p>
+	<Score score={scaleScore(question.notes)} label={m.scale_to_name_label()} />
+	<div class="actions">
+		<button type="button" onclick={() => void hear()}>{m.action_hear_it()}</button>
+	</div>
 	<ModeAnswer
 		options={question.options}
 		{format}
@@ -78,9 +81,9 @@
 	/>
 {:else}
 	<p class="prompt">
-		Write <strong>{noteName(question.modeRoot, names)} {modeLabel(question.mode, language)}</strong>
-		ascending from
-		{noteName(question.modeRoot, names)}, then name its parent scale.
+		{m.write_mode_prompt_start()}
+		<strong>{noteName(question.modeRoot, names)} {modeLabel(question.mode, language)}</strong>
+		{m.write_mode_prompt_end({ root: noteName(question.modeRoot, names) })}
 	</p>
 	<NoteInput
 		selected={written}
@@ -102,11 +105,11 @@
 <div class="actions">
 	{#if !revealed}
 		<button type="button" class="primary" disabled={!ready} onclick={() => (revealed = true)}>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next question</button>
-		<button type="button" onclick={() => void hear()}>Hear the scale</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next_question()}</button>
+		<button type="button" onclick={() => void hear()}>{m.hear_the_scale()}</button>
 	{/if}
 </div>
 
@@ -114,14 +117,18 @@
 	<div class="feedback">
 		{#if question.kind === 'write-mode'}
 			<p class={scaleCheck?.ok ? 'good' : 'bad'}>
-				{scaleCheck?.ok ? 'The scale is right.' : 'Not quite. The scale is:'}
+				{scaleCheck?.ok ? m.scale_right() : m.scale_wrong()}
 			</p>
-			{#if !scaleCheck?.ok}<Score score={scaleScore(question.notes)} label="Correct scale" />{/if}
+			{#if !scaleCheck?.ok}<Score
+					score={scaleScore(question.notes)}
+					label={m.correct_scale_label()}
+				/>{/if}
 		{/if}
 		<p class={parentOk ? 'good' : 'bad'}>
-			{parentOk ? 'Parent scale right: ' : 'Parent scale: '}
-			{noteName(expectedParent.root, names)}
-			{PARENT_NAMES[expectedParent.parent][language]} · degree {question.mode.split(':')[1]}
+			{(parentOk ? m.parent_right : m.parent_answer)({
+				name: `${noteName(expectedParent.root, names)} ${PARENT_NAMES[expectedParent.parent][language]}`,
+				degree: question.mode.split(':')[1] ?? ''
+			})}
 		</p>
 	</div>
 {/if}

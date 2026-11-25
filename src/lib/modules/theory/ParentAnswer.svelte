@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { ALL_ROOTS, noteName, pitchClassOf } from '#lib/music/pitch.ts';
 	import { PARENT_NAMES, PARENT_SCALES, type ParentScale } from '#lib/music/scales.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
@@ -15,27 +16,27 @@
 </script>
 
 <fieldset class="parent">
-	<legend class="label">Parent scale</legend>
+	<legend class="label">{m.parent_scale_label()}</legend>
 	<select
-		aria-label="Root"
+		aria-label={m.parent_root_label()}
 		value={root ?? ''}
 		{disabled}
 		onchange={(e) => onchange({ root: Number(e.currentTarget.value), parent })}
 	>
-		<option value="" disabled>Root…</option>
+		<option value="" disabled>{m.parent_root_placeholder()}</option>
 		{#each ALL_ROOTS as name (pitchClassOf(name))}
-			<option value={pitchClassOf(name)}>{noteName(name, settings.value.noteNames)}</option>
+			<option value={pitchClassOf(name)}>{noteName(name, settings.noteNames)}</option>
 		{/each}
 	</select>
 	<select
-		aria-label="Scale"
+		aria-label={m.parent_scale_select_label()}
 		value={parent ?? ''}
 		{disabled}
 		onchange={(e) => onchange({ root, parent: e.currentTarget.value as ParentScale })}
 	>
-		<option value="" disabled>Scale…</option>
+		<option value="" disabled>{m.parent_scale_placeholder()}</option>
 		{#each PARENT_SCALES as scale (scale)}
-			<option value={scale}>{PARENT_NAMES[scale][settings.value.modeLanguage]}</option>
+			<option value={scale}>{PARENT_NAMES[scale][settings.modeLanguage]}</option>
 		{/each}
 	</select>
 </fieldset>

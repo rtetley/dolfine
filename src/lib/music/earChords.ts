@@ -1,9 +1,10 @@
+import { m } from '#lib/i18n.ts';
 import type { Level } from './levels';
 
 export interface EarChordQuality {
-	id: string;
-	symbol: string;
-	intervals: readonly number[];
+	readonly id: string;
+	readonly symbol: string;
+	readonly intervals: readonly number[];
 }
 
 export const EAR_CHORDS: readonly EarChordQuality[] = [
@@ -31,7 +32,13 @@ export const EAR_CHORDS: readonly EarChordQuality[] = [
 	{ id: 'm7s11', symbol: '-7(♯11)', intervals: [0, 3, 7, 10, 18] },
 	{ id: 'us-d-over-c7', symbol: '13(♯11) · D/C7', intervals: [0, 4, 10, 14, 18, 21] },
 	{ id: 'us-eb-over-c7', symbol: '7(♯9 ♭13) · E♭/C7', intervals: [0, 4, 10, 15, 19, 22] },
-	{ id: 'quartal', symbol: 'quartal (-11)', intervals: [0, 5, 10, 15, 19] }
+	{
+		id: 'quartal',
+		get symbol() {
+			return m.chord_quartal();
+		},
+		intervals: [0, 5, 10, 15, 19]
+	}
 ];
 
 const ids = (...list: string[]): string[] => list;
@@ -104,21 +111,23 @@ export function voiceEarChord(
 	}
 }
 
-export const INTERVAL_NAMES: readonly string[] = [
-	'Unison',
-	'Minor 2nd',
-	'Major 2nd',
-	'Minor 3rd',
-	'Major 3rd',
-	'Perfect 4th',
-	'Tritone',
-	'Perfect 5th',
-	'Minor 6th',
-	'Major 6th',
-	'Minor 7th',
-	'Major 7th',
-	'Octave'
+const INTERVAL_MESSAGES: readonly (() => string)[] = [
+	m.interval_unison,
+	m.interval_minor_second,
+	m.interval_major_second,
+	m.interval_minor_third,
+	m.interval_major_third,
+	m.interval_perfect_fourth,
+	m.interval_tritone,
+	m.interval_perfect_fifth,
+	m.interval_minor_sixth,
+	m.interval_major_sixth,
+	m.interval_minor_seventh,
+	m.interval_major_seventh,
+	m.interval_octave
 ];
+
+export const intervalName = (semitones: number): string => INTERVAL_MESSAGES[semitones]?.() ?? '';
 
 export const INTERVALS_BY_LEVEL: Record<Level, number[]> = {
 	1: [3, 4, 5, 7, 12],

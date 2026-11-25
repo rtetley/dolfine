@@ -1,6 +1,7 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { THEORY_GUIDES } from '#lib/content/guides.ts';
 	import type { Level } from '#lib/music/levels.ts';
@@ -24,6 +25,7 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { settings } from '#lib/state/settings.svelte.ts';
 
 	let prefs = $state<TheoryPrefs>(loadModulePrefs('theory', THEORY_DEFAULTS));
 	let question = $state<TheoryQuestion | null>(null);
@@ -39,34 +41,38 @@
 	function next(): void {
 		question = createQuestion(prefs, newSeed());
 		questionKey++;
-		const parent = prefs.parent === 'level' ? 'parents from level' : PARENT_NAMES[prefs.parent].en;
+		const parent =
+			prefs.parent === 'level'
+				? m.parent_from_level()
+				: PARENT_NAMES[prefs.parent][settings.modeLanguage];
 		continueStore.record({
 			module: 'theory',
-			summary: `Music theory · Level ${prefs.level} · ${THEORY_EXERCISE_LABELS[prefs.exercise]} · ${parent}`
+			summary: m.theory_summary({
+				level: prefs.level,
+				exercise: THEORY_EXERCISE_LABELS[prefs.exercise],
+				parent
+			})
 		});
 	}
 </script>
 
 <svelte:head>
-	<title>Music theory · D.O.lfine</title>
+	<title>{m.page_title({ page: m.nav_theory() })}</title>
 </svelte:head>
 
 <div class="page">
-	<h1>Music theory</h1>
-	<p class="lede">
-		Jazz harmony at the keyboard: the major, melodic minor and harmonic minor scales, their modes,
-		voicings and voice leading.
-	</p>
+	<h1>{m.nav_theory()}</h1>
+	<p class="lede">{m.theory_lede()}</p>
 
 	{#if !question}
-		<section class="setup" aria-label="Exercise setup">
+		<section class="setup" aria-label={m.setup_label()}>
 			<LevelPicker
 				level={prefs.level}
 				mapping="jazz"
 				onchange={(level: Level) => update({ level })}
 			/>
 			<label class="field">
-				<span class="label">Exercise</span>
+				<span class="label">{m.exercise_label()}</span>
 				<select
 					value={prefs.exercise}
 					onchange={(e) => update({ exercise: e.currentTarget.value as TheoryPrefs['exercise'] })}
@@ -77,51 +83,55 @@
 				</select>
 			</label>
 			<label class="field">
-				<span class="label">Parent scale</span>
+				<span class="label">{m.parent_scale_label()}</span>
 				<select
 					value={prefs.parent}
 					onchange={(e) => update({ parent: e.currentTarget.value as TheoryPrefs['parent'] })}
 				>
-					<option value="level">From level</option>
+					<option value="level">{m.from_level()}</option>
 					{#each PARENT_SCALES as scale (scale)}<option value={scale}>
-							{PARENT_NAMES[scale].en}
+							{PARENT_NAMES[scale][settings.modeLanguage]}
 						</option>{/each}
 				</select>
 			</label>
 			<label class="field">
-				<span class="label">Answer format</span>
+				<span class="label">{m.answer_format_label()}</span>
 				<select
 					value={prefs.answerFormat}
 					onchange={(e) =>
 						update({ answerFormat: e.currentTarget.value as TheoryPrefs['answerFormat'] })}
 				>
-					<option value="level">From level ({format === 'choice' ? 'choices' : 'naming'})</option>
-					<option value="choice">Multiple choice</option>
-					<option value="naming">Name it outright</option>
+					<option value="level">
+						{format === 'choice' ? m.answer_format_level_choice() : m.answer_format_level_naming()}
+					</option>
+					<option value="choice">{m.answer_format_choice()}</option>
+					<option value="naming">{m.answer_format_naming()}</option>
 				</select>
 			</label>
 			<label class="field">
-				<span class="label">Voicing type</span>
+				<span class="label">{m.voicing_type_label()}</span>
 				<select
 					value={prefs.voicingType}
 					onchange={(e) =>
 						update({ voicingType: e.currentTarget.value as TheoryPrefs['voicingType'] })}
 				>
-					<option value="alternate">A or B</option>
+					<option value="alternate">{m.voicing_type_alternate()}</option>
 					<option value="A">Type A · 1 7 / 3 5 9</option>
 					<option value="B">Type B · 1 3 7 / 9 5</option>
 				</select>
 			</label>
 		</section>
 		<div class="actions">
-			<button type="button" class="primary" onclick={next}>Start</button>
+			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
 			<MidiStatus />
 		</div>
 		<GuideText guide={THEORY_GUIDES.intro} open />
 		<GuideText guide={THEORY_GUIDES.voicings} />
 		<GuideText guide={THEORY_GUIDES.voiceLeading} />
 	{:else}
-		<p class="label">Level {prefs.level} · {THEORY_EXERCISE_LABELS[prefs.exercise]}</p>
+		<p class="label">
+			{m.level_heading({ level: prefs.level, detail: THEORY_EXERCISE_LABELS[prefs.exercise] })}
+		</p>
 		{#key questionKey}
 			{#if question.kind === 'name-mode' || question.kind === 'write-mode'}
 				<ModeExercise {question} {format} onnext={next} />
@@ -134,7 +144,7 @@
 			{/if}
 		{/key}
 		<div class="actions">
-			<button type="button" onclick={() => (question = null)}>Back to setup</button>
+			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
 		</div>
 	{/if}
 </div>

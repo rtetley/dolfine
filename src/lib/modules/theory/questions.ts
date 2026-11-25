@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import { type ChordRef, chordSymbol, chordTone, seventhChordTones } from '#lib/music/chords.ts';
 import { type Level, THEORY_LEVELS } from '#lib/music/levels.ts';
 import { mod, type Pitch, type PitchClassName, pitchClassOf } from '#lib/music/pitch.ts';
@@ -31,13 +32,27 @@ export const THEORY_EXERCISES = [
 export type TheoryExercise = (typeof THEORY_EXERCISES)[number];
 
 export const THEORY_EXERCISE_LABELS: Record<TheoryExercise, string> = {
-	'name-mode': 'Name the mode',
-	'write-mode': 'Write the mode',
-	'mode-in-context': 'Mode in context',
-	'name-chord': 'Name the chord',
-	'build-chord': 'Build the chord',
-	'voice-chord': 'Voice the chord',
-	'voice-leading': 'Voice-leading sheet'
+	get 'name-mode'() {
+		return m.theory_exercise_name_mode();
+	},
+	get 'write-mode'() {
+		return m.theory_exercise_write_mode();
+	},
+	get 'mode-in-context'() {
+		return m.theory_exercise_mode_in_context();
+	},
+	get 'name-chord'() {
+		return m.theory_exercise_name_chord();
+	},
+	get 'build-chord'() {
+		return m.theory_exercise_build_chord();
+	},
+	get 'voice-chord'() {
+		return m.theory_exercise_voice_chord();
+	},
+	get 'voice-leading'() {
+		return m.theory_exercise_voice_leading();
+	}
 };
 
 export interface TheoryPrefs extends Record<string, unknown> {

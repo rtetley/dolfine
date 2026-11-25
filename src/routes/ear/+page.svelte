@@ -1,6 +1,7 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { EAR_GUIDES } from '#lib/content/guides.ts';
 	import type { Level } from '#lib/music/levels.ts';
@@ -39,23 +40,23 @@
 		questionKey++;
 		continueStore.record({
 			module: 'ear',
-			summary: `Ear training · Level ${prefs.level} · ${EAR_SUBMODULE_LABELS[prefs.submodule]}`
+			summary: m.ear_summary({
+				level: prefs.level,
+				submodule: EAR_SUBMODULE_LABELS[prefs.submodule]
+			})
 		});
 	}
 </script>
 
 <svelte:head>
-	<title>Ear training · D.O.lfine</title>
+	<title>{m.page_title({ page: m.nav_ear() })}</title>
 </svelte:head>
 
 <div class="page">
-	<h1>Ear training</h1>
-	<p class="lede">
-		Hear what the theory module teaches: intervals, chords, voicings, modes and progressions. Piano
-		sound.
-	</p>
+	<h1>{m.nav_ear()}</h1>
+	<p class="lede">{m.ear_lede()}</p>
 
-	<div class="tabs" role="group" aria-label="Sub-module">
+	<div class="tabs" role="group" aria-label={m.submodule_label()}>
 		{#each EAR_SUBMODULES as submodule (submodule)}
 			<button
 				type="button"
@@ -71,48 +72,50 @@
 	</div>
 
 	{#if !question}
-		<section class="setup" aria-label="Exercise setup">
+		<section class="setup" aria-label={m.setup_label()}>
 			<LevelPicker
 				level={prefs.level}
 				mapping="jazz"
 				onchange={(level: Level) => update({ level })}
 			/>
 			<label class="field">
-				<span class="label">Answer</span>
+				<span class="label">{m.ear_answer_label()}</span>
 				<select
 					value={prefs.answerFormat}
 					onchange={(e) =>
 						update({ answerFormat: e.currentTarget.value as EarPrefs['answerFormat'] })}
 				>
-					<option value="level">From level</option>
-					<option value="choice">Choose from options</option>
-					<option value="naming">Name it outright</option>
-					<option value="play">Play it back (piano or MIDI)</option>
+					<option value="level">{m.from_level()}</option>
+					<option value="choice">{m.ear_answer_choice()}</option>
+					<option value="naming">{m.answer_format_naming()}</option>
+					<option value="play">{m.ear_answer_play()}</option>
 				</select>
 			</label>
 			{#if prefs.submodule === 'chords' || prefs.submodule === 'voicings'}
 				<label class="field">
-					<span class="label">Voicing</span>
+					<span class="label">{m.ear_voicing_label()}</span>
 					<select
 						value={prefs.voicing}
 						onchange={(e) => update({ voicing: e.currentTarget.value as EarPrefs['voicing'] })}
 					>
-						<option value="level">From level</option>
-						<option value="shell-spread">Spread, root in the bass</option>
-						<option value="rootless">Rootless</option>
-						<option value="drop2">Drop 2</option>
-						<option value="close">Close position</option>
+						<option value="level">{m.from_level()}</option>
+						<option value="shell-spread">{m.ear_voicing_spread()}</option>
+						<option value="rootless">{m.ear_voicing_rootless()}</option>
+						<option value="drop2">{m.ear_voicing_drop2()}</option>
+						<option value="close">{m.ear_voicing_close()}</option>
 					</select>
 				</label>
 			{/if}
 		</section>
 		<div class="actions">
-			<button type="button" class="primary" onclick={next}>Start</button>
+			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
 			{#if format === 'play'}<MidiStatus />{/if}
 		</div>
 		<GuideText guide={EAR_GUIDES.intro} open />
 	{:else}
-		<p class="label">Level {prefs.level} · {EAR_SUBMODULE_LABELS[prefs.submodule]}</p>
+		<p class="label">
+			{m.level_heading({ level: prefs.level, detail: EAR_SUBMODULE_LABELS[prefs.submodule] })}
+		</p>
 		{#key questionKey}
 			{#if question.kind === 'modes'}
 				<ModeListening {question} {format} onnext={next} />
@@ -123,7 +126,7 @@
 			{/if}
 		{/key}
 		<div class="actions">
-			<button type="button" onclick={() => (question = null)}>Back to setup</button>
+			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
 		</div>
 	{/if}
 </div>

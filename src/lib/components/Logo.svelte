@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SegnoDolphinArt from '#lib/brand/SegnoDolphinArt.svelte';
+	import { m } from '#lib/i18n.ts';
 
 	interface Props {
 		size?: number;
@@ -14,7 +15,7 @@
 	height={size}
 	viewBox="0 0 100 100"
 	role="img"
-	aria-label="D.O.lfine: a dolphin in the shape of a segno"
+	aria-label={m.logo_label()}
 >
 	<SegnoDolphinArt weight={3.2} fill="var(--paper)" />
 </svg>

@@ -4,6 +4,10 @@ import { memoryStorage } from './testStorage';
 let storage: Storage;
 
 const loadSettings = () => import('./settings.svelte');
+const useLocale = async (locale: 'en' | 'fr') => {
+	const { overwriteGetLocale } = await import('#lib/paraglide/runtime.js');
+	overwriteGetLocale(() => locale);
+};
 const loadModulePrefs = () => import('./modulePrefs.svelte');
 
 beforeEach(() => {
@@ -18,12 +22,33 @@ describe('settings store', () => {
 	it('starts from the defaults on a fresh browser', async () => {
 		const { settings } = await loadSettings();
 		expect(settings.value).toEqual({
-			noteNames: 'letters',
+			noteNames: 'auto',
 			chordStyle: 'jazz',
-			modeLanguage: 'en',
+			modeLanguage: 'auto',
 			theme: 'auto',
 			dropCapColor: 'red'
 		});
+	});
+
+	it.each([
+		['en', 'letters', 'en'],
+		['fr', 'solfege', 'fr']
+	] as const)('names notes and modes after the %s interface', async (locale, notes, modes) => {
+		await useLocale(locale);
+		const { settings } = await loadSettings();
+		expect(settings.noteNames).toBe(notes);
+		expect(settings.modeLanguage).toBe(modes);
+	});
+
+	it('lets an explicit naming choice override the language', async () => {
+		await useLocale('fr');
+		storage.setItem(
+			'dolfine:settings',
+			JSON.stringify({ noteNames: 'letters', modeLanguage: 'en' })
+		);
+		const { settings } = await loadSettings();
+		expect(settings.noteNames).toBe('letters');
+		expect(settings.modeLanguage).toBe('en');
 	});
 
 	it('restores valid stored values and ignores mistyped ones', async () => {
@@ -39,7 +64,7 @@ describe('settings store', () => {
 		expect(settings.value.chordStyle).toBe('classic');
 		expect(JSON.parse(storage.getItem('dolfine:settings') ?? '{}')).toMatchObject({
 			chordStyle: 'classic',
-			noteNames: 'letters'
+			noteNames: 'auto'
 		});
 	});
 

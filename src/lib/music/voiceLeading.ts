@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import { type ChordRef, chordTone } from './chords';
 import { mod, pitchClassOf } from './pitch';
 import {
@@ -46,7 +47,7 @@ export function checkVoicing(
 		violations.push({
 			chordIndex,
 			rule: 'voicing',
-			message: `Expected the type ${entry.type} voicing: ${expected.length} notes in the order of the voicing, bottom to top.`
+			message: m.violation_voicing({ type: entry.type, count: expected.length })
 		});
 		return violations;
 	}
@@ -54,20 +55,20 @@ export function checkVoicing(
 	const rh = sorted.slice(lhCount);
 	const root = sorted[0];
 	if (rh.some((midi) => midi > LIMITS.rhTop)) {
-		violations.push({ chordIndex, rule: 'range', message: 'The right hand goes above A5.' });
+		violations.push({ chordIndex, rule: 'range', message: m.violation_rh_high() });
 	}
 	if (rh.some((midi) => midi < LIMITS.rhBottom)) {
-		violations.push({ chordIndex, rule: 'range', message: 'The right hand goes below G3.' });
+		violations.push({ chordIndex, rule: 'range', message: m.violation_rh_low() });
 	}
 	if (root < LIMITS.lowestRoot) {
-		violations.push({ chordIndex, rule: 'range', message: 'The root is below E2.' });
+		violations.push({ chordIndex, rule: 'range', message: m.violation_root_low() });
 	}
 	for (const index of lowIntervalViolations(sorted)) {
 		violations.push({
 			chordIndex,
 			rule: 'range',
 			voice: index,
-			message: 'An interval sits below its low interval limit and will sound muddy.'
+			message: m.violation_low_interval()
 		});
 	}
 	return violations;
@@ -92,14 +93,14 @@ export function checkMotion(
 				chordIndex,
 				rule: 'common-tone',
 				voice,
-				message: `Voice ${voice + 1} could hold its common tone but moves.`
+				message: m.violation_common_tone({ voice: voice + 1 })
 			});
 		} else if (Math.abs(to - from) > MAX_UPPER_MOTION) {
 			violations.push({
 				chordIndex,
 				rule: 'step',
 				voice,
-				message: `Voice ${voice + 1} leaps ${Math.abs(to - from)} semitones; upper voices move by a second at most.`
+				message: m.violation_leap({ voice: voice + 1, semitones: Math.abs(to - from) })
 			});
 		}
 	}

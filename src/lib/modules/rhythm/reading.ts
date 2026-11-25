@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import type { Level } from '#lib/music/levels.ts';
 import { POLYRHYTHM_LEVELS, RHYTHM_READING_LEVELS } from '#lib/music/rhythmLevels.ts';
 import { createRng } from '#lib/music/random.ts';
@@ -101,22 +102,22 @@ export function rhythmScore(exercise: RhythmExercise, syllables: SyllableMode): 
 		parts: [
 			{
 				clef: 'percussion',
-				measures: exercise.measures.map((measure, m) =>
+				measures: exercise.measures.map((measure, bar) =>
 					measure.map((event, n) => ({
-						id: `r${m}-${n}`,
+						id: `r${bar}-${n}`,
 						ticks: event.ticks,
 						rest: event.rest,
 						pitches: event.rest ? [] : [PERCUSSION_PITCH],
 						tie: event.tie,
 						triplet: event.triplet,
 						above:
-							m === 0 && n === 0
+							bar === 0 && n === 0
 								? exercise.swing
-									? `Swing ${ratioLabel(exercise.swingRatio)}`
-									: 'Straight'
+									? m.score_swing({ ratio: ratioLabel(exercise.swingRatio) })
+									: m.score_straight()
 								: undefined,
 						below:
-							syllables === 'off' || (syllables === 'fade' && m >= fadeFrom)
+							syllables === 'off' || (syllables === 'fade' && bar >= fadeFrom)
 								? undefined
 								: event.syllable
 					}))
@@ -126,7 +127,8 @@ export function rhythmScore(exercise: RhythmExercise, syllables: SyllableMode): 
 	};
 }
 
-export const ratioLabel = (ratio: number): string => (ratio === 2 ? '(triplet)' : `${ratio}:1`);
+export const ratioLabel = (ratio: number): string =>
+	ratio === 2 ? m.ratio_triplet() : `${ratio}:1`;
 
 export function listenSchedule(exercise: RhythmExercise, midi = 72): ScheduledChord[] {
 	const events = timeline(exercise.measures, exercise.meter);

@@ -1,33 +1,52 @@
+import { m } from '#lib/i18n.ts';
 import type { ProgressionKind } from './progressions';
 import type { ParentScale } from './scales';
 
 export const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 export type Level = (typeof LEVELS)[number];
 
-export const CLASSICAL_MAPPING: Record<Level, { abrsm: string; french: string }> = {
-	1: { abrsm: 'Grade 3', french: 'Start of cycle 2' },
-	2: { abrsm: 'Grade 4', french: 'Cycle 2' },
-	3: { abrsm: 'Grade 5', french: 'End of cycle 2 (BEM)' },
-	4: { abrsm: 'Grade 6', french: 'Start of cycle 3' },
-	5: { abrsm: 'Grade 7', french: 'Cycle 3' },
-	6: { abrsm: 'Grade 8', french: 'End of cycle 3 (CEM)' },
-	7: { abrsm: 'ARSM', french: 'DEM / CPES' },
-	8: { abrsm: 'DipABRSM', french: 'Entrance to higher education' },
-	9: { abrsm: 'LRSM', french: 'Higher education (DNSPM)' },
-	10: { abrsm: 'FRSM', french: 'Professional / concert level' }
+export interface ExamEquivalent {
+	readonly abrsm: string;
+	readonly french: string;
+}
+
+const equivalent = (abrsm: () => string, french: () => string): ExamEquivalent => ({
+	get abrsm() {
+		return abrsm();
+	},
+	get french() {
+		return french();
+	}
+});
+
+const literal = (text: string) => (): string => text;
+const grade = (value: number) => (): string => m.exam_grade({ grade: value });
+const jazzGrade = (value: number) => (): string => m.exam_jazz_grade({ grade: value });
+
+export const CLASSICAL_MAPPING: Record<Level, ExamEquivalent> = {
+	1: equivalent(grade(3), m.cycle_2_start),
+	2: equivalent(grade(4), m.cycle_2),
+	3: equivalent(grade(5), m.cycle_2_end_bem),
+	4: equivalent(grade(6), m.cycle_3_start),
+	5: equivalent(grade(7), m.cycle_3),
+	6: equivalent(grade(8), m.cycle_3_end_cem),
+	7: equivalent(literal('ARSM'), literal('DEM / CPES')),
+	8: equivalent(literal('DipABRSM'), m.higher_education_entrance),
+	9: equivalent(literal('LRSM'), m.higher_education_dnspm),
+	10: equivalent(literal('FRSM'), m.professional_level)
 };
 
-export const JAZZ_MAPPING: Record<Level, { abrsm: string; french: string }> = {
-	1: { abrsm: 'Jazz Grade 1', french: 'Cycle 1' },
-	2: { abrsm: 'Jazz Grade 2', french: 'Cycle 1' },
-	3: { abrsm: 'Jazz Grade 3', french: 'Cycle 2' },
-	4: { abrsm: 'Jazz Grade 4', french: 'Cycle 2' },
-	5: { abrsm: 'Jazz Grade 5', french: 'End of cycle 2' },
-	6: { abrsm: 'Beyond the jazz grades', french: 'Cycle 3 (CEM)' },
-	7: { abrsm: 'Beyond the jazz grades', french: 'Cycle 3 (CEM)' },
-	8: { abrsm: 'Beyond the jazz grades', french: 'DEM jazz' },
-	9: { abrsm: 'Beyond the jazz grades', french: 'Higher education in jazz' },
-	10: { abrsm: 'Beyond the jazz grades', french: 'Higher education in jazz' }
+export const JAZZ_MAPPING: Record<Level, ExamEquivalent> = {
+	1: equivalent(jazzGrade(1), m.cycle_1),
+	2: equivalent(jazzGrade(2), m.cycle_1),
+	3: equivalent(jazzGrade(3), m.cycle_2),
+	4: equivalent(jazzGrade(4), m.cycle_2),
+	5: equivalent(jazzGrade(5), m.cycle_2_end),
+	6: equivalent(m.exam_beyond_jazz_grades, m.cycle_3_cem),
+	7: equivalent(m.exam_beyond_jazz_grades, m.cycle_3_cem),
+	8: equivalent(m.exam_beyond_jazz_grades, literal('DEM jazz')),
+	9: equivalent(m.exam_beyond_jazz_grades, m.higher_education_jazz),
+	10: equivalent(m.exam_beyond_jazz_grades, m.higher_education_jazz)
 };
 
 export type AnswerFormat = 'choice' | 'naming';

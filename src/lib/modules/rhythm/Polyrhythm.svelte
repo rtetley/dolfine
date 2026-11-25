@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onDestroy } from 'svelte';
 	import { ensureAudio, now } from '#lib/audio/engine.ts';
 	import {
@@ -81,40 +82,38 @@
 
 <div class="bar">
 	<button type="button" class="primary" onclick={() => void toggle()} aria-pressed={playing}>
-		{playing ? 'Stop' : `Play ${ratio[0]} against ${ratio[1]}`}
+		{playing ? m.action_stop() : m.poly_play({ a: ratio[0], b: ratio[1] })}
 	</button>
-	<span class="label">♩ = {tempo} · cycle of {ratio[1]} beats</span>
+	<span class="label">{m.poly_cycle({ tempo, beats: ratio[1] })}</span>
 </div>
 
 <PolyCircle {cycle} {progress} showComposite={prefs.composite} />
 
 {#if prefs.modulation || POLYRHYTHM_LEVELS[prefs.level].modulation}
-	<section class="modulation" aria-label="Metric modulation">
-		<h2>Metric modulation</h2>
+	<section class="modulation" aria-label={m.metric_modulation()}>
+		<h2>{m.metric_modulation()}</h2>
 		<p class="equation">
 			♩ = {tempo} &nbsp;→&nbsp; <em>{modulation.label}</em> &nbsp;→&nbsp; ♩ = {plan.newTempo}
 		</p>
-		<p class="lede">
-			Two bars at the old tempo, then two at the new one. Hold the new pulse yourself if the
-			metronome drops out.
-		</p>
+		<p class="lede">{m.modulation_lede()}</p>
 		<div class="actions">
-			<button type="button" onclick={() => void playMod()}>Play the modulation</button>
+			<button type="button" onclick={() => void playMod()}>{m.modulation_play()}</button>
 			<label class="field inline">
 				<input type="checkbox" bind:checked={follow} />
-				<span>Metronome follows the change</span>
+				<span>{m.modulation_follow()}</span>
 			</label>
 			{#if modulationBeat}<span class="label">
-					{modulationBeat.phase === 'before' ? 'old tempo' : 'new tempo'} · beat {modulationBeat.beat +
-						1}
+					{modulationBeat.phase === 'before'
+						? m.modulation_old_beat({ beat: modulationBeat.beat + 1 })
+						: m.modulation_new_beat({ beat: modulationBeat.beat + 1 })}
 				</span>{/if}
 		</div>
 	</section>
 {/if}
 
 <div class="actions">
-	<button type="button" onclick={onnext}>New ratio</button>
-	<button type="button" onclick={onsetup}>Back to setup</button>
+	<button type="button" onclick={onnext}>{m.new_ratio()}</button>
+	<button type="button" onclick={onsetup}>{m.action_back_to_setup()}</button>
 </div>
 
 <style>

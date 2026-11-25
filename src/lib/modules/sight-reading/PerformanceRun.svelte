@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onDestroy, onMount } from 'svelte';
 	import { audioToPerformanceTime, ensureAudio } from '#lib/audio/engine.ts';
 	import {
@@ -123,8 +124,8 @@
 <div class="run">
 	<div class="bar">
 		{#if phase === 'preview'}
-			<p class="status">Preview · {remaining}s</p>
-			<button type="button" class="primary" onclick={() => void begin()}>Start now</button>
+			<p class="status">{m.preview_countdown({ seconds: remaining })}</p>
+			<button type="button" class="primary" onclick={() => void begin()}>{m.start_now()}</button>
 		{:else}
 			<MetronomePulse
 				beat={tick?.beat ?? 0}
@@ -134,11 +135,11 @@
 				active={tick !== null}
 			/>
 		{/if}
-		<button type="button" onclick={cancel}>Stop</button>
+		<button type="button" onclick={cancel}>{m.action_stop()}</button>
 	</div>
 
 	<div class="sheet" bind:this={overlay}>
-		<Score {score} bind:layout label="Sight-reading exercise" />
+		<Score {score} bind:layout label={m.sight_reading_exercise_label()} />
 		{#if prefs.cursor && phase === 'running' && cursor && system}
 			<div
 				class="cursor"

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ensureAudio, now, playArpeggio, playNotes } from '#lib/audio/engine.ts';
@@ -32,12 +33,12 @@
 	const answerLabel = $derived(question.options.find((o) => o.id === question.answer)?.label ?? '');
 	const prompt = $derived(
 		question.kind === 'intervals'
-			? 'Name the interval.'
+			? m.ear_prompt_interval()
 			: question.kind === 'chords'
-				? 'The root sounds first, then the chord. Name its quality.'
+				? m.ear_prompt_chord()
 				: question.ask === 'type'
-					? `The root sounds first, then ${question.chordLabel}. Which voicing type is it?`
-					: `The root sounds first, then a ${question.chordLabel} chord. Which chord tone is on top?`
+					? m.ear_prompt_voicing_type({ chord: question.chordLabel })
+					: m.ear_prompt_top_note({ chord: question.chordLabel })
 	);
 
 	async function play(): Promise<void> {
@@ -69,9 +70,9 @@
 
 <p class="prompt">{prompt}</p>
 <div class="actions">
-	<button type="button" onclick={() => void play()}>Replay</button>
+	<button type="button" onclick={() => void play()}>{m.action_replay()}</button>
 	{#if question.kind !== 'intervals'}<button type="button" onclick={() => void arpeggiate()}>
-			Arpeggiate
+			{m.arpeggiate()}
 		</button>{/if}
 </div>
 
@@ -87,13 +88,13 @@
 	/>
 {:else}
 	<label class="field">
-		<span class="label">Your answer</span>
+		<span class="label">{m.your_answer_label()}</span>
 		<select
 			value={chosen ?? ''}
 			disabled={revealed}
 			onchange={(e) => (chosen = e.currentTarget.value)}
 		>
-			<option value="" disabled>Name it…</option>
+			<option value="" disabled>{m.name_it_placeholder()}</option>
 			{#each [...question.options].sort( (a, b) => a.label.localeCompare(b.label) ) as option (option.id)}
 				<option value={option.id}>{option.label}</option>
 			{/each}
@@ -109,17 +110,18 @@
 			disabled={effectiveFormat === 'play' ? played.size === 0 : chosen === null}
 			onclick={() => (revealed = true)}
 		>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next</button>
-		<button type="button" onclick={() => void compare()}>Yours, then the real one</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next()}</button>
+		<button type="button" onclick={() => void compare()}>{m.yours_then_real()}</button>
 	{/if}
 </div>
 
 {#if revealed}
 	<p class={correct ? 'good' : 'bad'}>
-		{correct ? 'Right.' : 'Not this time.'} It was <strong>{answerLabel}</strong>.
+		{`${correct ? m.feedback_right() : m.feedback_wrong()} ${m.feedback_it_was()}`}
+		<strong>{answerLabel}</strong>.
 	</p>
 {/if}
 

@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import type { ChordRef } from './chords';
 import { type Interval, type PitchClassName, transpose } from './pitch';
 import type { Rng } from './random';
@@ -13,11 +14,21 @@ export const PROGRESSION_KINDS = [
 export type ProgressionKind = (typeof PROGRESSION_KINDS)[number];
 
 export const PROGRESSION_LABELS: Record<ProgressionKind, string> = {
-	'ii-v-i-major': 'II–V–I major',
-	'ii-v-i-minor': 'II–V–I minor',
-	turnaround: 'Turnaround I–VI–II–V',
-	'modal-vamp': 'Modal vamp',
-	blues: '12-bar blues'
+	get 'ii-v-i-major'() {
+		return m.progression_ii_v_i_major();
+	},
+	get 'ii-v-i-minor'() {
+		return m.progression_ii_v_i_minor();
+	},
+	get turnaround() {
+		return m.progression_turnaround();
+	},
+	get 'modal-vamp'() {
+		return m.progression_modal_vamp();
+	},
+	get blues() {
+		return m.progression_blues();
+	}
 };
 
 interface TemplateChord {

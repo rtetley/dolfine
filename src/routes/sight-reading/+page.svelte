@@ -1,5 +1,6 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
+	import { m } from '#lib/i18n.ts';
 	import { SIGHT_READING_GUIDES } from '#lib/content/guides.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import type { Level } from '#lib/music/levels.ts';
@@ -23,6 +24,7 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { settings } from '#lib/state/settings.svelte.ts';
 
 	type View = 'setup' | 'performance' | 'practice' | 'results';
 
@@ -41,7 +43,7 @@
 		exercise = createExercise(prefs, seed);
 		continueStore.record({
 			module: 'sight-reading',
-			summary: exerciseSummary(exercise, prefs)
+			summary: exerciseSummary(exercise, prefs, settings.noteNames)
 		});
 		runKey++;
 		view = prefs.mode === 'performance' ? 'performance' : 'practice';
@@ -59,12 +61,12 @@
 </script>
 
 <svelte:head>
-	<title>Sight reading · D.O.lfine</title>
+	<title>{m.page_title({ page: m.nav_sight_reading() })}</title>
 </svelte:head>
 
 <div class="page">
-	<h1>Sight reading</h1>
-	<p class="lede">Fresh, graded exercises, read at tempo. Dandelot-style at the easier levels.</p>
+	<h1>{m.nav_sight_reading()}</h1>
+	<p class="lede">{m.sight_reading_lede()}</p>
 
 	{#if view === 'setup'}
 		<Setup {prefs} onchange={updatePrefs} onstart={() => start()} />
@@ -73,7 +75,7 @@
 		<GuideText guide={SIGHT_READING_GUIDES.technique} />
 		<GuideText guide={SIGHT_READING_GUIDES.modes} />
 	{:else if exercise}
-		<p class="label summary">{exerciseSummary(exercise, prefs)}</p>
+		<p class="label summary">{exerciseSummary(exercise, prefs, settings.noteNames)}</p>
 		{#key runKey}
 			{#if view === 'performance'}
 				<PerformanceRun {exercise} {prefs} onfinish={finish} oncancel={() => (view = 'setup')} />

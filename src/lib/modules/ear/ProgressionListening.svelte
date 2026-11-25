@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onMount } from 'svelte';
 	import { ensureAudio, playSchedule } from '#lib/audio/engine.ts';
 	import { PROGRESSION_LABELS } from '#lib/music/progressions.ts';
@@ -29,15 +30,17 @@
 </script>
 
 <p class="prompt">
-	The tonic chord sounds first, then a {question.progression.chords.length}-chord progression.
-	{question.ask === 'degrees' ? 'Name the degree of each chord.' : 'Write the chord grid.'}
+	{m.progression_prompt({ count: question.progression.chords.length })}
+	{question.ask === 'degrees' ? m.progression_ask_degrees() : m.progression_ask_symbols()}
 </p>
-<div class="actions"><button type="button" onclick={() => void play()}>Replay</button></div>
+<div class="actions">
+	<button type="button" onclick={() => void play()}>{m.action_replay()}</button>
+</div>
 
 <ol class="slots">
 	{#each question.answers as answer, i (i)}
 		<li>
-			<span class="label">Chord {i + 1}</span>
+			<span class="label">{m.progression_slot({ position: i + 1 })}</span>
 			<select
 				value={answers[i] ?? ''}
 				disabled={revealed}
@@ -54,12 +57,16 @@
 <div class="actions">
 	{#if !revealed}
 		<button type="button" class="primary" disabled={!complete} onclick={() => (revealed = true)}>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next()}</button>
 		<span>
-			{score} of {question.answers.length} · {PROGRESSION_LABELS[question.progression.kind]}
+			{m.progression_score({
+				score,
+				total: question.answers.length,
+				progression: PROGRESSION_LABELS[question.progression.kind]
+			})}
 		</span>
 	{/if}
 </div>

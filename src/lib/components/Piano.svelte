@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { mod } from '#lib/music/pitch.ts';
 
 	interface Props {
@@ -37,7 +38,7 @@
 	};
 </script>
 
-<div class="piano" style:--whites={whites.length} role="group" aria-label="On-screen piano">
+<div class="piano" style:--whites={whites.length} role="group" aria-label={m.piano_label()}>
 	{#each whites as midi, index (midi)}
 		<button
 			type="button"

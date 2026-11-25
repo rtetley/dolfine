@@ -1,3 +1,5 @@
+import { m } from '#lib/i18n.ts';
+
 export interface PolyrhythmCycle {
 	a: number;
 	b: number;
@@ -30,18 +32,25 @@ export const onsetFractions = (onsets: readonly number[], length: number): numbe
 	onsets.map((onset) => onset / length);
 
 export interface MetricModulation {
-	label: string;
-	ratio: number;
+	readonly label: string;
+	readonly ratio: number;
 }
 
+const modulation = (label: () => string, ratio: number): MetricModulation => ({
+	get label() {
+		return label();
+	},
+	ratio
+});
+
 export const METRIC_MODULATIONS: readonly MetricModulation[] = [
-	{ label: 'dotted quarter = new quarter', ratio: 2 / 3 },
-	{ label: 'quarter = new dotted quarter', ratio: 3 / 2 },
-	{ label: 'triplet eighth = new eighth', ratio: 3 / 2 },
-	{ label: 'eighth = new triplet eighth', ratio: 2 / 3 },
-	{ label: 'quarter = new half', ratio: 1 / 2 },
-	{ label: 'triplet quarter = new quarter', ratio: 3 / 2 },
-	{ label: 'quintuplet sixteenth = new sixteenth', ratio: 5 / 4 }
+	modulation(m.modulation_dotted_quarter_to_quarter, 2 / 3),
+	modulation(m.modulation_quarter_to_dotted_quarter, 3 / 2),
+	modulation(m.modulation_triplet_eighth_to_eighth, 3 / 2),
+	modulation(m.modulation_eighth_to_triplet_eighth, 2 / 3),
+	modulation(m.modulation_quarter_to_half, 1 / 2),
+	modulation(m.modulation_triplet_quarter_to_quarter, 3 / 2),
+	modulation(m.modulation_quintuplet_to_sixteenth, 5 / 4)
 ];
 
 export const modulatedTempo = (bpm: number, modulation: MetricModulation): number =>
