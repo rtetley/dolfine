@@ -83,6 +83,6 @@
 
 <style>
 	.prompt {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 	}
 </style>

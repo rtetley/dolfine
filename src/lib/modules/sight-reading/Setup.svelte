@@ -164,7 +164,7 @@
 
 <style>
 	.advanced {
-		margin-top: 1rem;
+		margin-top: var(--space-4);
 	}
 
 	.advanced summary {

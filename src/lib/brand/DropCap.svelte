@@ -92,9 +92,9 @@
 				</g>
 			{/each}
 		</g>
-	</svg>
-	<span class="fallback" aria-hidden="true">{letter}</span>
-	<span class="visually-hidden">{letter}</span>
+	</svg><span class="fallback" aria-hidden="true">{letter}</span><span class="visually-hidden">
+		{letter}
+	</span>
 </span>
 
 <style>

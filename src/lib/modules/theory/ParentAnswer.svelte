@@ -45,14 +45,14 @@
 	.parent {
 		border: none;
 		padding: 0;
-		margin: 1rem 0 0;
+		margin: var(--space-4) 0 0;
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
+		gap: var(--space-2);
 		align-items: center;
 	}
 
 	legend {
-		margin-bottom: 0.3rem;
+		margin-bottom: var(--space-1);
 	}
 </style>

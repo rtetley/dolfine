@@ -37,31 +37,31 @@
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem 1.5rem;
-		padding: 0.9rem 1.5rem;
+		gap: var(--space-3) var(--space-5);
+		padding: var(--space-4) var(--space-5);
 		border-bottom: 1px solid var(--rule);
 	}
 
 	.brand {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
+		gap: var(--space-3);
 		text-decoration: none;
 	}
 
 	.name {
-		font-size: 1.3rem;
+		font-size: var(--step-1);
 		letter-spacing: 0.04em;
 	}
 
 	nav {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.25rem 1.1rem;
+		gap: var(--space-1) var(--space-4);
 		font-variant: small-caps;
 		letter-spacing: 0.06em;
 		text-transform: lowercase;
-		font-size: 0.95rem;
+		font-size: var(--step-0);
 	}
 
 	nav a {

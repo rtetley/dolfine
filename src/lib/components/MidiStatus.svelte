@@ -27,13 +27,13 @@
 <style>
 	.midi-status p {
 		margin: 0;
-		font-size: 0.9rem;
+		font-size: var(--step--1);
 		color: var(--ink-soft);
 	}
 
 	.warning {
 		border-left: 2px solid var(--late);
-		padding-left: 0.6rem;
+		padding-left: var(--space-3);
 	}
 
 	.dot {
@@ -42,6 +42,6 @@
 		height: 0.5rem;
 		border-radius: 50%;
 		background: var(--good);
-		margin-right: 0.3rem;
+		margin-right: var(--space-1);
 	}
 </style>

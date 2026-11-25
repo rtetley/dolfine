@@ -39,7 +39,7 @@
 	.choices {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-		gap: 0.5rem;
+		gap: var(--space-2);
 	}
 
 	button {
@@ -47,19 +47,21 @@
 	}
 
 	button:disabled {
-		opacity: 1;
+		color: inherit;
+		border-color: var(--rule-strong);
 		cursor: default;
 	}
 
 	.right {
 		border-color: var(--good);
 		color: var(--good);
-		background: color-mix(in srgb, var(--good) 10%, transparent);
+		background: var(--good-soft);
 	}
 
 	.wrong {
 		border-color: var(--bad);
 		color: var(--bad);
+		background: var(--bad-soft);
 		text-decoration: line-through;
 	}
 </style>

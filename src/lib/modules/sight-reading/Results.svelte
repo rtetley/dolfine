@@ -79,8 +79,8 @@
 	.legend {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 1rem;
-		font-size: 0.9rem;
+		gap: var(--space-4);
+		font-size: var(--step--1);
 	}
 
 	.late {

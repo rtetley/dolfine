@@ -82,16 +82,17 @@
 		position: absolute;
 		top: 0;
 		padding: 0;
-		border-radius: 0 0 3px 3px;
-		transition: background 80ms ease;
+		min-height: 0;
+		border-radius: 0 0 var(--radius) var(--radius);
+		transition: background var(--duration) ease;
 	}
 
 	.white {
 		left: calc(var(--key) * var(--i));
 		width: var(--key);
 		height: 100%;
-		background: var(--paper);
-		border: 1px solid var(--ink-soft);
+		background: var(--key-white);
+		border: var(--border) solid var(--key-edge);
 		z-index: 1;
 	}
 
@@ -99,16 +100,21 @@
 		left: calc(var(--key) * (var(--i) + 1) - var(--key) * 0.3);
 		width: calc(var(--key) * 0.6);
 		height: 60%;
-		background: var(--ink);
-		border: 1px solid var(--ink);
+		background: var(--key-black);
+		border: var(--border) solid var(--key-black);
 		z-index: 2;
 	}
 
 	.white:hover:not(:disabled) {
-		background: var(--paper-deep);
+		background: var(--key-white-hover);
 	}
 
-	.key.on {
+	.black:hover:not(:disabled) {
+		background: var(--key-black-hover);
+	}
+
+	.key.on,
+	.key.on:hover:not(:disabled) {
 		background: var(--accent);
 		border-color: var(--accent);
 	}
@@ -127,7 +133,15 @@
 
 	.key:disabled {
 		cursor: default;
-		opacity: 1;
+	}
+
+	.white:disabled {
+		color: inherit;
+		border-color: var(--key-edge);
+	}
+
+	.black:disabled {
+		border-color: var(--key-black);
 	}
 
 	.c-label {
@@ -135,7 +149,12 @@
 		bottom: 0.3rem;
 		left: 0;
 		right: 0;
-		font-size: 0.6rem;
-		color: var(--ink-soft);
+		font-size: var(--step--2);
+		font-variant-numeric: lining-nums;
+		color: var(--sepia-700);
+	}
+
+	.on .c-label {
+		color: var(--on-accent);
 	}
 </style>

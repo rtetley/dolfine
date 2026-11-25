@@ -121,11 +121,11 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 1rem;
-		margin: 1rem 0;
+		gap: var(--space-4);
+		margin: var(--space-4) 0;
 	}
 
 	.equation {
-		font-size: 1.15rem;
+		font-size: var(--step-1);
 	}
 </style>

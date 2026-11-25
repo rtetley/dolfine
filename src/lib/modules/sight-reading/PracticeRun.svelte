@@ -96,8 +96,8 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 1rem 1.5rem;
-		margin: 1rem 0;
+		gap: var(--space-4) var(--space-5);
+		margin: var(--space-4) 0;
 	}
 
 	input[type='number'] {

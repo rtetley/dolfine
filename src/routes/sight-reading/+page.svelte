@@ -99,6 +99,6 @@
 
 <style>
 	.summary {
-		margin-bottom: 0.5rem;
+		margin-bottom: var(--space-2);
 	}
 </style>

@@ -75,8 +75,8 @@
 <style>
 	.continue {
 		display: grid;
-		gap: 0.25rem;
-		padding: 1.25rem 1.5rem;
+		gap: var(--space-1);
+		padding: var(--space-4) var(--space-5);
 		border: 1px solid var(--accent);
 		background: var(--accent-soft);
 		border-radius: var(--radius);
@@ -84,17 +84,17 @@
 	}
 
 	.continue-name {
-		font-size: 1.3rem;
+		font-size: var(--step-1);
 	}
 
 	.continue-action,
 	.quiet {
 		color: var(--ink-soft);
-		font-size: 0.9rem;
+		font-size: var(--step--1);
 	}
 
 	.welcome {
-		margin-bottom: 1rem;
+		margin-bottom: var(--space-4);
 	}
 
 	.modules {
@@ -103,14 +103,14 @@
 		margin: 0;
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-		gap: 1rem;
+		gap: var(--space-4);
 	}
 
 	.modules a {
 		display: grid;
-		gap: 0.2rem;
+		gap: var(--space-1);
 		height: 100%;
-		padding: 1.1rem 1.2rem;
+		padding: var(--space-4) var(--space-4);
 		border: 1px solid var(--rule);
 		border-radius: var(--radius);
 		text-decoration: none;
@@ -122,11 +122,11 @@
 	}
 
 	.module-name {
-		font-size: 1.1rem;
+		font-size: var(--step-1);
 		font-weight: 600;
 	}
 
 	.open {
-		margin-top: 0.5rem;
+		margin-top: var(--space-2);
 	}
 </style>

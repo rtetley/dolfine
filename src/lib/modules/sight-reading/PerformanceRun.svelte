@@ -159,8 +159,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
-		padding: 0.6rem 0;
+		gap: var(--space-4);
+		padding: var(--space-3) 0;
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
 	}
@@ -173,7 +173,7 @@
 
 	.sheet {
 		position: relative;
-		margin-top: 1rem;
+		margin-top: var(--space-4);
 	}
 
 	.cursor {

@@ -32,15 +32,14 @@
 <style>
 	.level-picker {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: end;
-		gap: 0.5rem 1rem;
+		flex-direction: column;
+		gap: var(--space-1);
 	}
 
 	.equivalent {
-		margin: 0 0 0.35rem;
+		margin: 0;
 		color: var(--ink-soft);
 		font-style: italic;
-		font-size: 0.9rem;
+		font-size: var(--step--1);
 	}
 </style>
