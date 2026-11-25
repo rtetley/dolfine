@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import type { Level } from '#lib/music/levels.ts';
 
 export type StaffChoice = 'treble' | 'bass' | 'grand';
@@ -38,7 +39,13 @@ export const SIGHT_READING_DEFAULTS: SightReadingPrefs = {
 export const METER_OPTIONS = ['level', '2/4', '3/4', '4/4', '6/8', '12/8', '5/8', '7/8'] as const;
 
 export const STAFF_LABELS: Record<StaffChoice, string> = {
-	treble: 'treble clef',
-	bass: 'bass clef',
-	grand: 'grand staff'
+	get treble() {
+		return m.staff_treble_short();
+	},
+	get bass() {
+		return m.staff_bass_short();
+	},
+	get grand() {
+		return m.staff_grand_short();
+	}
 };

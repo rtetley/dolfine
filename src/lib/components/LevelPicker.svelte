@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { CLASSICAL_MAPPING, JAZZ_MAPPING, type Level, LEVELS } from '#lib/music/levels.ts';
 
 	interface Props {
@@ -15,13 +16,13 @@
 
 <div class="level-picker">
 	<label class="field">
-		<span class="label">Level</span>
+		<span class="label">{m.level_label()}</span>
 		<select
 			value={level}
 			onchange={(event) => onchange(Number(event.currentTarget.value) as Level)}
 		>
 			{#each LEVELS as option (option)}
-				<option value={option}>Level {option}</option>
+				<option value={option}>{m.level_option({ level: option })}</option>
 			{/each}
 		</select>
 	</label>

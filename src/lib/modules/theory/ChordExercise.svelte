@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ensureAudio, playNotes } from '#lib/audio/engine.ts';
 	import ChoiceGrid from '#lib/components/ChoiceGrid.svelte';
@@ -27,7 +28,7 @@
 	const entered = new SvelteSet<number>();
 
 	const style = $derived(settings.value.chordStyle);
-	const names = $derived(settings.value.noteNames);
+	const names = $derived(settings.noteNames);
 	const correctSymbol = $derived(chordSymbol(question.chord));
 	const displaySymbol = $derived(chordSymbol(question.chord, style, names));
 	const model = $derived(defaultVoicing(question.chord, question.type));
@@ -81,11 +82,12 @@
 
 {#if question.kind === 'name-chord'}
 	<p class="prompt">
-		What is the seventh chord on <strong>{ROMAN[degree - 1]}</strong> of
+		{m.name_chord_prompt_start()} <strong>{ROMAN[degree - 1]}</strong>
+		{m.name_chord_prompt_of()}
 		<strong>
 			{noteName(question.parentRoot, names)}
-			{PARENT_NAMES[parent][settings.value.modeLanguage]}
-		</strong>?
+			{PARENT_NAMES[parent][settings.modeLanguage]}
+		</strong>{m.name_chord_prompt_end()}
 	</p>
 	{#if format === 'choice'}
 		<ChoiceGrid
@@ -97,13 +99,13 @@
 		/>
 	{:else}
 		<label class="field">
-			<span class="label">Chord on {noteName(question.chord.root, names)}</span>
+			<span class="label">{m.chord_on_root({ root: noteName(question.chord.root, names) })}</span>
 			<select
 				value={namedSuffix ?? ''}
 				disabled={revealed}
 				onchange={(e) => (namedSuffix = e.currentTarget.value)}
 			>
-				<option value="" disabled>Quality…</option>
+				<option value="" disabled>{m.quality_placeholder()}</option>
 				{#each suffixes as suffix (suffix)}
 					<option value={suffix}>
 						{noteName(question.chord.root, names)}{formatSuffix(suffix, style)}
@@ -114,7 +116,8 @@
 	{/if}
 {:else if question.kind === 'build-chord'}
 	<p class="prompt">
-		Build <strong>{displaySymbol}</strong>: play or click its four chord tones, in any octave.
+		{m.build_chord_prompt_start()}
+		<strong>{displaySymbol}</strong>{m.build_chord_prompt_end()}
 	</p>
 	<NoteInput
 		selected={entered}
@@ -126,9 +129,10 @@
 	/>
 {:else}
 	<p class="prompt">
-		Voice <strong>{displaySymbol}</strong> as type <strong>{question.type}</strong>:
+		{m.voice_chord_prompt_start()} <strong>{displaySymbol}</strong>
+		{m.voice_chord_prompt_as_type()} <strong>{question.type}</strong>:
 		{spec.lh.join(' ')} / {spec.rh.join(' ').replace('sharp9', '♯9')}{spec.alternative
-			? ' (alternative voicing for this mode)'
+			? m.voice_chord_alternative()
 			: ''}.
 	</p>
 	<NoteInput selected={entered} low={40} high={84} disabled={revealed} maxNotes={5} />
@@ -137,32 +141,45 @@
 <div class="actions">
 	{#if !revealed}
 		<button type="button" class="primary" disabled={!ready} onclick={() => (revealed = true)}>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next question</button>
-		<button type="button" onclick={() => void play(answerMidis)}>Hear the answer</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next_question()}</button>
+		<button type="button" onclick={() => void play(answerMidis)}>{m.hear_the_answer()}</button>
 		{#if entered.size > 0}<button type="button" onclick={() => void play([...entered])}>
-				Hear yours
+				{m.hear_yours()}
 			</button>{/if}
 	{/if}
 </div>
 
 {#if revealed}
 	<div class="feedback">
-		<p class={correct ? 'good' : 'bad'}>{correct ? 'Right.' : `The answer is ${displaySymbol}.`}</p>
+		<p class={correct ? 'good' : 'bad'}>
+			{correct ? m.feedback_right() : m.chord_answer({ symbol: displaySymbol })}
+		</p>
 		{#each voicingIssues as issue, i (i)}<p class="bad">{issue.message}</p>{/each}
 		{#if question.kind !== 'name-chord'}
 			<Score
 				score={grandStaff([
 					...(entered.size > 0
-						? [{ id: 'yours', pitches: spellChord(question.chord, [...entered]), label: 'yours' }]
+						? [
+								{
+									id: 'yours',
+									pitches: spellChord(question.chord, [...entered]),
+									label: m.score_tag_yours()
+								}
+							]
 						: []),
 					question.kind === 'voice-chord'
-						? { id: 'model', pitches: model.notes, label: 'model', lhCount: model.lh.length }
-						: { id: 'model', pitches: close, label: 'answer' }
+						? {
+								id: 'model',
+								pitches: model.notes,
+								label: m.score_tag_model(),
+								lhCount: model.lh.length
+							}
+						: { id: 'model', pitches: close, label: m.score_tag_answer() }
 				])}
-				label="Your chord and the model"
+				label={m.chord_and_model_label()}
 			/>
 		{/if}
 	</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onMount } from 'svelte';
 	import { ensureAudio, now, playNotes } from '#lib/audio/engine.ts';
 	import { fromMidi, noteName, pitchClassOf } from '#lib/music/pitch.ts';
@@ -37,10 +38,10 @@
 	onMount(() => void play());
 </script>
 
-<p class="prompt">
-	A drone on the root, then the scale. Which mode is it, and what is its parent scale?
-</p>
-<div class="actions"><button type="button" onclick={() => void play()}>Replay</button></div>
+<p class="prompt">{m.mode_listening_prompt()}</p>
+<div class="actions">
+	<button type="button" onclick={() => void play()}>{m.action_replay()}</button>
+</div>
 
 <ModeAnswer
 	options={question.options}
@@ -65,17 +66,18 @@
 			disabled={mode === null}
 			onclick={() => (revealed = true)}
 		>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next()}</button>
 	{/if}
 </div>
 
 {#if revealed}
 	<p class={parentOk ? 'good' : 'bad'}>
-		Parent scale: {noteName(expectedParent, settings.value.noteNames)}
-		{PARENT_NAMES[modeInfo(question.mode).parent][settings.value.modeLanguage]}
+		{m.parent_scale_reveal({
+			name: `${noteName(expectedParent, settings.noteNames)} ${PARENT_NAMES[modeInfo(question.mode).parent][settings.modeLanguage]}`
+		})}
 	</p>
 {/if}
 

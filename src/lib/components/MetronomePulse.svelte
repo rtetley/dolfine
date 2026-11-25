@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	interface Props {
 		beat: number;
 		beatsPerBar: number;
@@ -14,7 +15,7 @@
 	{#each Array.from({ length: beatsPerBar }, (_, i) => i) as i (i)}
 		<span class="beat" class:now={active && i === beat} class:muted class:count={countIn}></span>
 	{/each}
-	<span class="caption">{countIn ? 'count-in' : muted ? 'silent bar' : ''}</span>
+	<span class="caption">{countIn ? m.pulse_count_in() : muted ? m.pulse_silent_bar() : ''}</span>
 </div>
 
 <style>

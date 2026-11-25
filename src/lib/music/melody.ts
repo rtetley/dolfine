@@ -1,7 +1,10 @@
+import { m } from '#lib/i18n.ts';
 import {
 	type Letter,
 	letterAt,
 	letterIndex,
+	type NoteNameSystem,
+	noteName,
 	type Pitch,
 	type PitchClassName,
 	toMidi
@@ -92,10 +95,9 @@ export function tonicName(key: KeySignature): PitchClassName {
 export const vexKeySignature = (key: KeySignature): string =>
 	`${(key.mode === 'major' ? MAJOR_TONICS : MINOR_TONICS)[key.fifths + 7] as string}${key.mode === 'minor' ? 'm' : ''}`;
 
-export function keyLabel(key: KeySignature): string {
-	const tonic = tonicName(key);
-	const symbol = tonic.accidental === 1 ? '♯' : tonic.accidental === -1 ? '♭' : '';
-	return `${tonic.letter}${symbol} ${key.mode}`;
+export function keyLabel(key: KeySignature, names: NoteNameSystem = 'letters'): string {
+	const tonic = noteName(tonicName(key), names);
+	return key.mode === 'major' ? m.key_name_major({ tonic }) : m.key_name_minor({ tonic });
 }
 
 export function diatonicPitches(key: KeySignature, low: number, high: number): Pitch[] {

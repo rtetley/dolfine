@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { m } from '#lib/i18n.ts';
 	import Logo from './Logo.svelte';
 
 	const links = [
-		{ href: '/', label: 'Dashboard' },
-		{ href: '/sight-reading', label: 'Sight reading' },
-		{ href: '/rhythm', label: 'Inner rhythm' },
-		{ href: '/theory', label: 'Music theory' },
-		{ href: '/ear', label: 'Ear training' },
-		{ href: '/settings', label: 'Settings' }
+		{ href: '/', label: m.nav_dashboard },
+		{ href: '/sight-reading', label: m.nav_sight_reading },
+		{ href: '/rhythm', label: m.nav_rhythm },
+		{ href: '/theory', label: m.nav_theory },
+		{ href: '/ear', label: m.nav_ear },
+		{ href: '/settings', label: m.nav_settings }
 	] as const;
 
 	const isCurrent = (href: string): boolean =>
@@ -17,14 +18,14 @@
 </script>
 
 <header class="site-header">
-	<a class="brand" href={resolve('/')} aria-label="D.O.lfine home">
+	<a class="brand" href={resolve('/')} aria-label={m.nav_home()}>
 		<Logo size={38} />
 		<span class="name">D.O.lfine</span>
 	</a>
-	<nav aria-label="Main">
+	<nav aria-label={m.nav_label()}>
 		{#each links as link (link.href)}
 			<a href={resolve(link.href)} aria-current={isCurrent(link.href) ? 'page' : undefined}>
-				{link.label}
+				{link.label()}
 			</a>
 		{/each}
 	</nav>

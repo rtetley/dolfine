@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onsetFractions, type PolyrhythmCycle } from '#lib/music/polyrhythm.ts';
 
 	interface Props {
@@ -25,7 +26,7 @@
 		viewBox="0 0 200 200"
 		class="circle"
 		role="img"
-		aria-label="Circular view of {cycle.a} against {cycle.b}"
+		aria-label={m.poly_circle_label({ a: cycle.a, b: cycle.b })}
 	>
 		<circle cx="100" cy="100" r={R} class="track" />
 		<circle cx="100" cy="100" r={R - 22} class="track" />
@@ -41,9 +42,9 @@
 		<text x="100" y="106" text-anchor="middle" class="ratio">{cycle.a}:{cycle.b}</text>
 	</svg>
 
-	<div class="lanes" aria-label="Proportional view">
+	<div class="lanes" aria-label={m.poly_lanes_label()}>
 		<div class="lane">
-			<span class="lane-label">Right hand · {cycle.a}</span>
+			<span class="lane-label">{m.poly_right_hand({ count: cycle.a })}</span>
 			<div class="line">
 				{#each cycle.onsetsA as onset, i (i)}<span
 						class="mark a"
@@ -52,7 +53,7 @@
 			</div>
 		</div>
 		<div class="lane">
-			<span class="lane-label">Left hand · {cycle.b}</span>
+			<span class="lane-label">{m.poly_left_hand({ count: cycle.b })}</span>
 			<div class="line">
 				{#each cycle.onsetsB as onset, i (i)}<span
 						class="mark b"
@@ -62,7 +63,7 @@
 		</div>
 		{#if showComposite}
 			<div class="lane">
-				<span class="lane-label">Composite</span>
+				<span class="lane-label">{m.poly_composite()}</span>
 				<div class="line">
 					{#each cycle.composite as event, i (i)}<span
 							class="mark c"

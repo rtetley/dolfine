@@ -1,3 +1,4 @@
+import paraglide from '@inlang/paraglide-js/eslint';
 import prettier from 'eslint-config-prettier';
 import path from 'node:path';
 import js from '@eslint/js';
@@ -10,6 +11,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	{ ignores: ['src/lib/paraglide/**'] },
 	js.configs.recommended,
 	ts.configs.recommendedTypeChecked,
 	svelte.configs.recommended,
@@ -37,8 +39,9 @@ export default defineConfig(
 		}
 	},
 	{
-		// Override or add rule settings here, such as:
-		// 'svelte/button-has-type': 'error'
-		rules: {}
+		plugins: { paraglide },
+		rules: {
+			'paraglide/no-dynamic-message-access': ['error', { messageModuleDirectories: ['paraglide'] }]
+		}
 	}
 );

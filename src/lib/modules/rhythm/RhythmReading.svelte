@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onDestroy } from 'svelte';
 	import { ensureAudio, playSchedule } from '#lib/audio/engine.ts';
 	import {
@@ -73,9 +74,9 @@
 		onclick={() => void toggleMetronome()}
 		aria-pressed={running}
 	>
-		{running ? 'Stop' : 'Start with count-in'}
+		{running ? m.action_stop() : m.start_with_count_in()}
 	</button>
-	<button type="button" onclick={() => void listen()}>Listen</button>
+	<button type="button" onclick={() => void listen()}>{m.listen()}</button>
 	<MetronomePulse
 		beat={tick?.beat ?? 0}
 		beatsPerBar={exercise.meter.beats}
@@ -85,13 +86,15 @@
 	/>
 </div>
 
-<Score {score} label="Rhythm exercise" />
+<Score {score} label={m.rhythm_exercise_label()} />
 
 <div class="actions">
-	<button type="button" onclick={onnext}>New exercise</button>
-	<button type="button" onclick={onrepeat}>Same exercise again</button>
-	{#if prefs.level < 10}<button type="button" onclick={onlevelup}>Level up</button>{/if}
-	<button type="button" onclick={onsetup}>Back to setup</button>
+	<button type="button" onclick={onnext}>{m.action_new_exercise()}</button>
+	<button type="button" onclick={onrepeat}>{m.same_exercise_again()}</button>
+	{#if prefs.level < 10}<button type="button" onclick={onlevelup}>
+			{m.action_level_up()}
+		</button>{/if}
+	<button type="button" onclick={onsetup}>{m.action_back_to_setup()}</button>
 </div>
 
 <style>

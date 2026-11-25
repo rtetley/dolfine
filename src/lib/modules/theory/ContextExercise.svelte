@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { chordSymbol } from '#lib/music/chords.ts';
 	import { PROGRESSION_LABELS } from '#lib/music/progressions.ts';
 	import type { ModeId } from '#lib/music/scales.ts';
@@ -21,14 +22,14 @@
 </script>
 
 <p class="prompt">
-	{PROGRESSION_LABELS[question.progression.kind]}. Which mode fits the highlighted chord here?
+	{m.context_prompt({ progression: PROGRESSION_LABELS[question.progression.kind] })}
 </p>
 
-<ol class="grid" aria-label="Chord grid">
+<ol class="grid" aria-label={m.chord_grid_label()}>
 	{#each question.progression.chords as chord, i (i)}
 		<li class:target={i === question.index}>
 			<span class="symbol">
-				{chordSymbol(chord, settings.value.chordStyle, settings.value.noteNames)}
+				{chordSymbol(chord, settings.value.chordStyle, settings.noteNames)}
 			</span>
 			{#if revealed}<span class="roman">{chord.roman}</span>{/if}
 		</li>
@@ -54,10 +55,10 @@
 			disabled={mode === null}
 			onclick={() => (revealed = true)}
 		>
-			Check
+			{m.action_check()}
 		</button>
 	{:else}
-		<button type="button" class="primary" onclick={onnext}>Next question</button>
+		<button type="button" class="primary" onclick={onnext}>{m.action_next_question()}</button>
 	{/if}
 </div>
 

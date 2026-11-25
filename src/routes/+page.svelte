@@ -1,72 +1,70 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import DropCap from '#lib/brand/DropCap.svelte';
+	import { m } from '#lib/i18n.ts';
 	import { continueStore, MODULE_ROUTES } from '#lib/state/modulePrefs.svelte.ts';
 
 	const modules = [
 		{
 			href: '/sight-reading',
-			name: 'Sight reading',
-			description: 'Dandelot-style reading',
-			sub: 'Performance · Practice'
+			name: m.nav_sight_reading,
+			description: m.module_sight_reading_description,
+			sub: m.module_sight_reading_sub
 		},
 		{
 			href: '/rhythm',
-			name: 'Inner rhythm',
-			description: 'Jazz rhythm reading',
-			sub: 'Reading · Polyrhythm'
+			name: m.nav_rhythm,
+			description: m.module_rhythm_description,
+			sub: m.module_rhythm_sub
 		},
 		{
 			href: '/theory',
-			name: 'Music theory',
-			description: 'Jazz harmony',
-			sub: 'Three parent scales'
+			name: m.nav_theory,
+			description: m.module_theory_description,
+			sub: m.module_theory_sub
 		},
 		{
 			href: '/ear',
-			name: 'Ear training',
-			description: 'Hear jazz harmony',
-			sub: 'Chords · Modes · more'
+			name: m.nav_ear,
+			description: m.module_ear_description,
+			sub: m.module_ear_sub
 		}
 	] as const;
 
 	const entry = $derived(continueStore.entry);
+	const welcome = m.welcome();
 </script>
 
 <svelte:head>
-	<title>Dashboard · D.O.lfine</title>
+	<title>{m.page_title({ page: m.nav_dashboard() })}</title>
 </svelte:head>
 
 <div class="page">
 	{#if entry}
 		<section aria-labelledby="continue-heading">
-			<h2 id="continue-heading" class="label">Continue</h2>
+			<h2 id="continue-heading" class="label">{m.continue_heading()}</h2>
 			<a class="continue" href={resolve(MODULE_ROUTES[entry.module])}>
-				<span class="continue-name">Continue</span>
+				<span class="continue-name">{m.continue_heading()}</span>
 				<span class="continue-detail">{entry.summary}</span>
-				<span class="continue-action">Resume with your last settings</span>
+				<span class="continue-action">{m.continue_action()}</span>
 			</a>
 		</section>
 	{:else}
 		<section class="prose welcome" style="display: flow-root">
-			<p>
-				<DropCap letter="W" />elcome to D.O.lfine, a quiet place to practise reading, rhythm and
-				harmony. Choose a module below, set it exactly as you like, and start. Nothing here adapts
-				on its own yet: every level and setting is yours to pick.
-			</p>
+			<p><DropCap letter={welcome.charAt(0)} />{welcome.slice(1)}</p>
 		</section>
 	{/if}
 
 	<section aria-labelledby="modules-heading">
-		<h2 id="modules-heading" class="label">Modules</h2>
+		<h2 id="modules-heading" class="label">{m.modules_heading()}</h2>
 		<ul class="modules">
 			{#each modules as module (module.href)}
 				<li>
 					<a href={resolve(module.href)}>
-						<span class="module-name">{module.name}</span>
-						<span>{module.description}</span>
-						<span class="quiet">{module.sub}</span>
-						<span class="quiet open">Open setup →</span>
+						<span class="module-name">{module.name()}</span>
+						<span>{module.description()}</span>
+						<span class="quiet">{module.sub()}</span>
+						<span class="quiet open">{m.module_open()}</span>
 					</a>
 				</li>
 			{/each}

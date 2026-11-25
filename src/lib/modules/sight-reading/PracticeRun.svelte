@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { onDestroy } from 'svelte';
 	import { ensureAudio } from '#lib/audio/engine.ts';
 	import {
@@ -62,7 +63,7 @@
 
 <div class="bar">
 	<button type="button" onclick={() => void toggle()} aria-pressed={running}>
-		{running ? 'Stop metronome' : 'Start metronome'}
+		{running ? m.metronome_stop() : m.metronome_start()}
 	</button>
 	<label class="field inline">
 		<span class="label">♩ =</span>
@@ -83,11 +84,11 @@
 	/>
 </div>
 
-<Score {score} label="Practice exercise" />
+<Score {score} label={m.practice_exercise_label()} />
 
 <div class="actions">
-	<button type="button" class="primary" onclick={onnext}>New exercise</button>
-	<button type="button" onclick={onsetup}>Back to setup</button>
+	<button type="button" class="primary" onclick={onnext}>{m.action_new_exercise()}</button>
+	<button type="button" onclick={onsetup}>{m.action_back_to_setup()}</button>
 </div>
 
 <style>

@@ -1,10 +1,11 @@
+import { m } from '#lib/i18n.ts';
 import { type ChordRef, chordSymbol } from '#lib/music/chords.ts';
 import {
 	EAR_VOICINGS_BY_LEVEL,
 	type EarChordQuality,
 	earChordsForLevel,
 	type EarVoicing,
-	INTERVAL_NAMES,
+	intervalName,
 	INTERVALS_BY_LEVEL,
 	voiceEarChord
 } from '#lib/music/earChords.ts';
@@ -25,11 +26,21 @@ export const EAR_SUBMODULES = ['intervals', 'chords', 'voicings', 'modes', 'prog
 export type EarSubmodule = (typeof EAR_SUBMODULES)[number];
 
 export const EAR_SUBMODULE_LABELS: Record<EarSubmodule, string> = {
-	intervals: 'Intervals',
-	chords: 'Chords',
-	voicings: 'Voicings',
-	modes: 'Modes',
-	progressions: 'Progressions'
+	get intervals() {
+		return m.ear_submodule_intervals();
+	},
+	get chords() {
+		return m.ear_submodule_chords();
+	},
+	get voicings() {
+		return m.ear_submodule_voicings();
+	},
+	get modes() {
+		return m.ear_submodule_modes();
+	},
+	get progressions() {
+		return m.ear_submodule_progressions();
+	}
 };
 
 export type EarAnswerFormat = 'level' | 'choice' | 'naming' | 'play';
@@ -106,8 +117,8 @@ export type EarQuestion =
 	| ModeEarQuestion
 	| ProgressionEarQuestion;
 
-const TOP_NOTE_NAMES = [
-	'root',
+const topNoteNames = (): string[] => [
+	m.top_note_root(),
 	'♭9',
 	'9',
 	'♯9 / ♭3',
@@ -152,9 +163,9 @@ function intervalQuestion(level: Level, rng: Rng): IntervalQuestion {
 		down && !harmonic ? [low + semitones, low] : [low, low + semitones];
 	const all = INTERVALS_BY_LEVEL[level].map((s) => ({
 		id: String(s),
-		label: INTERVAL_NAMES[s] ?? ''
+		label: intervalName(s)
 	}));
-	const correct = { id: String(semitones), label: INTERVAL_NAMES[semitones] ?? '' };
+	const correct = { id: String(semitones), label: intervalName(semitones) };
 	return {
 		kind: 'intervals',
 		notes,
@@ -215,7 +226,8 @@ function voicingQuestion(prefs: EarPrefs, rng: Rng): VoicingEarQuestion {
 	const root = rng.int(45, 52);
 	const midis = voiceEarChord(root, quality, voicing);
 	const top = mod((midis.at(-1) ?? root) - root, 12);
-	const options = TOP_NOTE_NAMES.map((label, i) => ({ id: String(i), label }));
+	const names = topNoteNames();
+	const options = names.map((label, i) => ({ id: String(i), label }));
 	return {
 		kind: 'voicings',
 		ask: 'top-note',
@@ -223,7 +235,7 @@ function voicingQuestion(prefs: EarPrefs, rng: Rng): VoicingEarQuestion {
 		midis,
 		chordLabel: quality.symbol,
 		answer: String(top),
-		options: pickOptions({ id: String(top), label: TOP_NOTE_NAMES[top] ?? '' }, options, rng, 5)
+		options: pickOptions({ id: String(top), label: names[top] ?? '' }, options, rng, 5)
 	};
 }
 

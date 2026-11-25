@@ -1,3 +1,5 @@
+import { m } from '#lib/i18n.ts';
+
 export interface ExpectedNote {
 	id: string;
 	midi: number;
@@ -86,13 +88,13 @@ export function resultsCommentary(summary: ScoreSummary): string {
 	const late = counts.late ?? 0;
 	const early = counts.early ?? 0;
 	if (summary.pitchAccuracy >= 95 && summary.rhythmAccuracy >= 90) {
-		return 'Clean and steady. Try the next level, or raise the tempo here.';
+		return m.commentary_clean();
 	}
 	if (missed > late + early) {
-		return 'Most slips were pitches. Use the preview to find the tricky bars, and read one beat ahead.';
+		return m.commentary_pitches();
 	}
 	if (late > early) {
-		return 'Notes tended to land late. Keep going after a mistake rather than correcting it.';
+		return m.commentary_late();
 	}
-	return 'Notes tended to rush. Let the metronome lead, and breathe on long notes.';
+	return m.commentary_rush();
 }

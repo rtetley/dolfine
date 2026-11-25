@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ensureAudio, playSchedule } from '#lib/audio/engine.ts';
 	import NoteInput from '#lib/components/NoteInput.svelte';
@@ -25,7 +26,7 @@
 
 	const symbols = $derived(
 		question.entries.map((entry) =>
-			chordSymbol(entry.chord, settings.value.chordStyle, settings.value.noteNames)
+			chordSymbol(entry.chord, settings.value.chordStyle, settings.noteNames)
 		)
 	);
 	const position = $derived(answers.length);
@@ -76,57 +77,63 @@
 </script>
 
 <p class="prompt">
-	{PROGRESSION_LABELS[question.progression.kind]}. Voice each chord with the type shown, connecting
-	them with tight voice leading: common tones held, every other upper voice moving by a second at
-	most.
+	{m.sheet_prompt({ progression: PROGRESSION_LABELS[question.progression.kind] })}
 </p>
 
-<Score score={grandStaff(columns)} preferredPerLine={4} label="Your voice-leading sheet" />
+<Score score={grandStaff(columns)} preferredPerLine={4} label={m.sheet_score_label()} />
 
 {#if !done && currentEntry && currentSpec}
 	<p class="label">
-		Chord {position + 1} of {question.entries.length}: {symbols[position]} · type {currentEntry.type}
-		·
+		{m.sheet_position({
+			position: position + 1,
+			total: question.entries.length,
+			symbol: symbols[position] ?? '',
+			type: currentEntry.type
+		})}
 		{currentSpec.lh.join(' ')} / {currentSpec.rh.join(' ').replace('sharp9', '♯9')}
 	</p>
 	<NoteInput selected={current} low={40} high={84} maxNotes={5} />
 	<div class="actions">
 		<button type="button" class="primary" disabled={current.size !== 5} onclick={confirm}>
-			Write this chord
+			{m.sheet_write_chord()}
 		</button>
-		{#if position > 0}<button type="button" onclick={undo}>Undo last chord</button>{/if}
+		{#if position > 0}<button type="button" onclick={undo}>{m.sheet_undo()}</button>{/if}
 	</div>
 {:else}
 	<div class="actions">
 		{#if !checked}
 			<button type="button" class="primary" onclick={() => (checked = true)}>
-				Check the sheet
+				{m.sheet_check()}
 			</button>
-			<button type="button" onclick={undo}>Undo last chord</button>
+			<button type="button" onclick={undo}>{m.sheet_undo()}</button>
 		{:else}
-			<button type="button" class="primary" onclick={onnext}>Next sheet</button>
+			<button type="button" class="primary" onclick={onnext}>{m.sheet_next()}</button>
 			<button type="button" onclick={() => (showModel = !showModel)}>
-				{showModel ? 'Hide' : 'Show'} a model answer
+				{showModel ? m.sheet_hide_model() : m.sheet_show_model()}
 			</button>
 		{/if}
-		<button type="button" onclick={() => void play(answers)}>Play yours</button>
+		<button type="button" onclick={() => void play(answers)}>{m.sheet_play_yours()}</button>
 		<button type="button" onclick={() => void play(question.model.map((v) => v.midis))}>
-			Play the model
+			{m.sheet_play_model()}
 		</button>
 	</div>
 	{#if checked}
 		{#if violations.length === 0}
-			<p class="good">Every rule holds. Clean voice leading.</p>
+			<p class="good">{m.sheet_clean()}</p>
 		{:else}
 			<ul class="violations">
 				{#each violations as violation, i (i)}
 					<li class="bad">
-						Chord {violation.chordIndex + 1} ({symbols[violation.chordIndex]}): {violation.message}
+						{m.sheet_violation({
+							position: violation.chordIndex + 1,
+							symbol: symbols[violation.chordIndex] ?? '',
+							message: violation.message
+						})}
 					</li>
 				{/each}
 			</ul>
 		{/if}
-		{#if showModel}<Score score={grandStaff(modelColumns)} label="Model answer" />{/if}
+		{#if showModel}<Score score={grandStaff(modelColumns)} label={m.sheet_model_label()} />{/if}
 	{/if}
 {/if}
 

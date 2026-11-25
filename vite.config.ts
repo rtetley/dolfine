@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-static';
@@ -10,6 +11,7 @@ const outDir = process.env.BUILD_DIR ?? 'build';
 
 export default defineConfig({
 	plugins: [
+		paraglideVitePlugin({ project: './project.inlang' }),
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
@@ -25,7 +27,13 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			include: ['src/**/*.{ts,svelte}'],
-			exclude: ['src/**/*.test.ts', 'src/app.d.ts', 'src/lib/state/testStorage.ts'],
+			exclude: [
+				'src/**/*.test.ts',
+				'src/app.d.ts',
+				'src/lib/state/testStorage.ts',
+				'src/lib/paraglide/**',
+				'src/routes/**'
+			],
 			thresholds: { statements: 60, lines: 60, functions: 58 }
 		},
 		projects: [

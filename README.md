@@ -9,6 +9,7 @@ v1 is an MVP: every setting is selectable, nothing adapts to the user, and every
 - SvelteKit 3 + Svelte 5 (runes), TypeScript, static build (`adapter-static`, SPA, no SSR)
 - VexFlow 5 for notation (lazy-loaded), Tone.js for audio (Salamander piano samples from the Tone.js CDN)
 - Web MIDI for keyboard input (Chrome, Edge, Firefox; Safari shows a warning)
+- Paraglide JS for translations (English and French)
 - Vitest (unit, component and build tests), Playwright (end-to-end), ESLint + Prettier
 
 ## Getting started
@@ -32,6 +33,15 @@ pnpm dev         # http://localhost:5173
 | `pnpm test:all`      | Everything above                                  |
 | `pnpm check`         | svelte-check / TypeScript                         |
 | `pnpm lint`          | Prettier check + ESLint                           |
+
+## Translations
+
+The interface is in English and French. The language comes from the browser on the first visit, then from **Settings → Language**, saved in this browser. Note names and mode names follow the language unless set explicitly in Settings.
+
+- Edit text in `messages/en.json` and `messages/fr.json`. Every key must exist in both, with the same `{placeholders}`; a unit test checks this.
+- Use messages in code with `import { m } from '#lib/i18n.ts'`, then `m.key()` or `m.key({ name })`. Missing keys are type errors.
+- `src/lib/paraglide/` is generated (by `pnpm install`, `pnpm i18n` or the dev server). Don't edit or commit it.
+- To add a language, add it to `locales` in `project.inlang/settings.json`, create `messages/<locale>.json`, and add its name to `LANGUAGE_NAMES` in `src/lib/i18n.ts`.
 
 ## Tests
 

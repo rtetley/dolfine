@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import type { Score } from './model';
 	import type { ScoreLayout } from './render';
 
@@ -13,7 +14,7 @@
 	let {
 		score,
 		preferredPerLine = 4,
-		label = 'Music notation',
+		label = m.score_default_label(),
 		layout = $bindable(null),
 		hidden = false
 	}: Props = $props();

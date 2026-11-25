@@ -1,3 +1,4 @@
+import { m } from '#lib/i18n.ts';
 import type { Level } from '#lib/music/levels.ts';
 import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
 import {
@@ -11,7 +12,7 @@ import {
 	type MelodySettings,
 	vexKeySignature
 } from '#lib/music/melody.ts';
-import { toMidi } from '#lib/music/pitch.ts';
+import { type NoteNameSystem, toMidi } from '#lib/music/pitch.ts';
 import { createRng, type Rng } from '#lib/music/random.ts';
 import { type Meter, measureTicks, TICKS_PER_QUARTER } from '#lib/music/rhythm.ts';
 import type { ExpectedNote, ScoredNote } from '#lib/music/scoring.ts';
@@ -152,9 +153,19 @@ export function exerciseScore(
 	};
 }
 
-export function exerciseSummary(exercise: SightReadingExercise, prefs: SightReadingPrefs): string {
-	const mode = prefs.mode === 'performance' ? 'Performance' : 'Practice';
-	return `Sight reading · Level ${exercise.level} · ${STAFF_LABELS[prefs.staff]} · ${keyLabel(exercise.key)} · ${exercise.meter.beats}/${exercise.meter.unit} · ${exercise.tempo} bpm · ${mode}`;
+export function exerciseSummary(
+	exercise: SightReadingExercise,
+	prefs: SightReadingPrefs,
+	names: NoteNameSystem = 'letters'
+): string {
+	return m.sight_reading_summary({
+		level: exercise.level,
+		staff: STAFF_LABELS[prefs.staff],
+		key: keyLabel(exercise.key, names),
+		meter: `${exercise.meter.beats}/${exercise.meter.unit}`,
+		tempo: exercise.tempo,
+		mode: prefs.mode === 'performance' ? m.reading_performance() : m.practice_suffix()
+	});
 }
 
 export function metronomeBeat(meter: Meter, tempo: number): { bpm: number; beatsPerBar: number } {

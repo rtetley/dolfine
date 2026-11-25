@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { ensureAudio, playNotes } from '#lib/audio/engine.ts';
+	import { m } from '#lib/i18n.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import Piano from './Piano.svelte';
 
@@ -45,8 +46,8 @@
 	<Piano {low} {high} {selected} {marked} {disabled} ontoggle={toggle} />
 	<div class="row">
 		<span class="label">
-			{selected.size} note{selected.size === 1 ? '' : 's'} selected{midi.status === 'ready'
-				? ' · MIDI keys toggle notes too'
+			{m.notes_selected({ count: selected.size })}{midi.status === 'ready'
+				? ` · ${m.midi_keys_hint()}`
 				: ''}
 		</span>
 		<button
@@ -54,14 +55,14 @@
 			onclick={() => selected.clear()}
 			disabled={disabled || selected.size === 0}
 		>
-			Clear
+			{m.action_clear()}
 		</button>
 		<button
 			type="button"
 			onclick={() => void ensureAudio().then(() => playNotes([...selected].sort((a, b) => a - b)))}
 			disabled={selected.size === 0}
 		>
-			Hear it
+			{m.action_hear_it()}
 		</button>
 	</div>
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
 	import { isMidiSupported, midi } from '#lib/midi/midi.svelte.ts';
 
 	const supported = isMidiSupported();
@@ -6,24 +7,19 @@
 
 <div class="midi-status" role="status">
 	{#if !supported}
-		<p class="warning">
-			This browser has no Web MIDI, so MIDI scoring is off. Use Chrome, Edge or Firefox to connect a
-			keyboard; everything else works here.
-		</p>
+		<p class="warning">{m.midi_unsupported()}</p>
 	{:else if midi.status === 'ready'}
 		<p>
 			<span class="dot on"></span>
-			MIDI ready{midi.devices.length > 0
-				? ` · ${midi.devices.join(', ')}`
-				: ' · no device detected yet'}
+			{midi.devices.length > 0
+				? m.midi_ready_devices({ devices: midi.devices.join(', ') })
+				: m.midi_ready_no_device()}
 		</p>
 	{:else if midi.status === 'denied'}
-		<p class="warning">
-			MIDI access was refused. Allow it in the browser's site settings to enable scoring.
-		</p>
+		<p class="warning">{m.midi_denied()}</p>
 	{:else}
 		<button type="button" onclick={() => midi.connect()} disabled={midi.status === 'requesting'}>
-			Connect MIDI keyboard
+			{m.midi_connect()}
 		</button>
 	{/if}
 </div>
