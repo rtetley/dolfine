@@ -111,13 +111,6 @@ export function modeLabel(id: ModeId, language: ModeLanguage = 'en'): string {
 	return language === 'fr' ? mode.frenchName : mode.name;
 }
 
-export function modeLongLabel(id: ModeId, language: ModeLanguage = 'en'): string {
-	const mode = modeInfo(id);
-	const roman = ROMAN[mode.degree - 1] as string;
-	const parent = PARENT_NAMES[mode.parent][language];
-	return `${roman} of ${parent} · ${modeLabel(id, language)}`;
-}
-
 export const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'] as const;
 
 export const isAccidentalHeavy = (name: PitchClassName): boolean => Math.abs(name.accidental) > 1;
