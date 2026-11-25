@@ -1,7 +1,8 @@
 name: Promote to production
 
-# Flow A: a person unticks "Set as a pre-release" (or publishes a full release) in GitHub.
-# That user action fires `release: released`, which deploys the release's tag to production.
+# A person either publishes the draft release with "Set as a pre-release" unticked, or later
+# unticks it on a published pre-release. Both fire `release: released`, which runs CI on the
+# tag and then deploys it to production.
 
 on:
   release:
@@ -9,13 +10,20 @@ on:
 
 permissions:
   contents: read
-  deployments: write
-  pages: write
-  id-token: write
 
 jobs:
+  ci:
+    name: ci
+    uses: ./.github/workflows/ci.yml
+
   deploy-production:
     name: deploy-production
+    needs: ci
+    permissions:
+      contents: read
+      deployments: write
+      pages: write
+      id-token: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: production

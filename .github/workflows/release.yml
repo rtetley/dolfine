@@ -12,9 +12,20 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+# A pushed tag creates a draft release, ticked as a pre-release by default. Nothing deploys
+# until a person publishes it: see staging.yml (published as a pre-release) and promote.yml
+# (published as a full release, or a pre-release later promoted).
+
 jobs:
-  pre-release:
-    name: pre-release
+  ci:
+    name: ci
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  draft-release:
+    name: draft-release
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,27 +42,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create pre-release
+      - name: Create draft release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.changelog }}
+          draft: true
           prerelease: true
           make_latest: false
-
-  # >>> deploy: remove this job if the project has no deploy target yet
-  deploy-staging:
-    name: deploy-staging
-    needs: pre-release
-    permissions:
-      contents: read
-      deployments: write
-      pages: write
-      id-token: write
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: staging
-      ref: ${{ github.ref_name }}
-    secrets: inherit
-  # <<< deploy

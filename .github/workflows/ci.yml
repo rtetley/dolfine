@@ -4,12 +4,14 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Called by the release and deploy workflows so nothing is published without a green run.
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
