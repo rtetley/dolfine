@@ -443,5 +443,9 @@
 	"voicing_rootless_b_about": "The same notes starting from the seventh. Alternating A and B keeps the hand in one place through a II–V–I.",
 	"voicing_type_a_about": "The two-hand voicing from the exercises: root and seventh in the left hand, third, fifth and a tension in the right.",
 	"voicing_type_b_about": "Root, third and seventh in the left hand, a tension and the fifth in the right.",
-	"voicing_alternative": "Alternative for this mode"
+	"voicing_alternative": "Alternative for this mode",
+	"your_scale_label": "Your scale",
+	"your_chord_label": "Your chord",
+	"write_hint": "Notes appear on the staff as you play them.",
+	"live_rules_label": "Point out voicing rule problems as I play"
 }

@@ -21,7 +21,7 @@ const INITIAL_JS_BUDGET_KB: Record<string, number> = {
 	'settings.html': 180,
 	'sight-reading.html': 500,
 	'rhythm.html': 500,
-	'theory.html': 500,
+	'theory.html': 520,
 	'ear.html': 500,
 	'theory/lessons.html': 220,
 	'theory/lessons/major.html': 500,

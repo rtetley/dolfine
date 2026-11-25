@@ -61,6 +61,7 @@ export interface TheoryPrefs extends Record<string, unknown> {
 	parent: ParentScale | 'level';
 	answerFormat: 'level' | 'choice' | 'naming';
 	voicingType: VoicingType | 'alternate';
+	liveRules: boolean;
 }
 
 export const THEORY_DEFAULTS: TheoryPrefs = {
@@ -68,7 +69,8 @@ export const THEORY_DEFAULTS: TheoryPrefs = {
 	exercise: 'name-mode',
 	parent: 'level',
 	answerFormat: 'level',
-	voicingType: 'alternate'
+	voicingType: 'alternate',
+	liveRules: true
 };
 
 const ROOTS_BY_ACCIDENTALS: readonly (readonly [PitchClassName, number])[] = [

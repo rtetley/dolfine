@@ -10,14 +10,16 @@
 	import Score from '#lib/notation/Score.svelte';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { grandStaff, type SheetColumn, spellChord } from './display';
+	import { voicingRuleIssues, writtenChordColumn } from './liveStaff';
 	import type { SheetQuestion } from './questions';
 
 	interface Props {
 		question: SheetQuestion;
+		liveRules?: boolean;
 		onnext: () => void;
 	}
 
-	let { question, onnext }: Props = $props();
+	let { question, liveRules = true, onnext }: Props = $props();
 
 	let answers = $state<number[][]>([]);
 	let checked = $state(false);
@@ -37,10 +39,24 @@
 		currentEntry ? voicingSpec(currentEntry.chord.mode, currentEntry.type) : null
 	);
 
+	const currentLh = $derived(currentSpec?.lh.length ?? 0);
+	const ruleIssues = $derived(
+		liveRules && !done
+			? voicingRuleIssues(current, currentLh)
+			: { flagged: new Set<number>(), messages: [] }
+	);
+
 	const columns = $derived<SheetColumn[]>(
 		question.entries.map((entry, i) => {
 			const answer = answers[i];
 			const label = `${symbols[i] ?? ''} · ${entry.type}`;
+			if (i === position && !answer && current.size > 0) {
+				return writtenChordColumn(`a${i}`, entry.chord, current, {
+					label,
+					lhCount: current.size > currentLh ? currentLh : undefined,
+					flagged: ruleIssues.flagged
+				});
+			}
 			return answer
 				? {
 						id: `a${i}`,
@@ -92,6 +108,7 @@
 		})}
 		{currentSpec.lh.join(' ')} / {currentSpec.rh.join(' ').replace('sharp9', '♯9')}
 	</p>
+	{#each ruleIssues.messages as message (message)}<p class="bad">{message}</p>{/each}
 	<NoteInput selected={current} low={40} high={84} maxNotes={5} />
 	<div class="actions">
 		<button type="button" class="primary" disabled={current.size !== 5} onclick={confirm}>
