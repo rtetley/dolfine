@@ -156,7 +156,8 @@ export function exerciseScore(
 export function exerciseSummary(
 	exercise: SightReadingExercise,
 	prefs: SightReadingPrefs,
-	names: NoteNameSystem = 'letters'
+	names: NoteNameSystem = 'letters',
+	mode: SightReadingPrefs['mode'] = prefs.mode
 ): string {
 	return m.sight_reading_summary({
 		level: exercise.level,
@@ -164,7 +165,7 @@ export function exerciseSummary(
 		key: keyLabel(exercise.key, names),
 		meter: `${exercise.meter.beats}/${exercise.meter.unit}`,
 		tempo: exercise.tempo,
-		mode: prefs.mode === 'performance' ? m.reading_performance() : m.practice_suffix()
+		mode: mode === 'performance' ? m.reading_performance() : m.practice_suffix()
 	});
 }
 

@@ -239,7 +239,10 @@ hr {
 	align-items: center;
 	gap: var(--space-3);
 	min-height: var(--control-height);
-	/* Line the box up with the controls of labelled fields in the same row. */
+}
+
+/* In a setup grid, line checkboxes up with the controls of labelled fields beside them. */
+.setup .field.inline {
 	margin-top: calc(var(--step--1) * var(--leading) + var(--space-1));
 }
 

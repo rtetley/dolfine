@@ -136,7 +136,6 @@
 	"results_score_label": "Exercise with results",
 	"results_unscored": "Done. Without a MIDI keyboard this run was not scored; take the next one while you’re warm.",
 	"results_new_at_level": "New exercise at this level",
-	"results_retry": "Retry the same exercise",
 	"commentary_clean": "Clean and steady. Try the next level, or raise the tempo here.",
 	"commentary_pitches": "Most slips were pitches. Use the preview to find the tricky bars, and read one beat ahead.",
 	"commentary_late": "Notes tended to land late. Keep going after a mistake rather than correcting it.",
@@ -385,5 +384,12 @@
 				"countPlural=other": "{count} flats"
 			}
 		}
-	]
+	],
+	"action_restart": "Restart",
+	"results_restart": "Restart from the beginning",
+	"practise_this": "Practise this exercise",
+	"perform_this": "Play it at tempo",
+	"results_stopped": "Stopped. Restart from the beginning, or practise it at your own pace.",
+	"practice_target": "target ♩ = {tempo}",
+	"practice_tempo_label": "Practice tempo"
 }
