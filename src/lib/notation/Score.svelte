@@ -21,7 +21,10 @@
 	let host = $state<HTMLDivElement>();
 	let width = $state(0);
 
-	const renderer = import('./render');
+	const renderer = import('./render').then(async (module) => {
+		await module.notationFontsReady;
+		return module;
+	});
 
 	$effect(() => {
 		const target = host;

@@ -51,6 +51,14 @@ export interface RenderOptions {
 	textAbove?: boolean;
 }
 
+// The vexflow/bravura entry registers its fonts without waiting for them; measuring
+// glyphs before they load sizes every notehead with a fallback font.
+const NOTATION_FONTS = ['30pt Bravura', '12pt Academico'];
+
+export const notationFontsReady: Promise<void> = Promise.all(
+	NOTATION_FONTS.map((font) => document.fonts.load(font))
+).then(() => undefined);
+
 const PART_HEIGHT = 96;
 const SYSTEM_GAP = 36;
 const TOP_PADDING = 34;
