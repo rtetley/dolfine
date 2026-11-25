@@ -1,11 +1,13 @@
 name: Deploy to staging
 
 # A person publishes the draft release with "Set as a pre-release" ticked (the default).
-# That fires `release: prereleased`, which runs CI on the tag and then deploys it to staging.
+# Publishing a draft fires `release: published` (never `prereleased`), so this listens to
+# `published` and only runs for pre-releases: CI on the tag, then deploy it to staging.
+# A draft published as a full release is handled by promote.yml instead.
 
 on:
   release:
-    types: [prereleased]
+    types: [published]
 
 permissions:
   contents: read
@@ -13,6 +15,7 @@ permissions:
 jobs:
   ci:
     name: ci
+    if: github.event.release.prerelease
     uses: ./.github/workflows/ci.yml
 
   deploy-staging:
