@@ -15,6 +15,7 @@ export interface ScoreNote {
 	below?: string;
 	above?: string;
 	style?: NoteStyle;
+	keyStyles?: readonly (NoteStyle | undefined)[];
 }
 
 export interface StaffPart {

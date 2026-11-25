@@ -1,6 +1,6 @@
 import { type ChordRef, seventhChordTones } from '#lib/music/chords.ts';
 import { type Pitch, placeAbove, placeAtOrAbove, spellMidi, toMidi } from '#lib/music/pitch.ts';
-import type { Score, ScoreNote } from '#lib/notation/model.ts';
+import type { NoteStyle, Score, ScoreNote } from '#lib/notation/model.ts';
 import { chordToneNames } from './questions';
 
 export function scaleScore(notes: readonly Pitch[], idPrefix = 's'): Score {
@@ -26,6 +26,12 @@ export interface SheetColumn {
 	pitches: Pitch[];
 	label: string;
 	lhCount?: number;
+	pitchStyles?: readonly (NoteStyle | undefined)[];
+}
+
+interface Hand {
+	pitches: Pitch[];
+	styles: (NoteStyle | undefined)[];
 }
 
 export function spellChord(chord: ChordRef, midis: readonly number[]): Pitch[] {
@@ -33,18 +39,31 @@ export function spellChord(chord: ChordRef, midis: readonly number[]): Pitch[] {
 	return [...midis].sort((a, b) => a - b).map((midi) => spellMidi(midi, names));
 }
 
-function splitHands(column: SheetColumn): { upper: Pitch[]; lower: Pitch[] } {
-	if (column.lhCount !== undefined) {
-		return {
-			upper: column.pitches.slice(column.lhCount),
-			lower: column.pitches.slice(0, column.lhCount)
-		};
-	}
-	return {
-		upper: column.pitches.filter((p) => toMidi(p) >= 60),
-		lower: column.pitches.filter((p) => toMidi(p) < 60)
-	};
+function splitHands(column: SheetColumn): { upper: Hand; lower: Hand } {
+	const inLowerHand = (pitch: Pitch, index: number): boolean =>
+		column.lhCount !== undefined ? index < column.lhCount : toMidi(pitch) < 60;
+	const upper: Hand = { pitches: [], styles: [] };
+	const lower: Hand = { pitches: [], styles: [] };
+	column.pitches.forEach((pitch, index) => {
+		const hand = inLowerHand(pitch, index) ? lower : upper;
+		hand.pitches.push(pitch);
+		hand.styles.push(column.pitchStyles?.[index]);
+	});
+	return { upper, lower };
 }
+
+const handNote = (id: string, hand: Hand | undefined, above?: string): ScoreNote => {
+	const pitches = hand?.pitches ?? [];
+	const styles = hand?.styles ?? [];
+	return {
+		id,
+		ticks: 48,
+		rest: pitches.length === 0,
+		pitches,
+		above,
+		keyStyles: styles.some(Boolean) ? styles : undefined
+	};
+};
 
 export function grandStaff(columns: readonly SheetColumn[]): Score {
 	const hands = columns.map(splitHands);
@@ -52,25 +71,13 @@ export function grandStaff(columns: readonly SheetColumn[]): Score {
 		parts: [
 			{
 				clef: 'treble',
-				measures: columns.map((column, i): ScoreNote[] => {
-					const upper = hands[i]?.upper ?? [];
-					return [
-						{
-							id: `${column.id}t`,
-							ticks: 48,
-							rest: upper.length === 0,
-							pitches: upper,
-							above: column.label || undefined
-						}
-					];
-				})
+				measures: columns.map((column, i) => [
+					handNote(`${column.id}t`, hands[i]?.upper, column.label || undefined)
+				])
 			},
 			{
 				clef: 'bass',
-				measures: columns.map((column, i): ScoreNote[] => {
-					const lower = hands[i]?.lower ?? [];
-					return [{ id: `${column.id}b`, ticks: 48, rest: lower.length === 0, pitches: lower }];
-				})
+				measures: columns.map((column, i) => [handNote(`${column.id}b`, hands[i]?.lower)])
 			}
 		]
 	};
