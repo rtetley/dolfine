@@ -63,4 +63,39 @@ describe('Score', () => {
 		expect(layout.systems.length).toBeGreaterThan(1);
 		expect(new Set(layout.notes.map((n) => n.system)).size).toBe(layout.systems.length);
 	});
+
+	it.each([
+		['a single staff', ['treble']],
+		['a grand staff', ['treble', 'bass']]
+	] as const)('frames each system of %s evenly for the cursor', async (_, clefs) => {
+		const bar = (m: number) => [
+			{ id: `${m}`, ticks: 48, rest: false, pitches: [parsePitch('C4')] }
+		];
+		const score: ScoreModel = {
+			meter: { beats: 4, unit: 4 },
+			parts: clefs.map((clef) => ({
+				clef,
+				measures: Array.from({ length: 8 }, (_, m) => bar(m))
+			}))
+		};
+		const { layout, svg } = await renderLayout(score);
+		const lineYs = [
+			...new Set(
+				[...svg.querySelectorAll('.vf-stave path')].map((path) => {
+					const box = (path as SVGGraphicsElement).getBBox();
+					return Math.round(box.y);
+				})
+			)
+		].sort((a, b) => a - b);
+		const linesPerSystem = clefs.length * 5;
+		expect(lineYs).toHaveLength(layout.systems.length * linesPerSystem);
+
+		layout.systems.forEach((system, i) => {
+			const lines = lineYs.slice(i * linesPerSystem, (i + 1) * linesPerSystem);
+			const above = lines[0] - system.top;
+			const below = system.bottom - lines[lines.length - 1];
+			expect(above).toBeGreaterThan(0);
+			expect(Math.abs(above - below)).toBeLessThanOrEqual(1.5);
+		});
+	});
 });
