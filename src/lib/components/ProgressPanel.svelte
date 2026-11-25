@@ -26,7 +26,9 @@
 	<LevelBadge level={open} size="large" />
 	<div class="text">
 		<p class="label">{trackLabel(track)}</p>
-		<p class="standing">{m.progress_open_level({ level: open })}</p>
+		<p class="standing">
+			{open === 1 ? m.progress_first_level() : m.progress_open_level({ level: open })}
+		</p>
 		<p class="equivalent">≈ {equivalent.abrsm} · {equivalent.french}</p>
 		<LevelProgress track={state} {level} />
 		<p class="links">

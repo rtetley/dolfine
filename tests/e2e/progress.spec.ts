@@ -9,7 +9,7 @@ test.describe('progress', () => {
 		await expect(level).toHaveValue('1');
 		await expect(page.getByRole('option', { name: 'Level 2 · locked' })).toBeDisabled();
 		const panel = page.getByRole('region', { name: 'Your progress' });
-		await expect(panel).toContainText('Levels 1 to 1 are open');
+		await expect(panel).toContainText('Level 1 is open');
 		await expect(panel.getByRole('progressbar', { name: 'Progress at Level 1' })).toHaveAttribute(
 			'aria-valuenow',
 			'0'
