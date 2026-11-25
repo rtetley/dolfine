@@ -12,6 +12,7 @@ export const BUILDS = {
 export const ROUTES = [
 	'index',
 	'settings',
+	'progress',
 	'sight-reading',
 	'rhythm',
 	'theory',

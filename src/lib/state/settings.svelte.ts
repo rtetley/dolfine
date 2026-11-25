@@ -8,6 +8,8 @@ export type Theme = 'auto' | 'light' | 'dark';
 export type DropCapColor = 'red' | 'black';
 export type NoteNameChoice = NoteNameSystem | 'auto';
 export type ModeLanguageChoice = ModeLanguage | 'auto';
+/** `progress`: levels open as the student passes them; `open`: every level can be picked. */
+export type LevelLadder = 'progress' | 'open';
 
 export interface AppSettings extends Record<string, unknown> {
 	noteNames: NoteNameChoice;
@@ -15,6 +17,7 @@ export interface AppSettings extends Record<string, unknown> {
 	modeLanguage: ModeLanguageChoice;
 	theme: Theme;
 	dropCapColor: DropCapColor;
+	levelLadder: LevelLadder;
 }
 
 const DEFAULTS: AppSettings = {
@@ -22,7 +25,8 @@ const DEFAULTS: AppSettings = {
 	chordStyle: 'jazz',
 	modeLanguage: 'auto',
 	theme: 'auto',
-	dropCapColor: 'red'
+	dropCapColor: 'red',
+	levelLadder: 'progress'
 };
 
 const LOCALE_NOTE_NAMES: Record<ModeLanguage, NoteNameSystem> = { en: 'letters', fr: 'solfege' };

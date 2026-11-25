@@ -17,9 +17,11 @@
 		question: SheetQuestion;
 		liveRules?: boolean;
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, liveRules = true, onnext }: Props = $props();
+	let { question, liveRules = true, onnext, onresult }: Props = $props();
 
 	let answers = $state<number[][]>([]);
 	let checked = $state(false);
@@ -90,6 +92,16 @@
 		await ensureAudio();
 		playSchedule(sheet.map((midis, i) => ({ midis, at: i * 1.6, duration: 1.5 })));
 	}
+
+	let reported = false;
+
+	function check(): void {
+		checked = true;
+		// Undo can reopen a checked sheet; only the first check counts towards progress.
+		if (reported) return;
+		reported = true;
+		onresult?.(checkSheet(question.entries, answers).length === 0);
+	}
 </script>
 
 <p class="prompt">
@@ -119,7 +131,7 @@
 {:else}
 	<div class="actions">
 		{#if !checked}
-			<button type="button" class="primary" onclick={() => (checked = true)}>
+			<button type="button" class="primary" onclick={check}>
 				{m.sheet_check()}
 			</button>
 			<button type="button" onclick={undo}>{m.sheet_undo()}</button>

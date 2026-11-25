@@ -18,9 +18,11 @@
 		question: IntervalQuestion | ChordEarQuestion | VoicingEarQuestion;
 		format: 'choice' | 'naming' | 'play';
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, format, onnext }: Props = $props();
+	let { question, format, onnext, onresult }: Props = $props();
 
 	let chosen = $state<string | null>(null);
 	let revealed = $state(false);
@@ -60,6 +62,11 @@
 	}
 
 	onMount(() => void play());
+
+	function check(): void {
+		revealed = true;
+		onresult?.(correct);
+	}
 </script>
 
 <p class="prompt">{prompt}</p>
@@ -102,7 +109,7 @@
 			type="button"
 			class="primary"
 			disabled={effectiveFormat === 'play' ? played.size === 0 : chosen === null}
-			onclick={() => (revealed = true)}
+			onclick={check}
 		>
 			{m.action_check()}
 		</button>

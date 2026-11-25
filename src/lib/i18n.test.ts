@@ -27,6 +27,8 @@ const placeholders = (message: unknown): string[] =>
 	].sort();
 
 const IDENTICAL_ON_PURPOSE = new Set([
+	'progress_xp',
+	'progress_xp_gained',
 	'page_title',
 	'modules_heading',
 	'reading_mode_label',

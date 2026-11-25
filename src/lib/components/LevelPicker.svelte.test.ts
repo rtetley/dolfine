@@ -25,4 +25,19 @@ describe('LevelPicker', () => {
 			.element(screen.getByText(`≈ ${classical.abrsm} · ${classical.french}`))
 			.toBeVisible();
 	});
+
+	it('locks the levels above the one the student has reached', async () => {
+		const screen = await render(LevelPicker, {
+			level: 2,
+			mapping: 'jazz',
+			unlocked: 3,
+			onchange: vi.fn()
+		});
+		const options = screen.getByRole('option').all();
+		expect(options).toHaveLength(10);
+		await expect
+			.element(screen.getByRole('option', { name: 'Level 3', exact: true }))
+			.toBeEnabled();
+		await expect.element(screen.getByRole('option', { name: 'Level 4 · locked' })).toBeDisabled();
+	});
 });

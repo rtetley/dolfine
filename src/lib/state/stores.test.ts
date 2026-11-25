@@ -32,7 +32,8 @@ describe('settings store', () => {
 			chordStyle: 'jazz',
 			modeLanguage: 'auto',
 			theme: 'auto',
-			dropCapColor: 'red'
+			dropCapColor: 'red',
+			levelLadder: 'progress'
 		});
 	});
 

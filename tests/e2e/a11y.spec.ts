@@ -22,6 +22,7 @@ test.describe('accessibility', () => {
 		'theory',
 		'ear',
 		'settings',
+		'progress',
 		'theory/lessons',
 		'theory/lessons/major',
 		'theory/lessons/voicings'

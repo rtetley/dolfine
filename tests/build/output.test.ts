@@ -16,11 +16,12 @@ import {
 
 const INITIAL_JS_BUDGET_KB: Record<string, number> = {
 	'index.html': 200,
-	'settings.html': 160,
+	'settings.html': 180,
+	'progress.html': 190,
 	'sight-reading.html': 270,
 	'rhythm.html': 260,
-	'theory.html': 280,
-	'ear.html': 280,
+	'theory.html': 305,
+	'ear.html': 300,
 	'theory/lessons.html': 200,
 	'theory/lessons/major.html': 250,
 	'theory/lessons/melodic-minor.html': 250,

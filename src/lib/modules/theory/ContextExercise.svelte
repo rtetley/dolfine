@@ -11,14 +11,21 @@
 		question: ContextQuestion;
 		format: 'choice' | 'naming';
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, format, onnext }: Props = $props();
+	let { question, format, onnext, onresult }: Props = $props();
 
 	let mode = $state<ModeId | null>(null);
 	let revealed = $state(false);
 
 	const target = $derived(question.progression.chords[question.index]);
+
+	function check(): void {
+		revealed = true;
+		onresult?.(mode !== null && mode === target?.mode);
+	}
 </script>
 
 <p class="prompt">
@@ -49,12 +56,7 @@
 
 <div class="actions">
 	{#if !revealed}
-		<button
-			type="button"
-			class="primary"
-			disabled={mode === null}
-			onclick={() => (revealed = true)}
-		>
+		<button type="button" class="primary" disabled={mode === null} onclick={check}>
 			{m.action_check()}
 		</button>
 	{:else}

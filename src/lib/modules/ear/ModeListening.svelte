@@ -21,9 +21,11 @@
 		question: ModeEarQuestion;
 		format: 'choice' | 'naming' | 'play';
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, format, onnext }: Props = $props();
+	let { question, format, onnext, onresult }: Props = $props();
 
 	let mode = $state<ModeId | null>(null);
 	let parent = $state<ParentChoice>({ root: null, parent: null });
@@ -40,6 +42,11 @@
 	const wrongMode = $derived(mode !== null && mode !== question.mode);
 
 	onMount(() => void play());
+
+	function check(): void {
+		revealed = true;
+		onresult?.(mode === question.mode && parentOk);
+	}
 </script>
 
 <p class="prompt">{m.mode_listening_prompt()}</p>
@@ -64,12 +71,7 @@
 
 <div class="actions">
 	{#if !revealed}
-		<button
-			type="button"
-			class="primary"
-			disabled={mode === null}
-			onclick={() => (revealed = true)}
-		>
+		<button type="button" class="primary" disabled={mode === null} onclick={check}>
 			{m.action_check()}
 		</button>
 	{:else}

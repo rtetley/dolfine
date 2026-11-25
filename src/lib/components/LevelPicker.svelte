@@ -6,9 +6,11 @@
 		level: Level;
 		mapping: 'classical' | 'jazz';
 		onchange: (level: Level) => void;
+		/** Levels above this one are shown but locked. */
+		unlocked?: Level;
 	}
 
-	let { level, mapping, onchange }: Props = $props();
+	let { level, mapping, onchange, unlocked = 10 }: Props = $props();
 
 	const table = $derived(mapping === 'jazz' ? JAZZ_MAPPING : CLASSICAL_MAPPING);
 	const equivalent = $derived(table[level]);
@@ -22,7 +24,11 @@
 			onchange={(event) => onchange(Number(event.currentTarget.value) as Level)}
 		>
 			{#each LEVELS as option (option)}
-				<option value={option}>{m.level_option({ level: option })}</option>
+				<option value={option} disabled={option > unlocked}>
+					{option > unlocked
+						? m.level_option_locked({ level: option })
+						: m.level_option({ level: option })}
+				</option>
 			{/each}
 		</select>
 	</label>

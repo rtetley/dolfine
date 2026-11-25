@@ -20,9 +20,11 @@
 		format: 'choice' | 'naming';
 		liveRules?: boolean;
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, format, liveRules = true, onnext }: Props = $props();
+	let { question, format, liveRules = true, onnext, onresult }: Props = $props();
 
 	let chosen = $state<string | null>(null);
 	let namedSuffix = $state<string | null>(null);
@@ -92,6 +94,11 @@
 		await ensureAudio();
 		playNotes(midis);
 	};
+
+	function check(): void {
+		revealed = true;
+		onresult?.(correct);
+	}
 </script>
 
 {#if question.kind === 'name-chord'}
@@ -156,7 +163,7 @@
 
 <div class="actions">
 	{#if !revealed}
-		<button type="button" class="primary" disabled={!ready} onclick={() => (revealed = true)}>
+		<button type="button" class="primary" disabled={!ready} onclick={check}>
 			{m.action_check()}
 		</button>
 	{:else}

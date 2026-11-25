@@ -8,9 +8,11 @@
 	interface Props {
 		question: ProgressionEarQuestion;
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, onnext }: Props = $props();
+	let { question, onnext, onresult }: Props = $props();
 
 	let answers = $state<(string | null)[]>([]);
 	let revealed = $state(false);
@@ -27,6 +29,11 @@
 	}
 
 	onMount(() => void play());
+
+	function check(): void {
+		revealed = true;
+		onresult?.(score === question.answers.length);
+	}
 </script>
 
 <p class="prompt">
@@ -56,7 +63,7 @@
 
 <div class="actions">
 	{#if !revealed}
-		<button type="button" class="primary" disabled={!complete} onclick={() => (revealed = true)}>
+		<button type="button" class="primary" disabled={!complete} onclick={check}>
 			{m.action_check()}
 		</button>
 	{:else}

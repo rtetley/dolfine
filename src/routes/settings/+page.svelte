@@ -3,11 +3,22 @@
 	import type { ChordSymbolStyle } from '#lib/music/chords.ts';
 	import {
 		type DropCapColor,
+		type LevelLadder,
 		type ModeLanguageChoice,
 		type NoteNameChoice,
 		settings,
 		type Theme
 	} from '#lib/state/settings.svelte.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
+
+	let confirmingReset = $state(false);
+	let resetDone = $state(false);
+
+	function reset(): void {
+		progress.reset();
+		confirmingReset = false;
+		resetDone = true;
+	}
 </script>
 
 <svelte:head>
@@ -86,5 +97,53 @@
 				<option value="black">{m.settings_drop_caps_black()}</option>
 			</select>
 		</label>
+
+		<label class="field">
+			<span class="label">{m.settings_level_ladder()}</span>
+			<select
+				value={settings.value.levelLadder}
+				onchange={(e) => settings.update({ levelLadder: e.currentTarget.value as LevelLadder })}
+			>
+				<option value="progress">{m.settings_level_ladder_progress()}</option>
+				<option value="open">{m.settings_level_ladder_open()}</option>
+			</select>
+		</label>
 	</div>
+
+	<section class="reset" aria-labelledby="reset-heading">
+		<h2 id="reset-heading" class="label">{m.settings_progress_heading()}</h2>
+		<p class="hint">{m.settings_progress_hint()}</p>
+		<div class="actions">
+			{#if confirmingReset}
+				<span>{m.settings_reset_confirm()}</span>
+				<button type="button" onclick={reset}>{m.settings_reset_yes()}</button>
+				<button type="button" onclick={() => (confirmingReset = false)}>
+					{m.settings_reset_cancel()}
+				</button>
+			{:else}
+				<button
+					type="button"
+					onclick={() => {
+						confirmingReset = true;
+						resetDone = false;
+					}}
+				>
+					{m.settings_reset_progress()}
+				</button>
+				{#if resetDone}<span role="status">{m.settings_reset_done()}</span>{/if}
+			{/if}
+		</div>
+	</section>
 </div>
+
+<style>
+	.reset {
+		margin-top: var(--space-6);
+		max-width: var(--measure);
+	}
+
+	.hint {
+		color: var(--ink-soft);
+		margin: 0;
+	}
+</style>

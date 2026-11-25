@@ -10,6 +10,7 @@
 		{ href: '/rhythm', label: m.nav_rhythm },
 		{ href: '/theory', label: m.nav_theory },
 		{ href: '/ear', label: m.nav_ear },
+		{ href: '/progress', label: m.nav_progress },
 		{ href: '/settings', label: m.nav_settings }
 	] as const;
 

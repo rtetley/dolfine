@@ -23,9 +23,11 @@
 		question: ModeQuestion;
 		format: 'choice' | 'naming';
 		onnext: () => void;
+		/** Called once, when the answer is checked. */
+		onresult?: (correct: boolean) => void;
 	}
 
-	let { question, format, onnext }: Props = $props();
+	let { question, format, onnext, onresult }: Props = $props();
 
 	let mode = $state<ModeId | null>(null);
 	let parentAnswer = $state<ParentChoice>({
@@ -64,6 +66,14 @@
 		const midis = question.notes.map(toMidi);
 		playArpeggio([...midis, (midis[0] ?? 60) + 12], 0.3, 0.6);
 	};
+
+	function check(): void {
+		revealed = true;
+		onresult?.(
+			(question.kind === 'write-mode' ? (scaleCheck?.ok ?? false) : mode === question.mode) &&
+				parentOk
+		);
+	}
 </script>
 
 {#if question.kind === 'name-mode'}
@@ -110,7 +120,7 @@
 
 <div class="actions">
 	{#if !revealed}
-		<button type="button" class="primary" disabled={!ready} onclick={() => (revealed = true)}>
+		<button type="button" class="primary" disabled={!ready} onclick={check}>
 			{m.action_check()}
 		</button>
 	{:else}
