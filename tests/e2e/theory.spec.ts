@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, seedStorage, test } from './fixtures';
 
 const EXERCISES = [
 	'Name the mode',
@@ -39,6 +39,7 @@ test.describe('music theory', () => {
 
 	for (const exercise of EXERCISES) {
 		test(`“${exercise}” renders at every level band`, async ({ page }) => {
+			await seedStorage(page, { settings: { levelLadder: 'open' } });
 			await page.goto('theory');
 			await page.getByRole('combobox', { name: 'Exercise' }).selectOption(exercise);
 			for (const level of ['Level 1', 'Level 5', 'Level 10']) {

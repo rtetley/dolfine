@@ -21,6 +21,7 @@ const PAGES = [
 		heading: 'Music theory'
 	},
 	{ path: 'ear', nav: 'Ear training', title: 'Ear training · D.O.lfine', heading: 'Ear training' },
+	{ path: 'progress', nav: 'Progress', title: 'Progress · D.O.lfine', heading: 'Progress' },
 	{ path: 'settings', nav: 'Settings', title: 'Settings · D.O.lfine', heading: 'Settings' }
 ] as const;
 

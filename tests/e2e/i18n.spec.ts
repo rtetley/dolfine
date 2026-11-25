@@ -6,6 +6,7 @@ const FRENCH_PAGES = [
 	{ path: 'rhythm', title: 'Rythme intérieur · D.O.lfine', heading: 'Rythme intérieur' },
 	{ path: 'theory', title: 'Théorie musicale · D.O.lfine', heading: 'Théorie musicale' },
 	{ path: 'ear', title: 'Formation de l’oreille · D.O.lfine', heading: 'Formation de l’oreille' },
+	{ path: 'progress', title: 'Progrès · D.O.lfine', heading: 'Progrès' },
 	{ path: 'settings', title: 'Réglages · D.O.lfine', heading: 'Réglages' }
 ];
 

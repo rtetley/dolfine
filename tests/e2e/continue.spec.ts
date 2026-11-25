@@ -1,6 +1,7 @@
-import { expect, test } from './fixtures';
+import { expect, seedStorage, test } from './fixtures';
 
 test('the dashboard offers to continue the last module with its settings', async ({ page }) => {
+	await seedStorage(page, { progress: { tracks: { theory: { unlocked: 4, levels: {} } } } });
 	await page.goto('');
 	await expect(page.getByText(/elcome to D\.O\.lfine/)).toBeVisible();
 

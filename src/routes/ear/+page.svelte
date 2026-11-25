@@ -1,6 +1,8 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
+	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
 	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { EAR_GUIDES } from '#lib/content/guides.ts';
@@ -23,12 +25,26 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { earTrack } from '#lib/progress/ladder.ts';
+	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
 
-	let prefs = $state<EarPrefs>(loadModulePrefs('ear', EAR_DEFAULTS));
+	const stored = loadModulePrefs('ear', EAR_DEFAULTS);
+	let prefs = $state<EarPrefs>({
+		...stored,
+		level: allowedLevel(stored.level, progress.unlocked(earTrack(stored.submodule)))
+	});
 	let question = $state<EarQuestion | null>(null);
 	let questionKey = $state(0);
 
 	const format = $derived(earFormatFor(prefs));
+	const track = $derived(earTrack(prefs.submodule));
+	const unlocked = $derived(progress.unlocked(track));
+
+	progress.clearEvents();
+
+	const record = (correct: boolean): void => {
+		progress.record(track, prefs.level, correct);
+	};
 
 	function update(patch: Partial<EarPrefs>): void {
 		prefs = { ...prefs, ...patch };
@@ -36,6 +52,7 @@
 	}
 
 	function next(): void {
+		progress.clearEvents();
 		question = createEarQuestion(prefs, newSeed());
 		questionKey++;
 		continueStore.record({
@@ -62,7 +79,9 @@
 				type="button"
 				aria-pressed={prefs.submodule === submodule}
 				onclick={() => {
-					update({ submodule });
+					// Each sub-module has its own ladder: open it on the level the student has reached.
+					update({ submodule, level: progress.levelFor(earTrack(submodule), prefs.level) });
+					progress.clearEvents();
 					question = null;
 				}}
 			>
@@ -76,6 +95,7 @@
 			<LevelPicker
 				level={prefs.level}
 				mapping="jazz"
+				{unlocked}
 				onchange={(level: Level) => update({ level })}
 			/>
 			<label class="field">
@@ -111,6 +131,7 @@
 			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
 			{#if format === 'play'}<MidiStatus />{/if}
 		</div>
+		<ProgressPanel {track} level={prefs.level} />
 		<GuideText guide={EAR_GUIDES.intro} open />
 	{:else}
 		<p class="label">
@@ -118,13 +139,21 @@
 		</p>
 		{#key questionKey}
 			{#if question.kind === 'modes'}
-				<ModeListening {question} {format} onnext={next} />
+				<ModeListening {question} {format} onnext={next} onresult={record} />
 			{:else if question.kind === 'progressions'}
-				<ProgressionListening {question} onnext={next} />
+				<ProgressionListening {question} onnext={next} onresult={record} />
 			{:else if question.kind === 'intervals' || question.kind === 'chords' || question.kind === 'voicings'}
-				<SoundQuestion {question} {format} onnext={next} />
+				<SoundQuestion {question} {format} onnext={next} onresult={record} />
 			{/if}
 		{/key}
+		<ProgressNotice
+			{track}
+			level={prefs.level}
+			onlevel={(level: Level) => {
+				update({ level });
+				next();
+			}}
+		/>
 		<div class="actions">
 			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
 		</div>

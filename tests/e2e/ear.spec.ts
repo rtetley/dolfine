@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, seedStorage, test } from './fixtures';
 
 const SUBMODULES = ['Intervals', 'Chords', 'Voicings', 'Modes', 'Progressions'];
 
@@ -26,6 +26,7 @@ test.describe('ear training', () => {
 
 	for (const submodule of SUBMODULES) {
 		test(`${submodule} questions start at levels 1 and 10`, async ({ page }) => {
+			await seedStorage(page, { settings: { levelLadder: 'open' } });
 			await page.goto('ear');
 			await page
 				.getByRole('group', { name: 'Sub-module' })

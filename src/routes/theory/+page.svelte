@@ -2,6 +2,8 @@
 	import { resolve } from '$app/paths';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
+	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
 	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { THEORY_GUIDES } from '#lib/content/guides.ts';
@@ -26,13 +28,25 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 
-	let prefs = $state<TheoryPrefs>(loadModulePrefs('theory', THEORY_DEFAULTS));
+	const stored = loadModulePrefs('theory', THEORY_DEFAULTS);
+	let prefs = $state<TheoryPrefs>({
+		...stored,
+		level: allowedLevel(stored.level, progress.unlocked('theory'))
+	});
 	let question = $state<TheoryQuestion | null>(null);
 	let questionKey = $state(0);
 
 	const format = $derived(answerFormatFor(prefs));
+	const unlocked = $derived(progress.unlocked('theory'));
+
+	progress.clearEvents();
+
+	const record = (correct: boolean): void => {
+		progress.record('theory', prefs.level, correct);
+	};
 
 	function update(patch: Partial<TheoryPrefs>): void {
 		prefs = { ...prefs, ...patch };
@@ -40,6 +54,7 @@
 	}
 
 	function next(): void {
+		progress.clearEvents();
 		question = createQuestion(prefs, newSeed());
 		questionKey++;
 		const parent =
@@ -73,6 +88,7 @@
 			<LevelPicker
 				level={prefs.level}
 				mapping="jazz"
+				{unlocked}
 				onchange={(level: Level) => update({ level })}
 			/>
 			<label class="field">
@@ -137,6 +153,7 @@
 			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
 			<MidiStatus />
 		</div>
+		<ProgressPanel track="theory" level={prefs.level} />
 		<GuideText guide={THEORY_GUIDES.intro} open />
 		<GuideText guide={THEORY_GUIDES.voicings} />
 		<GuideText guide={THEORY_GUIDES.voiceLeading} />
@@ -146,15 +163,29 @@
 		</p>
 		{#key questionKey}
 			{#if question.kind === 'name-mode' || question.kind === 'write-mode'}
-				<ModeExercise {question} {format} onnext={next} />
+				<ModeExercise {question} {format} onnext={next} onresult={record} />
 			{:else if question.kind === 'mode-in-context'}
-				<ContextExercise {question} {format} onnext={next} />
+				<ContextExercise {question} {format} onnext={next} onresult={record} />
 			{:else if question.kind === 'voice-leading'}
-				<SheetExercise {question} liveRules={prefs.liveRules} onnext={next} />
+				<SheetExercise {question} liveRules={prefs.liveRules} onnext={next} onresult={record} />
 			{:else if question.kind === 'name-chord' || question.kind === 'build-chord' || question.kind === 'voice-chord'}
-				<ChordExercise {question} {format} liveRules={prefs.liveRules} onnext={next} />
+				<ChordExercise
+					{question}
+					{format}
+					liveRules={prefs.liveRules}
+					onnext={next}
+					onresult={record}
+				/>
 			{/if}
 		{/key}
+		<ProgressNotice
+			track="theory"
+			level={prefs.level}
+			onlevel={(level: Level) => {
+				update({ level });
+				next();
+			}}
+		/>
 		<div class="actions">
 			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
 		</div>

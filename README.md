@@ -2,7 +2,7 @@
 
 Sight reading, inner rhythm, jazz theory and ear training for serious musicians. The product spec is in [PRD.md](PRD.md); the look and the design tokens are in [docs/design-guidelines.md](docs/design-guidelines.md).
 
-v1 is an MVP: every setting is selectable, nothing adapts to the user, and everything is stored in the browser (no accounts).
+Every setting is selectable and everything is stored in the browser (no accounts). Music theory and ear training levels open one by one as the student passes them (or all at once in Settings); see [docs/grading-sight-reading-and-rhythm.md](docs/grading-sight-reading-and-rhythm.md) for how the other two modules could be graded.
 
 ## Stack
 
@@ -64,7 +64,8 @@ src/lib/music/        pure music core: pitch, scales/modes, chords, voicings, vo
 src/lib/notation/     score model (pure) + VexFlow renderer + <Score> component
 src/lib/audio/        Tone.js engine, metronome, polyrhythm / metric-modulation scheduling
 src/lib/midi/         Web MIDI input
-src/lib/state/        browser-persisted settings, module prefs, Continue
+src/lib/progress/     progress ladder (pure): level unlocking, XP, streaks, achievements
+src/lib/state/        browser-persisted settings, module prefs, Continue, progress
 src/lib/modules/      one folder per module: exercise logic (pure, tested) + Svelte views
 src/lib/components/   shared UI: piano, choices, level picker, metronome pulse, logo
 src/routes/           dashboard, settings and one route per module
