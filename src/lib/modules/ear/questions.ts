@@ -87,6 +87,7 @@ export interface VoicingEarQuestion {
 	ask: 'top-note' | 'type';
 	root: number;
 	midis: number[];
+	chord?: ChordRef;
 	chordLabel: string;
 	answer: string;
 	options: Option[];
@@ -212,6 +213,7 @@ function voicingQuestion(prefs: EarPrefs, rng: Rng): VoicingEarQuestion {
 			ask: 'type',
 			root,
 			midis: voicing.midis,
+			chord,
 			chordLabel: chordSymbol(chord),
 			answer: type,
 			options: [

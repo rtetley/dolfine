@@ -297,7 +297,7 @@
 	"arpeggiate": "Arpeggiate",
 	"your_answer_label": "Your answer",
 	"name_it_placeholder": "Name it…",
-	"yours_then_real": "Yours, then the real one",
+	"yours_then_real": "Yours, then the right one",
 	"mode_listening_prompt": "A drone on the root, then the scale. Which mode is it, and what is its parent scale?",
 	"parent_scale_reveal": "Parent scale: {name}",
 	"progression_prompt": "The tonic chord sounds first, then a {count}-chord progression.",
@@ -447,5 +447,7 @@
 	"your_scale_label": "Your scale",
 	"your_chord_label": "Your chord",
 	"write_hint": "Notes appear on the staff as you play them.",
-	"live_rules_label": "Point out voicing rule problems as I play"
+	"live_rules_label": "Point out voicing rule problems as I play",
+	"hear_your_answer": "Hear your answer · {answer}",
+	"hear_right_answer": "Hear the right answer · {answer}"
 }

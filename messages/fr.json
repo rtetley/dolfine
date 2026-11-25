@@ -447,5 +447,7 @@
 	"your_scale_label": "Votre gamme",
 	"your_chord_label": "Votre accord",
 	"write_hint": "Les notes s’inscrivent sur la portée au fur et à mesure.",
-	"live_rules_label": "Signaler les erreurs de disposition pendant que je joue"
+	"live_rules_label": "Signaler les erreurs de disposition pendant que je joue",
+	"hear_your_answer": "Écouter votre réponse · {answer}",
+	"hear_right_answer": "Écouter la bonne réponse · {answer}"
 }

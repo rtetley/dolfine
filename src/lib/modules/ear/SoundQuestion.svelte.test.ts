@@ -60,4 +60,37 @@ describe('SoundQuestion', () => {
 		await screen.getByRole('button', { name: 'Check' }).click();
 		await expect.element(screen.getByText(/Right\. It was/)).toBeVisible();
 	});
+
+	it('lets the student hear a wrong answer next to the right one', async () => {
+		const screen = await render(SoundQuestion, { question, format: 'choice', onnext: vi.fn() });
+		await vi.waitFor(() => expect(playNotes).toHaveBeenCalledTimes(2));
+		vi.mocked(playNotes).mockClear();
+
+		await screen.getByRole('button', { name: 'Perfect fourth' }).click();
+		await screen.getByRole('button', { name: 'Check' }).click();
+
+		await screen.getByRole('button', { name: 'Hear your answer · Perfect fourth' }).click();
+		await vi.waitFor(() => expect(playNotes).toHaveBeenCalledTimes(2));
+		expect(vi.mocked(playNotes).mock.calls.map(([notes]) => notes)).toEqual([[60], [65]]);
+
+		vi.mocked(playNotes).mockClear();
+		await screen.getByRole('button', { name: 'Yours, then the right one' }).click();
+		await vi.waitFor(() => expect(playNotes).toHaveBeenCalledTimes(4));
+		const calls = vi.mocked(playNotes).mock.calls;
+		expect(calls.map(([notes]) => notes)).toEqual([[60], [65], [60], [67]]);
+		expect(calls[2][2]).toBeGreaterThan(calls[1][2] ?? 0);
+		await expect
+			.element(screen.getByRole('button', { name: 'Hear the right answer · Perfect fifth' }))
+			.toBeVisible();
+	});
+
+	it('offers no comparison after a right answer', async () => {
+		const screen = await render(SoundQuestion, { question, format: 'choice', onnext: vi.fn() });
+		await screen.getByRole('button', { name: 'Perfect fifth' }).click();
+		await screen.getByRole('button', { name: 'Check' }).click();
+		await expect.element(screen.getByText(/Right\. It was/)).toBeVisible();
+		await expect
+			.element(screen.getByRole('button', { name: /Hear your answer/ }))
+			.not.toBeInTheDocument();
+	});
 });

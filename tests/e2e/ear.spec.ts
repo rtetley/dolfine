@@ -44,4 +44,27 @@ test.describe('ear training', () => {
 			}
 		});
 	}
+
+	test('a wrong mode can be heard next to the right one', async ({ page }) => {
+		await page.goto('ear');
+		await page
+			.getByRole('group', { name: 'Sub-module' })
+			.getByRole('button', { name: 'Modes' })
+			.click();
+		await page.getByRole('combobox', { name: 'Answer' }).selectOption('Choose from options');
+		await page.getByRole('button', { name: 'Start' }).click();
+
+		const yours = page.getByRole('button', { name: /^Hear your answer · / });
+		for (let attempt = 0; attempt < 12; attempt++) {
+			await page.locator('.choices button').first().click();
+			await page.getByRole('button', { name: 'Check' }).click();
+			if (await yours.isVisible()) break;
+			await expect(page.getByRole('button', { name: /^Hear the right answer/ })).toHaveCount(0);
+			await page.getByRole('button', { name: 'Next', exact: true }).click();
+		}
+
+		await expect(yours).toBeVisible();
+		await expect(page.getByRole('button', { name: /^Hear the right answer · / })).toBeVisible();
+		await page.getByRole('button', { name: 'Yours, then the right one' }).click();
+	});
 });

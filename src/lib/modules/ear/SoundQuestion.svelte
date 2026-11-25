@@ -5,6 +5,8 @@
 	import { ensureAudio, now, playArpeggio, playNotes } from '#lib/audio/engine.ts';
 	import ChoiceGrid from '#lib/components/ChoiceGrid.svelte';
 	import NoteInput from '#lib/components/NoteInput.svelte';
+	import { answerSound, questionSound } from './answerSound';
+	import { playSounds } from './playback';
 	import {
 		samePitchClasses,
 		type ChordEarQuestion,
@@ -31,6 +33,8 @@
 		effectiveFormat === 'play' ? samePitchClasses([...played], target) : chosen === question.answer
 	);
 	const answerLabel = $derived(question.options.find((o) => o.id === question.answer)?.label ?? '');
+	const chosenLabel = $derived(question.options.find((o) => o.id === chosen)?.label ?? '');
+	const chosenSound = $derived(chosen === null ? null : answerSound(question, chosen));
 	const prompt = $derived(
 		question.kind === 'intervals'
 			? m.ear_prompt_interval()
@@ -41,17 +45,7 @@
 					: m.ear_prompt_top_note({ chord: question.chordLabel })
 	);
 
-	async function play(): Promise<void> {
-		await ensureAudio();
-		const start = now() + 0.05;
-		if (question.kind === 'intervals') {
-			if (question.harmonic) playNotes(question.notes, 1.6, start);
-			else question.notes.forEach((note, i) => playNotes([note], 1.1, start + i * 0.8));
-			return;
-		}
-		playNotes([question.root], 0.9, start);
-		playNotes(question.midis, 2, start + 1.1);
-	}
+	const play = (): Promise<void> => playSounds(questionSound(question));
 
 	async function arpeggiate(): Promise<void> {
 		await ensureAudio();
@@ -114,7 +108,19 @@
 		</button>
 	{:else}
 		<button type="button" class="primary" onclick={onnext}>{m.action_next()}</button>
-		<button type="button" onclick={() => void compare()}>{m.yours_then_real()}</button>
+		{#if effectiveFormat === 'play'}
+			<button type="button" onclick={() => void compare()}>{m.yours_then_real()}</button>
+		{:else if !correct && chosenSound}
+			<button type="button" onclick={() => void playSounds(chosenSound)}>
+				{m.hear_your_answer({ answer: chosenLabel })}
+			</button>
+			<button type="button" onclick={() => void play()}>
+				{m.hear_right_answer({ answer: answerLabel })}
+			</button>
+			<button type="button" onclick={() => void playSounds(chosenSound, questionSound(question))}>
+				{m.yours_then_real()}
+			</button>
+		{/if}
 	{/if}
 </div>
 
