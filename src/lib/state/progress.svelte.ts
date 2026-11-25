@@ -6,7 +6,7 @@ import {
 	type TrackId,
 	trackOf
 } from '#lib/progress/ladder.ts';
-import { type ProgressEvent, recordAnswer } from '#lib/progress/record.ts';
+import { placeOnLevel, type ProgressEvent, recordAnswer } from '#lib/progress/record.ts';
 import { readProgress } from '#lib/progress/stored.ts';
 import { readStored, writeStored } from './persisted';
 import { settings } from './settings.svelte';
@@ -43,6 +43,12 @@ class ProgressStore {
 		this.lastEvents = events;
 		save(state);
 		return events;
+	}
+
+	/** Starts the student higher on some tracks (self-declared level); never lowers one. */
+	place(tracks: readonly TrackId[], level: Level): void {
+		this.state = tracks.reduce((state, track) => placeOnLevel(state, track, level), this.state);
+		save(this.state);
 	}
 
 	clearEvents(): void {

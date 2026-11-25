@@ -18,7 +18,7 @@ import {
 	UNLOCK_WINDOW,
 	xpFor
 } from './ladder';
-import { type ProgressEvent, recordAnswer } from './record';
+import { placeOnLevel, type ProgressEvent, recordAnswer } from './record';
 import { readProgress } from './stored';
 
 const DAY = '2026-11-25';
@@ -250,5 +250,19 @@ describe('reading stored progress', () => {
 		expect(state.tracks['ear:chords']).toEqual({ unlocked: 1, levels: {} });
 		expect(state.tracks['ear:modes']).toBeUndefined();
 		expect(state.achievements).toEqual({ 'first-answer': '2026-11-20' });
+	});
+});
+
+describe('placing a student', () => {
+	it('opens every level up to the one chosen, as if passed', () => {
+		const state = placeOnLevel(emptyProgress(), 'ear:chords', 4);
+		expect(trackOf(state, 'ear:chords').unlocked).toBe(4);
+		expect(levelStanding(trackOf(state, 'ear:chords'), 3).passed).toBe(true);
+		expect(levelStanding(trackOf(state, 'ear:chords'), 4).passed).toBe(false);
+	});
+
+	it('never lowers a track', () => {
+		const state = placeOnLevel(emptyProgress(), 'theory', 6);
+		expect(placeOnLevel(state, 'theory', 2)).toBe(state);
 	});
 });

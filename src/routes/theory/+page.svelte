@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
 	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
 	import { m } from '#lib/i18n.ts';
@@ -88,6 +89,11 @@
 	</p>
 
 	{#if !question}
+		<ModuleIntro
+			module="theory"
+			tracks={['theory']}
+			onplace={(level: Level) => update({ level })}
+		/>
 		<section class="setup" aria-label={m.setup_label()}>
 			<LevelPicker
 				level={prefs.level}

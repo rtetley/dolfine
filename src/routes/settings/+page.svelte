@@ -9,7 +9,17 @@
 		settings,
 		type Theme
 	} from '#lib/state/settings.svelte.ts';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { onboarding } from '#lib/state/onboarding.svelte.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
+
+	let introsShown = $state(false);
+
+	function replayTour(): void {
+		onboarding.replayTour();
+		void goto(resolve('/'));
+	}
 
 	let confirmingReset = $state(false);
 	let resetDone = $state(false);
@@ -109,6 +119,23 @@
 			</select>
 		</label>
 	</div>
+
+	<section class="reset" aria-labelledby="onboarding-heading">
+		<h2 id="onboarding-heading" class="label">{m.settings_onboarding_heading()}</h2>
+		<div class="actions">
+			<button type="button" onclick={replayTour}>{m.settings_replay_tour()}</button>
+			<button
+				type="button"
+				onclick={() => {
+					onboarding.resetIntros();
+					introsShown = true;
+				}}
+			>
+				{m.settings_show_intros()}
+			</button>
+			{#if introsShown}<span role="status">{m.settings_intros_shown()}</span>{/if}
+		</div>
+	</section>
 
 	<section class="reset" aria-labelledby="reset-heading">
 		<h2 id="reset-heading" class="label">{m.settings_progress_heading()}</h2>
