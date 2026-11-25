@@ -1,13 +1,20 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { onMount } from 'svelte';
-	import { ensureAudio, now, playNotes } from '#lib/audio/engine.ts';
 	import { fromMidi, noteName, pitchClassOf } from '#lib/music/pitch.ts';
-	import { type ModeId, modeInfo, PARENT_NAMES, parentRootOf } from '#lib/music/scales.ts';
+	import {
+		type ModeId,
+		modeInfo,
+		modeLabel,
+		PARENT_NAMES,
+		parentRootOf
+	} from '#lib/music/scales.ts';
 	import ModeAnswer from '#lib/modules/theory/ModeAnswer.svelte';
 	import ParentAnswer from '#lib/modules/theory/ParentAnswer.svelte';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import type { ParentChoice } from '#lib/modules/theory/questions.ts';
+	import { answerSound, questionSound } from './answerSound';
+	import { playSounds } from './playback';
 	import type { ModeEarQuestion } from './questions';
 
 	interface Props {
@@ -28,12 +35,9 @@
 		parent.parent === modeInfo(question.mode).parent && parent.root === pitchClassOf(expectedParent)
 	);
 
-	async function play(): Promise<void> {
-		await ensureAudio();
-		const start = now() + 0.05;
-		playNotes([question.root - 12], (question.scale.length + 2) * 0.45, start);
-		question.scale.forEach((note, i) => playNotes([note], 0.6, start + 0.9 + i * 0.42));
-	}
+	const play = (): Promise<void> => playSounds(questionSound(question));
+	const chosenSound = $derived(mode === null ? null : answerSound(question, mode));
+	const wrongMode = $derived(mode !== null && mode !== question.mode);
 
 	onMount(() => void play());
 </script>
@@ -70,6 +74,17 @@
 		</button>
 	{:else}
 		<button type="button" class="primary" onclick={onnext}>{m.action_next()}</button>
+		{#if wrongMode && mode && chosenSound}
+			<button type="button" onclick={() => void playSounds(chosenSound)}>
+				{m.hear_your_answer({ answer: modeLabel(mode, settings.modeLanguage) })}
+			</button>
+			<button type="button" onclick={() => void play()}>
+				{m.hear_right_answer({ answer: modeLabel(question.mode, settings.modeLanguage) })}
+			</button>
+			<button type="button" onclick={() => void playSounds(chosenSound, questionSound(question))}>
+				{m.yours_then_real()}
+			</button>
+		{/if}
 	{/if}
 </div>
 
