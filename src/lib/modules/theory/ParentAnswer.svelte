@@ -17,6 +17,7 @@
 <fieldset class="parent">
 	<legend class="label">Parent scale</legend>
 	<select
+		aria-label="Root"
 		value={root ?? ''}
 		{disabled}
 		onchange={(e) => onchange({ root: Number(e.currentTarget.value), parent })}
@@ -27,6 +28,7 @@
 		{/each}
 	</select>
 	<select
+		aria-label="Scale"
 		value={parent ?? ''}
 		{disabled}
 		onchange={(e) => onchange({ root, parent: e.currentTarget.value as ParentScale })}
