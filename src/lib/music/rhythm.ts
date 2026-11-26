@@ -24,7 +24,11 @@ export type RhythmFeature =
 	| 'dotted'
 	| 'triplets'
 	| 'syncopation'
-	| 'ties';
+	| 'ties'
+	| 'sixteenthTriplets';
+
+/** The single note value of a Dandelot-style exercise, where every note is the same length. */
+export type UniformValue = 'eighths' | 'triplets' | 'sixteenths' | 'sixteenthTriplets';
 
 export const METER_2_4: Meter = { beats: 2, unit: 4 };
 export const METER_3_4: Meter = { beats: 3, unit: 4 };
@@ -52,6 +56,8 @@ const note = (ticks: number, extra: Partial<RhythmEvent> = {}): RhythmEvent => (
 });
 const rest = (ticks: number): RhythmEvent => ({ ticks, rest: true });
 
+const sixteenthTriplet = (): RhythmEvent[] => [0, 1, 2].map(() => note(2, { triplet: true }));
+
 interface CellOption {
 	cell: Cell;
 	needs: readonly RhythmFeature[];
@@ -72,7 +78,13 @@ const QUARTER_CELLS: readonly CellOption[] = [
 		cell: [note(4, { triplet: true }), note(4, { triplet: true }), note(4, { triplet: true })],
 		needs: ['triplets'],
 		weight: 2
-	}
+	},
+	{
+		cell: [...sixteenthTriplet(), note(6)],
+		needs: ['sixteenthTriplets', 'eighths'],
+		weight: 1
+	},
+	{ cell: [...sixteenthTriplet(), ...sixteenthTriplet()], needs: ['sixteenthTriplets'], weight: 1 }
 ];
 
 const SPAN_CELLS: readonly CellOption[] = [
@@ -147,6 +159,29 @@ export function generateRhythm(
 		measures[measures.length - 1] = [...head, note(24)];
 	}
 	return measures;
+}
+
+const UNIFORM_NOTES: Record<UniformValue, () => RhythmEvent> = {
+	eighths: () => note(6),
+	triplets: () => note(4, { triplet: true }),
+	sixteenths: () => note(3),
+	sixteenthTriplets: () => note(2, { triplet: true })
+};
+
+/**
+ * Every note the same value, as in Dandelot's reading exercises; the last bar closes on a note
+ * held for its final beat. Triplets fill whole beats, so the meter must have quarter-note beats.
+ */
+export function uniformRhythm(meter: Meter, bars: number, value: UniformValue): RhythmEvent[][] {
+	const total = measureTicks(meter);
+	const beat = beatTicks(meter);
+	const fill = (ticks: number): RhythmEvent[] => {
+		const one = UNIFORM_NOTES[value]();
+		return Array.from({ length: Math.floor(ticks / one.ticks) }, UNIFORM_NOTES[value]);
+	};
+	return Array.from({ length: bars }, (_, bar) =>
+		bar < bars - 1 ? fill(total) : [...fill(total - beat), note(beat)]
+	);
 }
 
 function trimToTicks(events: readonly RhythmEvent[], limit: number): RhythmEvent[] {

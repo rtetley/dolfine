@@ -50,9 +50,11 @@ const DURATIONS: readonly Duration[] = [
 ];
 
 const TRIPLET_EIGHTH: Duration = { code: '8', dots: 0, ticks: 4 };
+const TRIPLET_SIXTEENTH: Duration = { code: '16', dots: 0, ticks: 2 };
 
 export function splitTicks(ticks: number, triplet = false): Duration[] {
 	if (triplet && ticks === 4) return [TRIPLET_EIGHTH];
+	if (triplet && ticks === 2) return [TRIPLET_SIXTEENTH];
 	const parts: Duration[] = [];
 	let remaining = ticks;
 	while (remaining > 0) {

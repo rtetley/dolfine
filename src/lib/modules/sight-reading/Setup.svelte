@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
-	import LevelPicker from '#lib/components/LevelPicker.svelte';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
-	import type { Level } from '#lib/music/levels.ts';
-	import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
+	import { readingContent } from '#lib/music/sightReadingLevels.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 	import {
@@ -24,7 +22,7 @@
 
 	let { prefs, onchange, onstart }: Props = $props();
 
-	const level = $derived(SIGHT_READING_LEVELS[prefs.level]);
+	const level = $derived(readingContent(prefs.level, prefs.exercise));
 	const timed = $derived(prefs.mode === 'performance');
 	const spoken = $derived(prefs.input === 'voice');
 	const canStart = $derived(!timed || !spoken || voiceProfile.for(settings.noteNames) !== null);
@@ -38,11 +36,6 @@
 </script>
 
 <section class="setup" aria-label={m.setup_label()}>
-	<LevelPicker
-		level={prefs.level}
-		mapping="classical"
-		onchange={(value: Level) => onchange({ level: value })}
-	/>
 	<label class="field">
 		<span class="label">{m.staff_label()}</span>
 		<select

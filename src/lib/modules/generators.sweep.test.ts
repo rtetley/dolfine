@@ -3,7 +3,7 @@ import { CLASSICAL_MAPPING, JAZZ_MAPPING, LEVELS, THEORY_LEVELS } from '#lib/mus
 import { toMidi } from '#lib/music/pitch.ts';
 import { measureTicks, totalTicks } from '#lib/music/rhythm.ts';
 import { RHYTHM_READING_LEVELS } from '#lib/music/rhythmLevels.ts';
-import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
+import { drillsAt, readingContent } from '#lib/music/sightReadingLevels.ts';
 import { checkSheet } from '#lib/music/voiceLeading.ts';
 import { createEarQuestion, EAR_DEFAULTS, EAR_SUBMODULES } from './ear/questions';
 import { createRhythmExercise, RHYTHM_DEFAULTS } from './rhythm/reading';
@@ -19,23 +19,31 @@ describe('level tables', () => {
 			expect(CLASSICAL_MAPPING[level]).toBeDefined();
 			expect(JAZZ_MAPPING[level]).toBeDefined();
 			expect(THEORY_LEVELS[level]).toBeDefined();
-			expect(SIGHT_READING_LEVELS[level]).toBeDefined();
+			expect(drillsAt(level).length).toBeGreaterThan(0);
 			expect(RHYTHM_READING_LEVELS[level]).toBeDefined();
 		}
 	});
 
 	it('never get easier as the level rises', () => {
-		const fifths = LEVELS.map((l) => SIGHT_READING_LEVELS[l].maxFifths);
+		const fifths = LEVELS.map((l) => readingContent(l, drillsAt(l)[0]).maxFifths);
 		expect(fifths).toEqual([...fifths].sort((a, b) => a - b));
 	});
 });
 
 describe.each(LEVELS)('level %i', (level) => {
 	it.each(['treble', 'bass', 'grand'] satisfies StaffChoice[])(
-		'sight reading on the %s staff fills every bar and scores every note',
+		'sight reading on the %s staff fills every bar and scores every note, in every drill',
 		(staff) => {
-			for (const seed of SEEDS) {
-				const exercise = createExercise({ ...SIGHT_READING_DEFAULTS, level, staff }, seed);
+			for (const [seed, exercise] of drillsAt(level).flatMap((drill) =>
+				SEEDS.map(
+					(seed) =>
+						[
+							seed,
+							createExercise({ ...SIGHT_READING_DEFAULTS, level, exercise: drill, staff }, seed)
+						] as const
+				)
+			)) {
+				expect(seed).toBeGreaterThan(0);
 				const perBar = measureTicks(exercise.meter);
 				for (const part of exercise.parts) {
 					expect(part.measures).toHaveLength(exercise.bars);

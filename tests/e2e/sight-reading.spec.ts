@@ -167,6 +167,20 @@ test.describe('sight reading', () => {
 		await expect(page.getByText('Collection mode is on')).toHaveCount(0);
 	});
 
+	test('levels follow Dandelot, open one by one, and a drill starts from the map', async ({
+		page
+	}) => {
+		await page.goto('sight-reading');
+		const first = page.getByRole('region', { name: /Level 1\s*Landmark notes/ });
+		await expect(first).toContainText('C and G on the treble clef');
+		const second = page.getByRole('region', { name: /Level 2\s*Landmarks and their neighbours/ });
+		await expect(second).toContainText('Locked');
+		await expect(second.getByRole('button', { name: /Review/ })).toBeDisabled();
+		await first.getByRole('button', { name: /New element/ }).click();
+		await expect(page.getByText(/Level 1/).first()).toBeVisible();
+		await expect(page.getByRole('figure').first()).toBeVisible();
+	});
+
 	test('a calibrated voice can start a spoken reading', async ({ page }) => {
 		const take = [[[0, 0]]];
 		const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];

@@ -2,7 +2,7 @@
 
 Sight reading, inner rhythm, jazz theory and ear training for serious musicians. The product spec is in [PRD.md](PRD.md); the look and the design tokens are in [docs/design-guidelines.md](docs/design-guidelines.md).
 
-Every setting is selectable and everything is stored in the browser (no accounts). Music theory and ear training levels open one by one as the student passes them (or all at once in Settings); see [docs/grading-sight-reading-and-rhythm.md](docs/grading-sight-reading-and-rhythm.md) for how the other two modules could be graded.
+Every setting is selectable and everything is stored in the browser (no accounts). Music theory, ear training and sight reading levels open one by one as the student passes them (or all at once in Settings). Sight reading follows Dandelot's progression (landmark notes, then intervals, then one rhythmic value at a time) and counts each scored run as passed or not; see [docs/grading-sight-reading-and-rhythm.md](docs/grading-sight-reading-and-rhythm.md) for the grading and how inner rhythm could be graded.
 
 ## Stack
 

@@ -28,7 +28,7 @@ const result = buildProfile(calibration.prompts, calibration.syllables, 'solfege
 if (!result.ok) throw new Error('calibration failed');
 const profile = result.profile;
 const exercise = createExercise(
-	{ ...SIGHT_READING_DEFAULTS, input: 'voice', level: 1, bars: 4 },
+	{ ...SIGHT_READING_DEFAULTS, input: 'voice', level: 2, bars: 4 },
 	11
 );
 

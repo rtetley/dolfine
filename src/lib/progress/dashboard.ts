@@ -52,7 +52,7 @@ export function moduleStatuses(
 	prefs: SavedPrefs
 ): Record<ModuleId, ModuleStatus> {
 	return {
-		'sight-reading': { graded: false, level: savedLevel(prefs['sight-reading']) },
+		'sight-reading': graded(state, 'sight-reading'),
 		rhythm: { graded: false, level: savedLevel(prefs.rhythm) },
 		theory: graded(state, 'theory'),
 		ear: graded(state, 'ear')

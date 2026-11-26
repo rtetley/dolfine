@@ -1,5 +1,6 @@
 import { m } from '#lib/i18n.ts';
 import type { Level } from '#lib/music/levels.ts';
+import type { SightReadingDrill } from '#lib/music/sightReadingLevels.ts';
 
 export type StaffChoice = 'treble' | 'bass' | 'grand';
 export type ReadingMode = 'performance' | 'practice';
@@ -10,6 +11,8 @@ export type AnswerInput = 'midi' | 'voice';
 
 export interface SightReadingPrefs extends Record<string, unknown> {
 	level: Level;
+	/** The level's drill: its new element ("focus"), a review, or a level 9 rhythm figure. */
+	exercise: SightReadingDrill;
 	staff: StaffChoice;
 	mode: ReadingMode;
 	input: AnswerInput;
@@ -25,7 +28,8 @@ export interface SightReadingPrefs extends Record<string, unknown> {
 }
 
 export const SIGHT_READING_DEFAULTS: SightReadingPrefs = {
-	level: 3,
+	level: 1,
+	exercise: 'focus',
 	staff: 'treble',
 	mode: 'performance',
 	input: 'midi',

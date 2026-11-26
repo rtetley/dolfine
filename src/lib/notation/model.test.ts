@@ -7,6 +7,7 @@ describe('splitTicks', () => {
 	it('uses single durations when possible', () => {
 		expect(splitTicks(18).map((d) => [d.code, d.dots])).toEqual([['q', 1]]);
 		expect(splitTicks(4, true).map((d) => d.code)).toEqual(['8']);
+		expect(splitTicks(2, true).map((d) => [d.code, d.ticks])).toEqual([['16', 2]]);
 	});
 
 	it('splits odd lengths into tied parts', () => {

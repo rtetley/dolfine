@@ -19,7 +19,8 @@ const result = buildProfile(calibration.prompts, calibration.syllables, 'solfege
 if (!result.ok) throw new Error('calibration failed');
 const profile = result.profile;
 
-const voice = { ...SIGHT_READING_DEFAULTS, input: 'voice', level: 1, bars: 4 } as const;
+// Stepwise reading (landmarks and their neighbours), as in the earlier recognition tests.
+const voice = { ...SIGHT_READING_DEFAULTS, input: 'voice', level: 2, bars: 4 } as const;
 const exercise = createExercise(voice, 11);
 
 interface Reading {

@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import type { Level } from '#lib/music/levels.ts';
+	import { countsRuns, ruleFor } from '#lib/progress/curriculum.ts';
 	import {
 		drillStanding,
 		type GradedModule,
 		moduleStanding,
 		percent,
-		REQUIRED_CORRECT,
-		trackOf,
-		UNLOCK_WINDOW
+		trackOf
 	} from '#lib/progress/ladder.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 
@@ -23,20 +22,30 @@
 
 	const standing = $derived(moduleStanding(progress.state, track, level));
 	const drill = $derived(
-		exercise ? drillStanding(trackOf(progress.state, track), level, exercise.id) : null
+		exercise
+			? drillStanding(
+					trackOf(progress.state, track),
+					level,
+					exercise.id,
+					ruleFor(track, level, exercise.id)
+				)
+			: null
 	);
 	const value = $derived(percent(drill ? drill.ratio : standing.ratio));
 	const detail = $derived.by(() => {
 		if (level === 10 && standing.passed) return m.progress_top();
 		if (drill && exercise) {
+			const towards = {
+				correct: drill.recentCorrect,
+				required: drill.required,
+				window: drill.window,
+				exercise: exercise.label
+			};
 			return drill.passed
 				? m.drill_progress_graded({ exercise: exercise.label })
-				: m.drill_progress_towards({
-						correct: drill.recentCorrect,
-						required: REQUIRED_CORRECT,
-						window: UNLOCK_WINDOW,
-						exercise: exercise.label
-					});
+				: countsRuns(track)
+					? m.drill_progress_towards_runs(towards)
+					: m.drill_progress_towards(towards);
 		}
 		return standing.passed
 			? m.progress_passed({ level })

@@ -5,7 +5,7 @@ import type { TrackId } from './ladder';
 
 /** The module a track belongs to: "Music theory". */
 export const trackLabel = (track: TrackId): string =>
-	track === 'theory' ? m.nav_theory() : m.nav_ear();
+	track === 'theory' ? m.nav_theory() : track === 'ear' ? m.nav_ear() : m.nav_sight_reading();
 
 const THEORY_STAGE_TITLES: Record<Level, () => string> = {
 	1: m.stage_theory_1,
@@ -33,9 +33,27 @@ const EAR_STAGE_TITLES: Record<Level, () => string> = {
 	10: m.stage_ear_10
 };
 
+const SIGHT_READING_STAGE_TITLES: Record<Level, () => string> = {
+	1: m.stage_sight_1,
+	2: m.stage_sight_2,
+	3: m.stage_sight_3,
+	4: m.stage_sight_4,
+	5: m.stage_sight_5,
+	6: m.stage_sight_6,
+	7: m.stage_sight_7,
+	8: m.stage_sight_8,
+	9: m.stage_sight_9,
+	10: m.stage_sight_10
+};
+
+const STAGE_TITLES: Record<TrackId, Record<Level, () => string>> = {
+	theory: THEORY_STAGE_TITLES,
+	ear: EAR_STAGE_TITLES,
+	'sight-reading': SIGHT_READING_STAGE_TITLES
+};
+
 /** What a level of a graded module is about: "The major scale". */
-export const stageTitle = (track: TrackId, level: Level): string =>
-	(track === 'theory' ? THEORY_STAGE_TITLES : EAR_STAGE_TITLES)[level]();
+export const stageTitle = (track: TrackId, level: Level): string => STAGE_TITLES[track][level]();
 
 const ACHIEVEMENT_TEXT: Record<AchievementId, [() => string, () => string]> = {
 	'first-answer': [m.achievement_first_answer, m.achievement_first_answer_detail],

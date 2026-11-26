@@ -7,9 +7,9 @@ import {
 	type TrackId,
 	trackOf,
 	type TrackProgress,
-	UNLOCK_WINDOW,
 	xpFor
 } from './ladder';
+import { KEPT_ANSWERS } from './passRule';
 
 export interface Answer {
 	track: TrackId;
@@ -48,7 +48,7 @@ export function recordAnswer(state: ProgressState, answer: Answer): Recorded {
 				drills: {
 					...levelRecord.drills,
 					[exercise]: {
-						recent: [...drill.recent, correct].slice(-UNLOCK_WINDOW),
+						recent: [...drill.recent, correct].slice(-KEPT_ANSWERS),
 						answered: drill.answered + 1,
 						correct: drill.correct + point
 					}

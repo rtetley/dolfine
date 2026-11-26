@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LEVELS, type Level } from '#lib/music/levels.ts';
 import { EAR_SUBMODULES } from '#lib/modules/ear/questions.ts';
 import { THEORY_EXERCISES } from '#lib/modules/theory/questions.ts';
+import { drillsAt } from '#lib/music/sightReadingLevels.ts';
 import { newlyEarned } from './achievements';
 import {
 	CURRICULA,
@@ -379,5 +380,47 @@ describe('placing a student', () => {
 	it('never lowers a track', () => {
 		const state = placeOnLevel(emptyProgress(), 'theory', 6);
 		expect(placeOnLevel(state, 'theory', 2)).toBe(state);
+	});
+});
+
+describe('sight-reading ladder', () => {
+	it('grades exactly the drills the level table defines', () => {
+		for (const level of LEVELS) {
+			expect(exercisesAt('sight-reading', level)).toEqual(drillsAt(level));
+		}
+	});
+
+	const run = (state: ProgressState, level: Level, exercise: string, passed: boolean) =>
+		recordAnswer(state, {
+			track: 'sight-reading',
+			level,
+			exercise,
+			correct: passed,
+			today: '2026-11-26'
+		}).state;
+
+	it('leaves the tutorial after two passing runs among three', () => {
+		const once = run(emptyProgress(), 1, 'focus', true);
+		expect(trackOf(once, 'sight-reading').unlocked).toBe(1);
+		const twice = run(run(once, 1, 'focus', false), 1, 'focus', true);
+		expect(trackOf(twice, 'sight-reading').unlocked).toBe(2);
+	});
+
+	it('opens the next level after four passing runs among five on every drill', () => {
+		let state = placeOnLevel(emptyProgress(), 'sight-reading', 2);
+		for (const passed of [true, true, false, true, true]) state = run(state, 2, 'focus', passed);
+		expect(moduleStanding(state, 'sight-reading', 2).passed).toBe(false);
+		for (const passed of [true, true, true]) state = run(state, 2, 'review', passed);
+		expect(trackOf(state, 'sight-reading').unlocked).toBe(2);
+		state = run(state, 2, 'review', true);
+		expect(trackOf(state, 'sight-reading').unlocked).toBe(3);
+	});
+
+	it('only looks at the last five runs', () => {
+		let state = placeOnLevel(emptyProgress(), 'sight-reading', 3);
+		for (const passed of [true, true, true, true, false, false])
+			state = run(state, 3, 'focus', passed);
+		const standing = moduleStanding(state, 'sight-reading', 3).drills[0];
+		expect(standing).toMatchObject({ recentCorrect: 3, required: 4, window: 5, passed: false });
 	});
 });

@@ -3,14 +3,13 @@
 	import { m } from '#lib/i18n.ts';
 	import { JAZZ_MAPPING, type Level, LEVELS } from '#lib/music/levels.ts';
 	import { LESSON_TEXT } from '#lib/modules/theory/lessonText.ts';
-	import type { Curriculum } from '#lib/progress/curriculum.ts';
+	import { countsRuns, type Curriculum } from '#lib/progress/curriculum.ts';
 	import {
 		drillStanding,
 		type GradedModule,
 		isLevel,
 		percent,
-		trackOf,
-		UNLOCK_ACCURACY
+		trackOf
 	} from '#lib/progress/ladder.ts';
 	import { stageTitle } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
@@ -22,17 +21,21 @@
 		curriculum: Curriculum<E>;
 		labels: Record<E, string>;
 		onpick: (level: Level, exercise: E) => void;
+		/** Exam equivalents under each title (the jazz mapping fits theory and ear training). */
+		equivalents?: boolean;
+		/** What a level is about, under its title. */
+		describe?: (level: Level) => string;
 	}
 
-	let { module, curriculum, labels, onpick }: Props = $props();
+	let { module, curriculum, labels, onpick, equivalents = true, describe }: Props = $props();
 
 	const unlocked = $derived(progress.unlocked(module));
 	const track = $derived(trackOf(progress.state, module));
 
 	const drillsAt = (level: Level) =>
-		curriculum[level].drills.map(({ exercise }) => ({
+		curriculum[level].drills.map(({ exercise, rule }) => ({
 			exercise,
-			standing: drillStanding(track, level, exercise)
+			standing: drillStanding(track, level, exercise, rule)
 		}));
 
 	const stages = $derived(
@@ -51,13 +54,12 @@
 		const prior = level - 1;
 		if (!isLevel(prior)) return '';
 		if (prior > unlocked) return m.stage_unlock_after({ level: prior });
-		const missing = drillsAt(prior)
-			.filter((drill) => !drill.standing.passed)
-			.map((drill) => labels[drill.exercise]);
+		const missing = drillsAt(prior).filter((drill) => !drill.standing.passed);
+		const rule = missing[0]?.standing ?? { required: 1, window: 1 };
 		return m.stage_unlock_needs({
 			level: prior,
-			percent: percent(UNLOCK_ACCURACY),
-			exercises: missing.join(' · ')
+			percent: percent(rule.required / rule.window),
+			exercises: missing.map((drill) => labels[drill.exercise]).join(' · ')
 		});
 	}
 </script>
@@ -74,9 +76,12 @@
 						{stageTitle(module, stage.level)}
 					</h2>
 					<p class="meta">
-						≈ {JAZZ_MAPPING[stage.level].abrsm} · {JAZZ_MAPPING[stage.level].french}
-						{#if passed && !locked}· <span class="passed">{m.stage_passed()}</span>{/if}
+						{#if equivalents}≈ {JAZZ_MAPPING[stage.level].abrsm} ·
+							{JAZZ_MAPPING[stage.level].french}{/if}
+						{#if passed && !locked}{#if equivalents}·{/if}
+							<span class="passed">{m.stage_passed()}</span>{/if}
 					</p>
+					{#if describe}<p class="about">{describe(stage.level)}</p>{/if}
 				</div>
 			</header>
 			<div class="body" inert={locked}>
@@ -95,6 +100,7 @@
 								label={labels[exercise]}
 								{standing}
 								disabled={locked}
+								runs={countsRuns(module)}
 								onpick={() => onpick(stage.level, exercise)}
 							/>
 						</li>
@@ -148,6 +154,7 @@
 	}
 
 	.meta,
+	.about,
 	.lesson {
 		margin: 0;
 		font-size: var(--step--1);
@@ -156,6 +163,11 @@
 
 	.meta {
 		font-style: italic;
+	}
+
+	.about {
+		margin-top: var(--space-1);
+		max-width: var(--measure);
 	}
 
 	.passed {

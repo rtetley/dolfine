@@ -1,6 +1,7 @@
 import { m } from '#lib/i18n.ts';
 import type { LessonId } from '#lib/modules/theory/lessons.ts';
 import { REQUIRED_CORRECT, UNLOCK_WINDOW } from '#lib/progress/ladder.ts';
+import { RUN_PASS_PERCENT, RUN_RULE } from '#lib/progress/passRule.ts';
 import type { ModuleId } from '#lib/state/modulePrefs.svelte.ts';
 
 type Text = () => string;
@@ -32,10 +33,15 @@ export const MODULE_INTROS: Record<ModuleId, ModuleIntro> = {
 			m.intro_sight_reading_step_4
 		],
 		studyFirst: m.intro_sight_reading_first,
-		nextLevel: m.intro_ungraded_next,
+		nextLevel: () =>
+			m.intro_sight_reading_next({
+				required: RUN_RULE.required,
+				window: RUN_RULE.window,
+				percent: RUN_PASS_PERCENT
+			}),
 		lessons: [],
 		related: { module: 'rhythm', text: m.intro_sight_reading_related },
-		graded: false
+		graded: true
 	},
 	rhythm: {
 		title: m.intro_rhythm_title,

@@ -1,6 +1,6 @@
 import { m } from '#lib/i18n.ts';
 import type { Level } from '#lib/music/levels.ts';
-import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
+import { pitchPool, readingContent } from '#lib/music/sightReadingLevels.ts';
 import {
 	bassLine,
 	type Clef,
@@ -14,7 +14,7 @@ import {
 } from '#lib/music/melody.ts';
 import { type Letter, type NoteNameSystem, toMidi } from '#lib/music/pitch.ts';
 import { createRng, type Rng } from '#lib/music/random.ts';
-import { type Meter, measureTicks, TICKS_PER_QUARTER } from '#lib/music/rhythm.ts';
+import { isCompound, type Meter, measureTicks, TICKS_PER_QUARTER } from '#lib/music/rhythm.ts';
 import type { ExpectedNote, ScoredNote } from '#lib/music/scoring.ts';
 import type { NoteStyle, Score, ScoreNote, StaffClef, StaffPart } from '#lib/notation/model.ts';
 import type { SightReadingPrefs } from './prefs';
@@ -89,8 +89,14 @@ export function spokenTempo(tempo: number, gapTicks: number): number {
 
 export function createExercise(prefs: SightReadingPrefs, seed: number): SightReadingExercise {
 	const rng = createRng(seed);
-	const level = SIGHT_READING_LEVELS[prefs.level];
-	const meter = parseMeter(prefs.meter) ?? rng.pick(level.meters);
+	const level = readingContent(prefs.level, prefs.exercise);
+	// Triplets fill quarter-note beats: a compound meter chosen in setup can't hold them.
+	const chosenMeter = parseMeter(prefs.meter);
+	const tripletsOnly = level.uniform === 'triplets' || level.uniform === 'sixteenthTriplets';
+	const meter =
+		chosenMeter && !(tripletsOnly && isCompound(chosenMeter))
+			? chosenMeter
+			: rng.pick(level.meters);
 	const key = chooseKey(prefs, level.maxFifths, rng);
 	const spoken = prefs.input === 'voice';
 	const chosenTempo = prefs.tempo > 0 ? prefs.tempo : level.tempo;
@@ -104,7 +110,10 @@ export function createExercise(prefs: SightReadingPrefs, seed: number): SightRea
 		range: level.range,
 		features: new Set(level.features),
 		maxLeap: level.maxLeap,
-		accidentalRate: level.accidentalRate
+		accidentalRate: level.accidentalRate,
+		pool: level.pitches ? pitchPool(melodyClef, level.pitches) : undefined,
+		moves: level.moves,
+		uniform: level.uniform
 	};
 	const parts: SightReadingExercise['parts'] = [
 		{ clef: melodyClef, measures: generateMelody(settings, rng) }

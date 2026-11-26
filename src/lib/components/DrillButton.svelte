@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
-	import { type DrillStanding, percent, REQUIRED_CORRECT } from '#lib/progress/ladder.ts';
+	import { type DrillStanding, percent } from '#lib/progress/ladder.ts';
 
 	interface Props {
 		label: string;
 		standing: DrillStanding;
 		disabled?: boolean;
+		/** Graded on whole runs (sight reading) rather than single answers. */
+		runs?: boolean;
 		onpick: () => void;
 	}
 
-	let { label, standing, disabled = false, onpick }: Props = $props();
+	let { label, standing, disabled = false, runs = false, onpick }: Props = $props();
 
 	const RADIUS = 30;
 	const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -18,7 +20,10 @@
 	const detail = $derived(
 		standing.passed
 			? m.drill_graded()
-			: m.drill_towards({ correct: standing.recentCorrect, required: REQUIRED_CORRECT })
+			: (runs ? m.drill_towards_runs : m.drill_towards)({
+					correct: standing.recentCorrect,
+					required: standing.required
+				})
 	);
 </script>
 
