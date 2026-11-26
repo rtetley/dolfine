@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { onDestroy, onMount } from 'svelte';
+	import { AsyncStart } from '#lib/audio/asyncStart.svelte.ts';
 	import { audioContext, audioToPerformanceTime, ensureAudio } from '#lib/audio/engine.ts';
 	import {
 		type MetronomeHandle,
@@ -55,6 +56,9 @@
 	const played: PlayedNote[] = [];
 	let microphone: Microphone | null = null;
 	let recorder: Recorder | null = null;
+	/** One run per mount: stale once the run is stopped, restarted or left, even mid-wait. */
+	const starting = new AsyncStart();
+	let run = 0;
 
 	onMount(() => {
 		remaining = skipPreview ? 0 : prefs.previewSeconds;
@@ -72,13 +76,22 @@
 		if (phase !== 'preview') return;
 		clearInterval(countdown);
 		phase = 'starting';
+		run = starting.token();
 		await ensureAudio();
+		if (!starting.isCurrent(run)) return;
 		const context = audioContext();
 		if (profile && context) {
 			const { microphoneError, openMicrophone } = await import('#lib/audio/voice/microphone.ts');
+			if (!starting.isCurrent(run)) return;
 			try {
-				microphone = await openMicrophone(context);
+				const opened = await openMicrophone(context);
+				if (!starting.isCurrent(run)) {
+					opened.close();
+					return;
+				}
+				microphone = opened;
 			} catch (error) {
+				if (!starting.isCurrent(run)) return;
 				micProblem = microphoneError(error);
 				phase = 'preview';
 				return;
@@ -154,6 +167,7 @@
 			void import('./hear').then(({ hearReading }) => {
 				// Let the "listening back" state paint before the analysis blocks the main thread.
 				setTimeout(() => {
+					if (!starting.isCurrent(run)) return;
 					const notes = hearReading(recording, readingStart, exercise, heard);
 					if (!collection.on) {
 						onfinish({ input: 'voice', notes });
@@ -174,17 +188,23 @@
 		}, RECORDING_TAIL_MS);
 	}
 
-	function stop(): void {
+	/** Ends this run for good: nothing still waiting may start it or report it afterwards. */
+	function abandon(): void {
+		starting.cancel();
 		teardown();
+	}
+
+	function stop(): void {
+		abandon();
 		onstop();
 	}
 
 	function restart(): void {
-		teardown();
+		abandon();
 		onrestart();
 	}
 
-	onDestroy(teardown);
+	onDestroy(abandon);
 
 	const system = $derived(cursor && layout ? layout.systems[cursor.system] : undefined);
 </script>

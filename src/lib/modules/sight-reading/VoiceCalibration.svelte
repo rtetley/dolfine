@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { m } from '#lib/i18n.ts';
+	import { AsyncStart } from '#lib/audio/asyncStart.svelte.ts';
 	import { audioContext, ensureAudio } from '#lib/audio/engine.ts';
 	import { type MetronomeHandle, startMetronome } from '#lib/audio/metronome.ts';
 	import {
@@ -50,8 +51,10 @@
 	let microphone: Microphone | null = null;
 	let recorder: Recorder | null = null;
 	let handle: MetronomeHandle | null = null;
+	const starting = new AsyncStart();
 
 	function release(): void {
+		starting.cancel();
 		handle?.stop();
 		handle = null;
 		recorder = null;
@@ -61,16 +64,28 @@
 
 	async function start(): Promise<void> {
 		release();
-		await ensureAudio();
-		const context = audioContext();
-		if (!context) return;
+		const opening: { microphone: Microphone | null } = { microphone: null };
 		try {
-			microphone = await openMicrophone(context);
+			const began = await starting.run(
+				async () => {
+					await ensureAudio();
+					const context = audioContext();
+					if (context) opening.microphone = await openMicrophone(context);
+				},
+				() => {
+					if (opening.microphone) record(opening.microphone);
+				}
+			);
+			// Left or restarted while the microphone was opening: let it go.
+			if (!began) opening.microphone?.close();
 		} catch (error) {
 			phase = microphoneError(error);
-			return;
 		}
-		recorder = microphone.record();
+	}
+
+	function record(opened: Microphone): void {
+		microphone = opened;
+		recorder = opened.record();
 		const take = prompts;
 		current = -1;
 		phase = 'running';
@@ -185,8 +200,13 @@
 		{#if phase !== 'denied' && phase !== 'unavailable'}
 			<p class="to-say">{m.voice_setup_sequence(sequence)}</p>
 		{/if}
-		<button type="button" onclick={() => void start()}>
-			{ready ? m.voice_setup_again() : m.voice_setup_start()}
+		<button
+			type="button"
+			onclick={() => void start()}
+			aria-busy={starting.pending}
+			disabled={starting.pending}
+		>
+			{starting.pending ? m.audio_loading() : ready ? m.voice_setup_again() : m.voice_setup_start()}
 		</button>
 	{/if}
 </section>

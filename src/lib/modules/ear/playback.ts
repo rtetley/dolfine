@@ -1,4 +1,4 @@
-import { ensureAudio, now, playNotes } from '#lib/audio/engine.ts';
+import { ensureAudio, now, playNotes, stopAll } from '#lib/audio/engine.ts';
 import type { AnswerSound } from './answerSound';
 
 const GAP = 0.6;
@@ -27,9 +27,13 @@ function schedule(sound: AnswerSound, start: number): number {
 	}
 }
 
-/** Plays the sounds one after another, with a short gap between them. */
+/**
+ * Plays the sounds one after another, with a short gap between them. Playing again starts over
+ * rather than layering a second playback on the first.
+ */
 export async function playSounds(...sounds: (AnswerSound | null)[]): Promise<void> {
 	await ensureAudio();
+	stopAll();
 	let at = now() + 0.05;
 	for (const sound of sounds) {
 		if (sound) at += schedule(sound, at) + GAP;

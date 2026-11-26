@@ -36,6 +36,7 @@
 	"metronome_off": "Off",
 	"metronome_off_count_in": "Off (count-in only)",
 	"metronome_random_mute": "Random mute",
+	"audio_loading": "Loading sound…",
 	"metronome_start": "Start metronome",
 	"metronome_stop": "Stop metronome",
 	"pulse_count_in": "count-in",

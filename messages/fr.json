@@ -36,6 +36,7 @@
 	"metronome_off": "Désactivé",
 	"metronome_off_count_in": "Désactivé (décompte seulement)",
 	"metronome_random_mute": "Coupures aléatoires",
+	"audio_loading": "Chargement du son…",
 	"metronome_start": "Démarrer le métronome",
 	"metronome_stop": "Arrêter le métronome",
 	"pulse_count_in": "décompte",

@@ -3,8 +3,9 @@
 	import '@fontsource-variable/alegreya/wght-italic.css';
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
+	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { preloadAudio } from '#lib/audio/engine.ts';
+	import { preloadAudio, stopAll } from '#lib/audio/engine.ts';
 	import SiteHeader from '#lib/components/SiteHeader.svelte';
 	import { getLocale, m } from '#lib/i18n.ts';
 	import { applyTheme, settings } from '#lib/state/settings.svelte.ts';
@@ -13,6 +14,8 @@
 	let { children }: LayoutProps = $props();
 
 	$effect(() => applyTheme(settings.value.theme));
+	// Notes already scheduled (a scale, a played-back exercise) would sound on the next page.
+	beforeNavigate(() => stopAll());
 	$effect(() => {
 		if (/^\/(sight-reading|rhythm|theory|ear)/.test(page.route.id ?? '')) preloadAudio();
 	});
