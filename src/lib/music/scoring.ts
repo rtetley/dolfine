@@ -21,6 +21,8 @@ export interface ScoredNote {
 	id: string;
 	outcome: NoteOutcome;
 	deltaMs?: number;
+	/** For a wrong note, the index of the played event heard in its place. */
+	heard?: number;
 }
 
 export interface ScoreSummary<P extends Timed = PlayedNote> {
@@ -76,7 +78,7 @@ export function scoreTimed<E extends ExpectedNote, P extends Timed>(
 		const wrong = nearest(target, () => true);
 		if (wrong >= 0) {
 			used.add(wrong);
-			return { id: target.id, outcome: 'wrong' };
+			return { id: target.id, outcome: 'wrong', heard: wrong };
 		}
 		return { id: target.id, outcome: 'missed' };
 	});

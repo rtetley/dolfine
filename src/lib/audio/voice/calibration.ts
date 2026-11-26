@@ -13,7 +13,7 @@ export const CALIBRATION_ROUNDS = 3;
 export const CALIBRATION_BEAT_MS = 1000;
 const PAIRING_WINDOW_MS = CALIBRATION_BEAT_MS / 2;
 const SAME_NAME_FACTOR = 2.5;
-const OTHER_NAME_FACTOR = 1.5;
+const OTHER_NAME_FACTOR = 2;
 
 export const calibrationPrompts = (): Letter[] =>
 	Array.from({ length: CALIBRATION_ROUNDS }, () => [...LETTERS]).flat();

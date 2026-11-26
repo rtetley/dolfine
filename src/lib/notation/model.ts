@@ -14,6 +14,8 @@ export interface ScoreNote {
 	triplet?: boolean;
 	below?: string;
 	above?: string;
+	/** What was played or said instead of a wrong note, drawn under it. */
+	heard?: string;
 	style?: NoteStyle;
 	keyStyles?: readonly (NoteStyle | undefined)[];
 }
@@ -78,6 +80,7 @@ export function expandMeasure(measure: readonly ScoreNote[]): RenderableNote[] {
 			duration,
 			tie: index < parts.length - 1 && !note.rest ? true : note.tie,
 			below: index === 0 ? note.below : undefined,
+			heard: index === 0 ? note.heard : undefined,
 			above: index === 0 ? note.above : undefined
 		}));
 	});

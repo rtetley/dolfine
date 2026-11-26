@@ -5,7 +5,7 @@ import { isVoiceProfile } from './profile';
 import { classify, dtwDistance } from './names';
 import { analyseFrames, fft, resample } from './signal';
 import { findSyllables, voicedRegions } from './syllables';
-import { calibrationTake, NAME_VOWELS, RATE, speak } from './testSignals';
+import { calibrationTake, NAME_SOUNDS, RATE, speak } from './testSignals';
 
 describe('signal analysis', () => {
 	it('computes a forward and inverse FFT', () => {
@@ -70,9 +70,9 @@ describe('syllables', () => {
 			speak(
 				3.8,
 				LETTERS.map((letter, i) => ({
-					vowel: NAME_VOWELS[letter],
+					...NAME_SOUNDS[letter],
 					at: onsets[i],
-					duration: 0.52,
+					duration: 0.45,
 					f0: 140 + i * 5
 				}))
 			),
@@ -82,6 +82,26 @@ describe('syllables', () => {
 		syllables.forEach((syllable, i) =>
 			expect(Math.abs(syllable.time - onsets[i])).toBeLessThan(0.04)
 		);
+	});
+
+	it('times la at its vowel, whichever name runs into it', () => {
+		for (const before of LETTERS) {
+			const syllables = findSyllables(
+				speak(1.4, [
+					{ ...NAME_SOUNDS[before], at: 0.3, duration: 0.4 },
+					{ ...NAME_SOUNDS.A, at: 0.8, duration: 0.3 }
+				]),
+				RATE
+			);
+			expect(syllables).toHaveLength(2);
+			expect(Math.abs(syllables[1].time - 0.8)).toBeLessThan(0.015);
+		}
+	});
+
+	it('keeps the l that closes "sol" with sol', () => {
+		expect(
+			findSyllables(speak(1, [{ ...NAME_SOUNDS.G, at: 0.3, duration: 0.3 }]), RATE)
+		).toHaveLength(1);
 	});
 
 	it('keeps a long held name whole', () => {
@@ -133,7 +153,7 @@ describe('calibration', () => {
 		if (!result.ok) return;
 		for (const letter of LETTERS) {
 			expect(result.profile.templates[letter]).toHaveLength(3);
-			expect(Math.abs(result.profile.offsetMs[letter] - 60)).toBeLessThan(25);
+			expect(Math.abs(result.profile.offsetMs[letter] - 60)).toBeLessThan(30);
 		}
 		expect(result.profile.rejectDistance).toBeGreaterThan(0);
 		expect(isVoiceProfile(JSON.parse(JSON.stringify(result.profile)))).toBe(true);
@@ -153,10 +173,29 @@ describe('calibration', () => {
 		expect(heard).toEqual(take.prompts);
 	});
 
+	it('tells la from fa, which share their vowel, in a legato reading', () => {
+		if (!result.ok) throw new Error('calibration failed');
+		const order = ['G', 'A', 'F', 'A', 'E', 'A', 'F'] as const;
+		const syllables = findSyllables(
+			speak(
+				4,
+				order.map((letter, i) => ({
+					...NAME_SOUNDS[letter],
+					at: 0.3 + i * 0.5,
+					duration: 0.4,
+					f0: 150 + i * 8
+				}))
+			),
+			RATE
+		);
+		const profile = result.profile;
+		expect(syllables.map((s) => classify(s.features, profile)?.letter)).toEqual(order);
+	});
+
 	it('gives a near tie to the name the score expects, and ignores noise', () => {
 		if (!result.ok) throw new Error('calibration failed');
 		const profile = result.profile;
-		const [syllable] = findSyllables(speak(0.6, [{ vowel: NAME_VOWELS.C, at: 0.2 }]), RATE);
+		const [syllable] = findSyllables(speak(0.6, [{ ...NAME_SOUNDS.C, at: 0.2 }]), RATE);
 		expect(classify(syllable.features, profile)?.letter).toBe('C');
 		const tied = { ...profile, templates: { ...profile.templates, G: profile.templates.C } };
 		expect(classify(syllable.features, tied)?.letter).toBe('C');

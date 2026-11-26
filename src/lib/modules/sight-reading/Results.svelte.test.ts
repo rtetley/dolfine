@@ -56,6 +56,31 @@ describe('Results', () => {
 		await expect.element(screen.getByText(/Clean and steady/)).toBeVisible();
 	});
 
+	it('tells rushed from late notes, and writes what was heard under a wrong one', async () => {
+		const [first, second, third, ...rest] = spokenPerfect.notes;
+		const shift = exercise.toleranceMs * 1.5;
+		const heard = first.letter === 'G' ? 'C' : 'G';
+		const screen = await render(Results, {
+			exercise,
+			performance: {
+				input: 'voice',
+				notes: [
+					{ ...first, letter: heard },
+					{ ...second, time: second.time - shift },
+					{ ...third, time: third.time + shift },
+					...rest
+				]
+			},
+			scored: true,
+			canLevelUp: false,
+			...handlers()
+		});
+		await expect.element(screen.getByText('● rushed 1')).toBeVisible();
+		await expect.element(screen.getByText('● late 1')).toBeVisible();
+		await expect.element(screen.getByText(/Under a wrong note, in red/)).toBeVisible();
+		await expect.poll(() => notation(screen.container)?.textContent).toContain(heard);
+	});
+
 	it('keeps the staff on screen after an unscored run', async () => {
 		const screen = await render(Results, {
 			exercise,

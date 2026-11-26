@@ -1,10 +1,11 @@
+import type { Letter } from '#lib/music/pitch.ts';
 import { describe, expect, it } from 'vitest';
 import { buildProfile } from '#lib/audio/voice/calibration.ts';
-import { calibrationTake, NAME_VOWELS, RATE, speak } from '#lib/audio/voice/testSignals.ts';
+import { calibrationTake, NAME_SOUNDS, RATE, speak } from '#lib/audio/voice/testSignals.ts';
 import { createExercise, MIN_SPOKEN_TOLERANCE_MS, spokenTempo } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
 import { hearReading } from './hear';
-import { scoreRun } from './spoken';
+import { heardLabels, scoreRun } from './spoken';
 
 const LATENCY = 0.06;
 const calibration = calibrationTake(LATENCY);
@@ -17,7 +18,7 @@ const exercise = createExercise(voice, 11);
 
 interface Reading {
 	/** Replaces the name said at one note. */
-	misread?: { index: number; vowel: keyof typeof NAME_VOWELS };
+	misread?: { index: number; letter: Letter };
 	/** Holds each name until the next and sings it at pitch, as a fluent reader does. */
 	legato?: boolean;
 }
@@ -30,22 +31,12 @@ function reading({ misread, legato = false }: Reading = {}) {
 	const { expected } = exercise;
 	const end = exercise.durationMs;
 	const syllables = expected.map((note, index) => ({
-		vowel: NAME_VOWELS[index === misread?.index ? misread.vowel : note.letter],
+		...NAME_SOUNDS[index === misread?.index ? misread.letter : note.letter],
 		at: onsetAt(lead, note.time),
-		duration: legato ? ((expected[index + 1]?.time ?? end) - note.time) / 1000 + 0.02 : 0.15,
+		duration: legato ? ((expected[index + 1]?.time ?? end) - note.time) / 1000 - 0.05 : 0.15,
 		f0: legato ? 440 * 2 ** ((note.midi - 81) / 12) : 140
 	}));
 	const samples = speak(lead + exercise.durationMs / 1000 + 0.5, syllables);
-	if (legato) {
-		// Each name's consonant: a slight dip, deeper where a name repeats and the vowel can't change.
-		expected.forEach((note, index) => {
-			const repeated = expected[index - 1]?.letter === note.letter;
-			const start = Math.round((onsetAt(lead, note.time) - 0.025) * RATE);
-			for (let n = Math.max(0, start); n < start + 0.025 * RATE; n++) {
-				samples[n] *= repeated ? 0.3 : 0.7;
-			}
-		});
-	}
 	const recordingStart = 10;
 	return hearReading(
 		{ samples, sampleRate: RATE, startTime: recordingStart },
@@ -75,17 +66,34 @@ describe('spoken reading', () => {
 		const other = actual === 'C' ? 'E' : 'C';
 		const summary = scoreRun(exercise, {
 			input: 'voice',
-			notes: reading({ misread: { index, vowel: other } })
+			notes: reading({ misread: { index, letter: other } })
 		});
 		expect(summary.notes[index].outcome).toBe('wrong');
+		const performance = {
+			input: 'voice',
+			notes: reading({ misread: { index, letter: other } })
+		} as const;
+		const labels = heardLabels(
+			scoreRun(exercise, performance).notes,
+			performance,
+			'solfege',
+			false
+		);
+		expect([...labels]).toEqual([[summary.notes[index].id, other === 'C' ? 'Do' : 'Mi']]);
 		expect(summary.notes.filter((note) => note.outcome === 'correct')).toHaveLength(
 			exercise.expected.length - 1
 		);
 	});
 
-	it('scores MIDI runs on exact pitch, as before', () => {
+	it('scores MIDI runs on exact pitch, as before, and labels a wrong key with its octave', () => {
 		const notes = exercise.expected.map(({ midi, time }) => ({ midi: midi + 12, time }));
-		expect(scoreRun(exercise, { input: 'midi', notes }).pitchAccuracy).toBe(0);
+		const performance = { input: 'midi', notes } as const;
+		const summary = scoreRun(exercise, performance);
+		expect(summary.pitchAccuracy).toBe(0);
+		const first = exercise.expected[0];
+		expect(heardLabels(summary.notes, performance, 'letters', false).get(summary.notes[0].id)).toBe(
+			`${first.letter}${Math.floor((first.midi + 12) / 12) - 1}`
+		);
 	});
 });
 

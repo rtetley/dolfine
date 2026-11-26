@@ -164,7 +164,12 @@ export const noteId = (part: number, measure: number, index: number): string =>
 
 export function exerciseScore(
 	exercise: SightReadingExercise,
-	options: { showReferences: boolean; outcomes?: readonly ScoredNote[] }
+	options: {
+		showReferences: boolean;
+		outcomes?: readonly ScoredNote[];
+		/** Labels of what was heard in place of wrong notes, by note id. */
+		heard?: ReadonlyMap<string, string>;
+	}
 ): Score {
 	const outcomeById = new Map(options.outcomes?.map((outcome) => [outcome.id, outcome.outcome]));
 	const parts: StaffPart[] = exercise.parts.map((part, p) => ({
@@ -185,7 +190,8 @@ export function exerciseScore(
 					pitches: note.pitch ? [note.pitch] : [],
 					tie: note.tie,
 					triplet: note.triplet,
-					style
+					style,
+					heard: options.heard?.get(id)
 				};
 			})
 		)

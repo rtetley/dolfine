@@ -14,8 +14,15 @@ const VALLEY_DB = 6;
 const CHANGE_SPAN = 2;
 /** How much faster the spectrum must change than in the stretch's steady parts to mark a new name. */
 const CHANGE_RATIO = 4;
+/** The calmest quarter of a stretch: a short name is mostly transitions. */
+const STEADY_PERCENTILE = 0.25;
+/** Above the ripple of a held vowel, even sung with vibrato; below any jump into another sound. */
+const MIN_JUMP = 30;
+const SPLIT_LOUDNESS_DB = 6;
 const ONSET_BELOW_PEAK_DB = 10;
 const CONSONANT_FRAMES = 8;
+/** How far into a stretch a voiced consonant can run before its vowel. */
+const CONSONANT_SEARCH_FRAMES = 15;
 const MAX_FEATURE_FRAMES = 40;
 
 export interface Region {
@@ -60,6 +67,15 @@ function splitAtValleys(energy: Float32Array, region: Region): Region[] {
 	];
 }
 
+const jumpThreshold = (change: Float32Array, region: Region): number =>
+	Math.max(
+		percentile(change.slice(region.start, region.end), STEADY_PERCENTILE) * CHANGE_RATIO,
+		MIN_JUMP
+	);
+
+const isPeak = (change: Float32Array, i: number): boolean =>
+	change[i] >= change[i - 1] && change[i] >= change[i + 1];
+
 /** How fast the spectrum changes around each frame. */
 export function spectralChange(mfcc: readonly Float32Array[]): Float32Array {
 	const change = new Float32Array(mfcc.length);
@@ -72,17 +88,30 @@ export function spectralChange(mfcc: readonly Float32Array[]): Float32Array {
 
 /**
  * Names said legato through a voiced consonant ("ré-mi", "sol-la") barely dip in loudness, but the
- * spectrum jumps between their vowels. Splits at the sharpest jump, relative to the steady parts.
+ * spectrum jumps between their vowels. Splits at the sharpest jump, relative to the steady parts,
+ * with a vowel on each side: a voiced consonant (the l closing "sol") or the fade of a held name
+ * is a jump too, but quieter than any vowel.
  */
-function splitAtChanges(change: Float32Array, region: Region): Region[] {
-	const inner = change.slice(region.start + MIN_FRAMES, region.end - MIN_FRAMES);
-	if (inner.length === 0) return [region];
-	const steady = percentile(change.slice(region.start, region.end), 0.5);
-	const at = region.start + MIN_FRAMES + inner.indexOf(Math.max(...inner));
-	if (change[at] <= steady * CHANGE_RATIO) return [region];
+function splitAtChanges(energyDb: Float32Array, change: Float32Array, region: Region): Region[] {
+	const threshold = jumpThreshold(change, region);
+	const vowelOnBothSides = (at: number): boolean =>
+		Math.abs(
+			peakOf(energyDb, at + CHANGE_SPAN, region.end) -
+				peakOf(energyDb, region.start, at - CHANGE_SPAN)
+		) <= SPLIT_LOUDNESS_DB;
+	const at = Array.from({ length: region.end - region.start - 2 * MIN_FRAMES }, (_, i) => {
+		const frame = region.start + MIN_FRAMES + i;
+		return { frame, change: change[frame] };
+	})
+		.filter(
+			({ frame, change: jump }) =>
+				jump > threshold && isPeak(change, frame) && vowelOnBothSides(frame)
+		)
+		.sort((a, b) => b.change - a.change)[0]?.frame;
+	if (at === undefined) return [region];
 	return [
-		...splitAtChanges(change, { start: region.start, end: at }),
-		...splitAtChanges(change, { start: at, end: region.end })
+		...splitAtChanges(energyDb, change, { start: region.start, end: at }),
+		...splitAtChanges(energyDb, change, { start: at, end: region.end })
 	];
 }
 
@@ -111,30 +140,44 @@ export function voicedRegions(
 	}
 	return regions
 		.flatMap((region) => splitAtValleys(energyDb, region))
-		.flatMap((region) => splitAtChanges(change, region))
+		.flatMap((region) => splitAtChanges(energyDb, change, region))
 		.filter((region) => region.end - region.start >= MIN_FRAMES);
 }
 
 /**
- * A syllable is heard where its vowel starts (its perceptual centre), not at the consonant.
- * The first frame within a few dB of the stretch's peak is a stable estimate of that point.
+ * A syllable is heard where its vowel starts (its perceptual centre), not at the consonant. That is
+ * the first frame within a few dB of the stretch's peak, unless the spectrum jumps later on, from a
+ * voiced consonant into the vowel. A voiced consonant like the l of "la" is sometimes nearly as loud
+ * as the vowel and sometimes cut off by a dip: the jump times the name the same way in both cases.
  */
-export function vowelOnset(energyDb: Float32Array, region: Region): number {
+export function vowelOnset(energyDb: Float32Array, change: Float32Array, region: Region): number {
 	const peak = peakOf(energyDb, region.start, region.end);
-	for (let i = region.start; i < region.end; i++) {
-		if (energyDb[i] >= peak - ONSET_BELOW_PEAK_DB) return i;
+	let loud = region.start;
+	while (loud < region.end - 1 && energyDb[loud] < peak - ONSET_BELOW_PEAK_DB) loud++;
+	let jump = -1;
+	let strongest = jumpThreshold(change, region);
+	const last = Math.min(region.end, region.start + CONSONANT_SEARCH_FRAMES);
+	for (let i = region.start + 2 * CHANGE_SPAN; i < last; i++) {
+		if (isPeak(change, i) && change[i] > strongest) {
+			strongest = change[i];
+			jump = i;
+		}
 	}
-	return region.start;
+	return Math.max(loud, jump);
 }
 
 export function findSyllables(samples: Float32Array, sampleRate: number): Syllable[] {
 	const signal = resample(samples, sampleRate, ANALYSIS_RATE);
 	const { energyDb, voicing, mfcc } = analyseFrames(signal);
-	const regions = voicedRegions(energyDb, voicing, spectralChange(mfcc));
+	const change = spectralChange(mfcc);
+	const regions = voicedRegions(energyDb, voicing, change);
 	return regions.map((region, index) => {
 		const previousEnd = index > 0 ? regions[index - 1].end : 0;
 		const start = Math.max(previousEnd, region.start - CONSONANT_FRAMES);
 		const end = Math.min(region.end, start + MAX_FEATURE_FRAMES);
-		return { time: frameTime(vowelOnset(energyDb, region)), features: mfcc.slice(start, end) };
+		return {
+			time: frameTime(vowelOnset(energyDb, change, region)),
+			features: mfcc.slice(start, end)
+		};
 	});
 }
