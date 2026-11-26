@@ -9,7 +9,16 @@
 	import Score from '#lib/notation/Score.svelte';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { scaleScore } from '../display';
-	import { CHARACTERISTIC_NOTES, type DegreeStudy, rootCode, TYPICAL_CHORDS } from '../lessons';
+	import { VOICING_TEXT } from '../lessonText';
+	import {
+		CHARACTERISTIC_NOTES,
+		type DegreeStudy,
+		type LessonVoicing,
+		lessonVoicings,
+		rootCode,
+		TYPICAL_CHORDS,
+		voicingFormula
+	} from '../lessons';
 
 	interface Props {
 		study: DegreeStudy;
@@ -26,11 +35,24 @@
 		`${noteName(study.chord.root, names)} ${modeLabel(study.mode, language)}`
 	);
 	const symbol = $derived(chordSymbol(study.chord, settings.value.chordStyle, names));
-	const chordScore = $derived<ScoreModel>({
+	/** The basic voicings of the mode's chord: close position, and drop 2. */
+	const voicings = $derived(
+		lessonVoicings(study.chord).filter((v) => v.kind === 'close' || v.kind === 'drop2')
+	);
+	const voicingScore = (voicing: LessonVoicing): ScoreModel => ({
 		parts: [
 			{
 				clef: 'treble',
-				measures: [[{ id: `c${study.degree}`, ticks: 48, rest: false, pitches: study.seventh }]]
+				measures: [
+					[
+						{
+							id: `v${study.degree}${voicing.kind}`,
+							ticks: 48,
+							rest: false,
+							pitches: voicing.pitches
+						}
+					]
+				]
 			}
 		]
 	});
@@ -42,9 +64,9 @@
 		playArpeggio([...midis, (midis[0] ?? 60) + 12], 0.28, 0.6);
 	}
 
-	async function hearChord(): Promise<void> {
+	async function hearVoicing(voicing: LessonVoicing): Promise<void> {
 		await ensureAudio();
-		playNotes(study.seventh.map(toMidi), 2);
+		playNotes(voicing.pitches.map(toMidi), 2);
 	}
 </script>
 
@@ -62,12 +84,31 @@
 		</div>
 	</header>
 
-	<div class="staves">
-		<Score
-			score={scaleScore(study.scale, `d${study.degree}-`)}
-			label={m.lesson_scale_label({ name: modeName })}
-		/>
-		<Score score={chordScore} preferredPerLine={1} label={m.lesson_chord_label({ name: symbol })} />
+	<Score
+		score={scaleScore(study.scale, `d${study.degree}-`)}
+		label={m.lesson_scale_label({ name: modeName })}
+	/>
+
+	<div class="voicings">
+		{#each voicings as voicing (voicing.kind)}
+			<figure class="voicing">
+				<Score
+					score={voicingScore(voicing)}
+					preferredPerLine={1}
+					label={m.lesson_voicing_label({
+						name: symbol,
+						voicing: VOICING_TEXT[voicing.kind].name()
+					})}
+				/>
+				<figcaption>
+					<strong>{VOICING_TEXT[voicing.kind].name()}</strong>
+					<span class="formula">{voicingFormula(study.mode, voicing)}</span>
+					<button type="button" onclick={() => void hearVoicing(voicing)}>
+						{m.lesson_hear_voicing_named({ voicing: VOICING_TEXT[voicing.kind].name() })}
+					</button>
+				</figcaption>
+			</figure>
+		{/each}
 	</div>
 
 	<dl class="facts">
@@ -89,7 +130,6 @@
 
 	<div class="actions">
 		<button type="button" onclick={() => void hearScale()}>{m.hear_the_scale()}</button>
-		<button type="button" onclick={() => void hearChord()}>{m.lesson_hear_chord()}</button>
 		<!-- The path is resolved; resolve() cannot express the query string. -->
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={resolve('/theory/lessons/[lesson]', { lesson: 'voicings' }) + voicingsQuery}>
@@ -128,11 +168,26 @@
 		margin: 0;
 	}
 
-	.staves {
+	.voicings {
 		display: grid;
-		grid-template-columns: minmax(0, 3fr) minmax(8rem, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 		gap: var(--space-4);
-		align-items: end;
+	}
+
+	.voicing {
+		margin: 0;
+	}
+
+	figcaption {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-2) var(--space-3);
+	}
+
+	.formula {
+		color: var(--ink-soft);
+		font-variant-numeric: lining-nums;
 	}
 
 	.facts {
@@ -155,11 +210,5 @@
 
 	.actions {
 		margin: 0;
-	}
-
-	@media (max-width: 40rem) {
-		.staves {
-			grid-template-columns: minmax(0, 1fr);
-		}
 	}
 </style>

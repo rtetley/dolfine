@@ -22,13 +22,6 @@
 	import { grandStaff } from '../display';
 	import { VOICING_TEXT } from '../lessonText';
 	import { lessonVoicings, parseRootCode, voicingFormula } from '../lessons';
-	import LessonIntro from './LessonIntro.svelte';
-
-	interface Props {
-		paragraphs: string[];
-	}
-
-	let { paragraphs }: Props = $props();
 
 	const requested = MODES.find((mode) => mode.id === (page.url.searchParams.get('mode') as ModeId));
 	const requestedRoot = parseRootCode(page.url.searchParams.get('root'));
@@ -81,8 +74,6 @@
 		);
 	}
 </script>
-
-<LessonIntro {paragraphs} />
 
 <section class="setup" aria-label={m.setup_label()}>
 	<label class="field">

@@ -23,10 +23,10 @@ const INITIAL_JS_BUDGET_KB: Record<string, number> = {
 	'theory.html': 305,
 	'ear.html': 300,
 	'theory/lessons.html': 200,
-	'theory/lessons/major.html': 250,
-	'theory/lessons/melodic-minor.html': 250,
-	'theory/lessons/harmonic-minor.html': 250,
-	'theory/lessons/voicings.html': 250
+	'theory/lessons/major.html': 270,
+	'theory/lessons/melodic-minor.html': 270,
+	'theory/lessons/harmonic-minor.html': 270,
+	'theory/lessons/voicings.html': 270
 };
 
 const LAZY_LIBRARIES = [

@@ -30,7 +30,8 @@
 	<meta name="description" content={m.meta_description()} />
 </svelte:head>
 
-<SiteHeader />
+<!-- A lesson is an environment of its own: it draws its own slim bar instead of the site menu. -->
+{#if page.route.id !== '/theory/lessons/[lesson]'}<SiteHeader />{/if}
 <main>
 	{@render children()}
 </main>
