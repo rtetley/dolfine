@@ -104,9 +104,9 @@ Once the performance is a list of scored notes, a text model can turn the number
 
 ## Review notes (Nov 2026)
 
-- **Spoken note names are missing.** The first idea for microphone grading was the student saying the note names in rhythm. That grades reading for every instrument without solving polyphony. It is worked out in [its own note](grading-spoken-note-reading.md), and it should come before listening to instruments in the recommendation above.
-- **Octave errors.** `scorePerformance` matches on exact MIDI. Microphone pitch trackers often jump an octave, so an on-device tracker would mark correct notes as wrong. Make the comparison a parameter: exact MIDI for a MIDI keyboard, octave-tolerant for the microphone, letter only for spoken names.
-- **Metronome bleed.** Option B doesn't mention that the microphone hears the click from the speakers. Plan on `echoCancellation`, a headphones recommendation, and an onset filter that rejects clicks.
+- **Spoken note names are missing.** The first idea for microphone grading was the student saying the note names in rhythm, with the app checking only the right note at the right time. That is what sight reading should prove, and it needs no pitch detection at all. It is worked out in [its own note](grading-spoken-note-reading.md), and it should replace the instrument listening of option B for sight reading.
+- **Matching.** `scorePerformance` compares exact MIDI numbers. Make the comparison a parameter: exact MIDI for a MIDI keyboard, letter only for spoken names.
+- **Metronome bleed.** The plan doesn't mention that the microphone hears the click from the speakers. Plan on `echoCancellation`, a headphones recommendation, and an onset filter that rejects clicks.
 - **The ladder model has changed.** Since #34, a level is a set of exercises that each need their grade. The "4 of the last 5 runs" rule should apply per exercise (for example "play (MIDI)", "spoken reading", "clap the rhythm"), not to the whole module.
 - **Prices.** The model names and rates in option A's table come from third-party trackers. Re-check them against the providers' pages before using them in a decision.
 - **Latency calibration** (open question below): store it once per device, and redo it when the audio device changes (`devicechange`), rather than before every session.

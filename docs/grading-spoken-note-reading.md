@@ -2,23 +2,19 @@
 
 _Design note, a variant of [Grading sight reading and inner rhythm](grading-sight-reading-and-rhythm.md). Status: proposal, for a later release. Nothing here is implemented._
 
-The original idea for microphone grading was simple. The student reads the score aloud, saying each note's name in rhythm ("do, ré, mi, sol…" or "C, D, E, G…"). The app listens, checks that every name is right, and checks that it arrived on time. This is the _lecture de notes rythmée_ of French formation musicale classes. It trains the eye-to-name reflex and the inner pulse without needing an instrument.
+The original idea for microphone grading was simple. The student reads the score aloud, saying each note's name in rhythm ("do, ré, mi, sol…" or "C, D, E, G…"). The app checks two things only: **the right note, at the right time**. This is the _lecture de notes rythmée_ of French formation musicale classes, and it is exactly the skill sight reading is meant to train: turning what is on the staff into names and rhythm without hesitating.
 
-This note works out how to build that version, and how it compares with listening to an instrument.
+**No pitch is involved.** The student speaks, they don't sing, and the app never measures the pitch of their voice or of an instrument. That removes the hardest parts of the original microphone plan (pitch tracking, polyphony, vibrato, a different sound for every instrument), and it works the same for every student, whatever they play, with no MIDI keyboard.
 
-## 1. Why speaking is worth it
+## 1. What is graded
 
-The instrument plan has two hard problems: every instrument sounds different, and the piano is polyphonic. Speaking avoids both.
+| Graded                                                     | Not graded                                    |
+| ---------------------------------------------------------- | --------------------------------------------- |
+| The name of each written note head (clef reading)          | The pitch of the voice: speaking, not singing |
+| When each name lands, against the metronome and the rhythm | Octave (not spoken)                           |
+| Missed notes, extra names, names said during a rest        | Accidentals (see the open questions)          |
 
-| Concern                 | Listening to an instrument                | Listening to spoken names                                  |
-| ----------------------- | ----------------------------------------- | ---------------------------------------------------------- |
-| Who can be graded       | One pipeline per instrument family        | Every student, whatever they play, with no MIDI keyboard   |
-| What must be recognised | Any pitch, polyphony, vibrato, intonation | 7 words in a known order: a closed vocabulary with a prior |
-| Skill graded            | Reading plus technique                    | Reading only: clef, note names, rhythm                     |
-| Octave and accidentals  | Graded                                    | Not spoken, so not graded (see §5)                         |
-| Hardest part            | Polyphonic transcription                  | Timing: when a syllable "lands" is fuzzy (see §3)          |
-
-The two modes complement each other. Spoken reading grades the reading itself, from Level 1 and for every instrument. MIDI, and later instrument listening, grades playing what you read.
+The hard part is not recognising seven words. It is deciding when a spoken syllable "lands" (§3).
 
 ## 2. What the student does
 
@@ -34,7 +30,7 @@ The student uses a single staff only, treble or bass (and the C clefs later). No
 Grading timing is the part that needs care. It is also the reason not to use off-the-shelf speech recognition.
 
 - **The beat of a syllable is its vowel, not its first sound.** Listeners hear a spoken syllable land at its _perceptual centre_ (P-centre). The P-centre sits near the vowel onset, 30–100 ms after the acoustic start, and the gap depends on the consonant. The "s" of _sol_ and _si_ starts early. The "d" of _do_ and _ré_'s "r" start late. Grading the raw acoustic onset would mark every _sol_ as early.
-- **So we time the vowel onset**: the rise of voiced energy (periodicity in the 80–400 Hz band) after the consonant. Then we subtract a per-syllable offset measured at calibration, so each student's _sol_ is compared with their own _sol_.
+- **So we time the vowel onset**: the rise of voiced energy after the consonant. The voice's periodicity is only used to find where the vowel starts. Its pitch is never read or graded. Then we subtract a per-syllable offset measured at calibration, so each student's _sol_ is compared with their own _sol_.
 - **Tolerance.** The sight-reading levels already scale the window from 160 ms (Level 1) to 52 ms (Level 10). Speech onsets jitter more than key presses, so the spoken mode should use `max(level.toleranceMs, 80)` until a test corpus says otherwise.
 - **Speed limit.** Nobody articulates more than about 5 clear names a second. At 104 bpm, Level 10's tempo, sixteenth notes would need 7. The spoken mode caps the rate at `notes per second ≤ 5` and lowers the tempo for that run, telling the student why. A run that is slowed this way still counts towards the ladder.
 - **Latency.** Microphone latency varies with the device and the browser. Calibration takes the median offset of the four "do"s against the clicks. It is stored per device and redone when `navigator.mediaDevices` fires `devicechange`.
@@ -58,7 +54,7 @@ The problem is much smaller than speech recognition. The score tells us **which 
 
 Whisper-family APIs and Google or Deepgram speech-to-text return word timings at roughly $0.003–0.006 a minute (2025 list prices; check before committing). At the original plan's 200 graded minutes per student a month, that is about $1 per student a month.
 
-But their word timestamps are accurate to ±50–100 ms at best, which is too coarse for Levels 6–10. They are poor on single isolated syllables. And as with the instrument plan, recordings of minors would leave the device.
+But their word timestamps are accurate to ±50–100 ms at best, which is too coarse for Levels 6–10. They are poor on single isolated syllables. And as with sending audio to an AI model in the original plan, recordings of minors would leave the device.
 
 **Verdict:** rejected for grading, for the same reasons as the original plan's option A.
 
@@ -66,7 +62,7 @@ But their word timestamps are accurate to ±50–100 ms at best, which is too co
 
 The audio is processed in the browser, frame by frame, through a Web Audio `AudioWorklet`:
 
-1. **Segment.** Detect voiced syllables: energy plus periodicity, which also rejects claps, coughs and metronome clicks. Each syllable gives a time (its vowel onset, §3) and a short window of audio.
+1. **Segment.** Detect voiced syllables: energy plus voicing (is there a vowel, not which pitch), which also rejects claps, coughs and metronome clicks. Each syllable gives a time (its vowel onset, §3) and a short window of audio.
 2. **Classify** each syllable as one of the seven names (plus "noise").
    - **Phase 1: template matching, no model.** Compute MFCC features for the syllable, then use dynamic time warping (DTW) against the student's own calibration recordings of the seven names. For one known speaker and seven words, this classic approach is accurate and needs no training data. It is a few hundred lines of TypeScript.
    - **Phase 2, only if Phase 1 falls short: a small trained classifier.** A CNN on log-mel features, trained offline on a corpus of children's and adults' voices, exported to ONNX and run with `onnxruntime-web`. The model would be under 500 KB and lazy-loaded like VexFlow. This works without calibration, but it needs the corpus.
@@ -85,15 +81,15 @@ English letter names are acoustically the hardest case: five of the seven differ
 
 ## 5. Fitting it into the code
 
-- **Scoring.** `scorePerformance` matches on exact MIDI. Generalise it to take the comparison as a parameter, so the spoken mode compares letters (and an instrument tracker can later forgive octave errors):
+- **Scoring.** `scorePerformance` already does the matching we need (nearest event in a window, then `correct` / `early` / `late` / `wrong` / `missed`), but it compares exact MIDI numbers. Make the comparison a parameter, so the spoken mode compares letters only:
 
   ```ts
-  scorePerformance(expected, played, toleranceMs, (same = (e, p) => e.midi === p.midi));
+  type SameNote = (expected: ExpectedNote, played: PlayedNote) => boolean;
   ```
 
-  A spoken name becomes a `PlayedNote` carrying its letter. The expected notes already have their spelling from the exercise generator.
+  The MIDI path keeps comparing `midi`. A spoken name becomes a played event carrying its letter and time. The expected notes already have their spelling from the exercise generator.
 
-- **What is graded.** In this mode, name % replaces pitch % and rhythm % keeps its meaning. Octave and accidental are out of scope, which matches classroom _lecture de notes_. A later option could ask for "fa dièse" or "F sharp" at the higher levels. It needs two syllables per note, so it would halve the speed limit.
+- **What is graded.** Two numbers: notes % (right name, whatever the timing) and rhythm % (right name within the tolerance). Octave and accidental are out of scope, which matches classroom _lecture de notes_.
 - **Ladder.** Use the original plan's run rule unchanged: a run passes at ≥ 85 % names and ≥ 85 % rhythm, and a level needs 4 passes among the last 5 counted runs. Since #34, a level is a set of exercises that each need their grade. So "spoken reading" is one exercise of each sight-reading level, next to "play (MIDI)", and either one can open the next level for students without a keyboard.
 - **Metronome bleed.** The microphone hears the click from the speakers. Request `echoCancellation: true` in `getUserMedia`, and recommend headphones on the setup screen. The voicing check in step 1 rejects clicks that get through. Check during calibration that echo cancellation doesn't shift the onsets: if it does, keep the timing measured with it turned off.
 - **New files** (each one under 400 lines): `src/lib/audio/mic.ts` (capture, permission, calibration storage), `src/lib/audio/syllables.worklet.ts` (segmentation), `src/lib/audio/spokenNames.ts` (MFCC, DTW, classifying with the prior: pure functions, unit-tested on fixture recordings).
@@ -109,11 +105,11 @@ English letter names are acoustically the hardest case: five of the seven differ
 | Test corpus (children and adults, fr and en, quiet and noisy rooms)    | 2 weeks        |
 | _Phase 2 only:_ trained CNN classifier with `onnxruntime-web`          | 2–3 weeks      |
 
-That is 6–8 weeks for Phase 1, similar to the instrument plan's on-device option. The spoken mode grades every student, though, not just pianists and monophonic instruments.
+That is 6–8 weeks for Phase 1, with no pitch tracking and no per-instrument work, and it grades every student.
 
 ## 7. Recommendation
 
-1. Build the spoken mode **before** listening to instruments. It reuses the same microphone, calibration and onset groundwork, it covers every student, and it avoids polyphony.
+1. Make the spoken mode **the** microphone grading for sight reading, instead of listening to instruments. It checks what matters (the right note at the right time), covers every student, and needs no pitch detection.
 2. Start with solfège names (French users and English users who choose them). Turn on letter names once the corpus shows the rhyming letters are told apart reliably.
 3. Keep everything on the device. No audio leaves the browser, so there is no data processing agreement, and the consent wording only concerns microphone access.
 
@@ -121,5 +117,5 @@ That is 6–8 weeks for Phase 1, similar to the instrument plan's on-device opti
 
 - Should "spoken reading" alone be able to open the next sight-reading level, or should it count for only half when a MIDI keyboard is connected?
 - Is the 5-names-a-second cap right for children at Levels 1–3? It might be closer to 3.
-- Should the higher levels ask for accidentals ("fa dièse"), or is that a separate theory skill?
+- Should the higher levels ask for accidentals ("fa dièse")? It would mean two syllables per note, which halves the speed limit.
 - How much calibration will students accept: once per device, or a quick check before each session?
