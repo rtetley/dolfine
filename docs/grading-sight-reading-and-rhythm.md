@@ -2,6 +2,8 @@
 
 _Design note for issue #13 (progress tracking). Status: proposal, for a later release. Nothing here is implemented._
 
+_See also [Grading sight reading by speaking the note names](grading-spoken-note-reading.md), the microphone variant where the student reads the notes aloud._
+
 Music theory and ear training already have a progress ladder: every answer is right or wrong, each level has a few exercises, and the next level opens once the student gets 18 of their last 20 answers right on every one of them (`src/lib/progress/`). Sight reading and inner rhythm don't fit that model. A performance is never just right or wrong. It is _mostly_ right, a little late, and it drifts. This note covers how to grade them, and what microphone grading with AI would cost.
 
 ## 1. What a grade should measure
@@ -99,6 +101,15 @@ Once the performance is a list of scored notes, a text model can turn the number
 2. **Then:** on-device microphone grading, starting with onset detection for rhythm, then monophonic pitch, then basic-pitch for piano.
 3. **Don't** grade by sending raw audio to a general AI model. Gemini Flash would be cheap enough (≈ $0.25–0.50 per student a month), but it can't promise the timing precision or repeatability a grade needs, and it sends students' recordings off the device.
 4. **Maybe:** LLM-written commentary on top of our own scores, once the scores are trustworthy.
+
+## Review notes (Nov 2026)
+
+- **Spoken note names are missing.** The first idea for microphone grading was the student saying the note names in rhythm. That grades reading for every instrument without solving polyphony. It is worked out in [its own note](grading-spoken-note-reading.md), and it should come before listening to instruments in the recommendation above.
+- **Octave errors.** `scorePerformance` matches on exact MIDI. Microphone pitch trackers often jump an octave, so an on-device tracker would mark correct notes as wrong. Make the comparison a parameter: exact MIDI for a MIDI keyboard, octave-tolerant for the microphone, letter only for spoken names.
+- **Metronome bleed.** Option B doesn't mention that the microphone hears the click from the speakers. Plan on `echoCancellation`, a headphones recommendation, and an onset filter that rejects clicks.
+- **The ladder model has changed.** Since #34, a level is a set of exercises that each need their grade. The "4 of the last 5 runs" rule should apply per exercise (for example "play (MIDI)", "spoken reading", "clap the rhythm"), not to the whole module.
+- **Prices.** The model names and rates in option A's table come from third-party trackers. Re-check them against the providers' pages before using them in a decision.
+- **Latency calibration** (open question below): store it once per device, and redo it when the audio device changes (`devicechange`), rather than before every session.
 
 ## Open questions
 
