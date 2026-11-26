@@ -57,11 +57,15 @@ describe('Results', () => {
 	});
 
 	it('tells rushed from late notes, and writes what was heard under a wrong one', async () => {
-		const [first, second, third, ...rest] = spokenPerfect.notes;
-		const shift = exercise.toleranceMs * 1.5;
+		const longer = createExercise({ ...SIGHT_READING_DEFAULTS, bars: 4 }, 5);
+		const [first, second, third, ...rest] = longer.expected.map(({ letter, time }) => ({
+			letter,
+			time
+		}));
+		const shift = longer.toleranceMs * 1.5;
 		const heard = first.letter === 'G' ? 'C' : 'G';
 		const screen = await render(Results, {
-			exercise,
+			exercise: longer,
 			performance: {
 				input: 'voice',
 				notes: [
