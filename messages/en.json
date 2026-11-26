@@ -645,6 +645,7 @@
 	"voice_setup_again": "Set up again",
 	"voice_setup_instructions": "Say each name when it lights up, on the click. The seven names come round three times, then seven made-up syllables, so the app learns what isn’t a name.",
 	"voice_setup_say": "Say",
+	"voice_setup_sequence": "You will say the seven names, three times round: {names}. Then seven made-up syllables, once each: {decoys}.",
 	"voice_setup_decoy": "(made up, not a name)",
 	"voice_setup_progress": "{done} of {total}",
 	"voice_setup_listening": "Listening back…",

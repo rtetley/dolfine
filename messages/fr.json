@@ -645,6 +645,7 @@
 	"voice_setup_again": "Refaire le réglage",
 	"voice_setup_instructions": "Dites chaque nom quand il s’allume, sur le clic. Les sept noms reviennent trois fois, puis sept syllabes inventées, pour que l’application apprenne ce qui n’est pas une note.",
 	"voice_setup_say": "Dites",
+	"voice_setup_sequence": "Vous direz les sept noms, trois fois de suite : {names}. Puis sept syllabes inventées, une fois chacune : {decoys}.",
 	"voice_setup_decoy": "(syllabe inventée, pas une note)",
 	"voice_setup_progress": "{done} sur {total}",
 	"voice_setup_listening": "Écoute en cours…",

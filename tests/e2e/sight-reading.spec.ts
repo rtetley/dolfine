@@ -150,6 +150,7 @@ test.describe('sight reading', () => {
 		await expect(staffChoice).toHaveValue('treble');
 		const setup = page.getByRole('region', { name: 'Microphone set-up' });
 		await expect(setup).toContainText('not how high or low you say it');
+		await expect(setup).toContainText('Then seven made-up syllables, once each:');
 		await expect(setup.getByRole('button', { name: 'Set up the microphone' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Start' })).toBeDisabled();
 		await expect(page.getByRole('button', { name: 'Connect MIDI keyboard' })).toHaveCount(0);

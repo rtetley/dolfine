@@ -7,7 +7,8 @@
 		buildProfile,
 		CALIBRATION_BEAT_MS,
 		type CalibrationPrompt,
-		calibrationPrompts
+		calibrationPrompts,
+		DECOYS
 	} from '#lib/audio/voice/calibration.ts';
 	import {
 		type Microphone,
@@ -37,6 +38,14 @@
 	const allNames = $derived(LETTERS.map(label).join(' '));
 	const promptText = (prompt: CalibrationPrompt): string =>
 		prompt.kind === 'name' ? label(prompt.letter) : prompt.text;
+	const sequence = $derived({ names: allNames, decoys: DECOYS[names].join(' ') });
+	/** Which name or decoy the current click asks for, to highlight it in the written sequence. */
+	const asking = $derived(current >= 0 && current < prompts.length ? prompts[current] : null);
+	const isAsked = (prompt: CalibrationPrompt): boolean =>
+		asking !== null &&
+		(prompt.kind === 'name'
+			? asking.kind === 'name' && asking.letter === prompt.letter
+			: asking.kind === 'decoy' && asking.text === prompt.text);
 
 	let microphone: Microphone | null = null;
 	let recorder: Recorder | null = null;
@@ -132,6 +141,15 @@
 	{/if}
 	{#if phase === 'running'}
 		<p>{m.voice_setup_instructions()}</p>
+		<p class="sequence" aria-hidden="true">
+			{#each prompts.slice(0, LETTERS.length) as prompt (promptText(prompt))}
+				<span class:asked={isAsked(prompt)}>{promptText(prompt)}</span>
+			{/each}
+			<span class="times">×3</span>
+			{#each prompts.slice(-DECOYS[names].length) as prompt (promptText(prompt))}
+				<span class="decoy" class:asked={isAsked(prompt)}>{promptText(prompt)}</span>
+			{/each}
+		</p>
 		<p class="prompt" aria-live="polite">
 			{#if current >= 0 && current < prompts.length}
 				<span class="label">{m.voice_setup_say()}</span>
@@ -164,6 +182,9 @@
 				{m.voice_setup_needed()}
 			{/if}
 		</p>
+		{#if phase !== 'denied' && phase !== 'unavailable'}
+			<p class="to-say">{m.voice_setup_sequence(sequence)}</p>
+		{/if}
 		<button type="button" onclick={() => void start()}>
 			{ready ? m.voice_setup_again() : m.voice_setup_start()}
 		</button>
@@ -197,6 +218,28 @@
 		padding: var(--space-2) var(--space-3);
 		border-left: 2px solid var(--accent);
 		font-size: var(--step--1);
+	}
+
+	.sequence {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-3);
+		font-size: var(--step-1);
+		color: var(--ink-faint);
+	}
+
+	.sequence .decoy {
+		font-style: italic;
+	}
+
+	.sequence .asked {
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.sequence .times {
+		font-size: var(--step--1);
+		align-self: center;
 	}
 
 	.prompt .decoy {
