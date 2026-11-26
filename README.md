@@ -7,7 +7,7 @@ Every setting is selectable and everything is stored in the browser (no accounts
 ## Stack
 
 - SvelteKit 3 + Svelte 5 (runes), TypeScript, static build (`adapter-static`, SPA, no SSR)
-- VexFlow 5 for notation (lazy-loaded), Tone.js for audio (Salamander piano samples from the Tone.js CDN)
+- VexFlow 5 for notation (lazy-loaded), Tone.js for audio (Salamander Grand Piano samples served from `static/samples/piano`, see its README for credits)
 - Web MIDI for keyboard input (Chrome, Edge, Firefox; Safari shows a warning)
 - Spoken sight reading: the microphone checks the note names the student says and their timing, analysed on the device (see [docs/grading-spoken-note-reading.md](docs/grading-spoken-note-reading.md))
 - Paraglide JS for translations (English and French)

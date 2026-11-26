@@ -1,15 +1,4 @@
-import type * as ToneModule from 'tone';
-
-type Tone = typeof ToneModule;
-
-interface Instruments {
-	tone: Tone;
-	piano: ToneModule.Sampler;
-	clickHigh: ToneModule.Synth;
-	clickLow: ToneModule.Synth;
-}
-
-const SALAMANDER_BASE = 'https://tonejs.github.io/audio/salamander/';
+import type { Instruments, Tone } from './instruments';
 
 let context: AudioContext | null = null;
 let loading: Promise<Instruments> | null = null;
@@ -17,42 +6,9 @@ let instruments: Instruments | null = null;
 
 const loadTone = (): Promise<Tone> => import('tone');
 
-function salamanderUrls(): Record<string, string> {
-	const urls: Record<string, string> = { A0: 'A0.mp3', C8: 'C8.mp3' };
-	for (let octave = 1; octave <= 7; octave++) {
-		urls[`C${octave}`] = `C${octave}.mp3`;
-		urls[`D#${octave}`] = `Ds${octave}.mp3`;
-		urls[`F#${octave}`] = `Fs${octave}.mp3`;
-		urls[`A${octave}`] = `A${octave}.mp3`;
-	}
-	return urls;
-}
-
-const makeClick = (tone: Tone, type: 'triangle' | 'square'): ToneModule.Synth =>
-	new tone.Synth({
-		oscillator: { type },
-		envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 },
-		volume: -10
-	}).toDestination();
-
-async function loadInstruments(audioContext: AudioContext): Promise<Instruments> {
-	const tone = await loadTone();
-	tone.setContext(audioContext);
-	await tone.start();
-	const piano = new tone.Sampler({
-		urls: salamanderUrls(),
-		baseUrl: SALAMANDER_BASE,
-		release: 1.2
-	}).toDestination();
-	const result = {
-		tone,
-		piano,
-		clickHigh: makeClick(tone, 'triangle'),
-		clickLow: makeClick(tone, 'square')
-	};
-	await tone.loaded();
-	return result;
-}
+// Building the instruments only happens once audio starts, so it loads with Tone, not the page.
+const loadInstruments = async (audioContext: AudioContext): Promise<Instruments> =>
+	(await import('./instruments')).loadInstruments(audioContext, await loadTone());
 
 /** Downloads the audio library in the background, without starting any audio. */
 export function preloadAudio(): void {
@@ -75,6 +31,10 @@ export const now = (): number => instruments?.tone.now() ?? 0;
 /** The context the metronome is scheduled on, once `ensureAudio` has run. */
 export const audioContext = (): AudioContext | null => context;
 
+/** Softer as a chord grows, as a pianist plays a dense voicing, so it stays clear of the limiter. */
+export const chordVelocity = (count: number): number =>
+	Math.min(0.85, 0.85 * Math.sqrt(3 / Math.max(count, 1)));
+
 export function playNotes(
 	midis: readonly number[],
 	durationSeconds = 1.6,
@@ -83,7 +43,7 @@ export function playNotes(
 	if (!instruments || midis.length === 0) return;
 	const { tone, piano } = instruments;
 	const notes = midis.map((midi) => tone.Frequency(midi, 'midi').toNote());
-	piano.triggerAttackRelease(notes, durationSeconds, at);
+	piano.triggerAttackRelease(notes, durationSeconds, at, chordVelocity(notes.length));
 }
 
 export function playArpeggio(

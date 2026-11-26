@@ -161,6 +161,20 @@
 			{/if}
 		</div>
 	</section>
+
+	<section class="reset" aria-labelledby="credits-heading">
+		<h2 id="credits-heading" class="label">{m.settings_credits_heading()}</h2>
+		<p class="hint">
+			{m.settings_credits_piano()}
+			<a
+				href="https://creativecommons.org/licenses/by/3.0/"
+				rel="license noreferrer"
+				target="_blank"
+			>
+				CC BY 3.0
+			</a>.
+		</p>
+	</section>
 </div>
 
 <style>
