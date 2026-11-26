@@ -153,10 +153,13 @@
 			void import('./hear').then(({ hearReading }) => {
 				// Let the "listening back" state paint before the analysis blocks the main thread.
 				setTimeout(() => {
-					onfinish({
-						input: 'voice',
-						notes: hearReading(recording, readingStart, exercise, heard)
-					});
+					const notes = hearReading(recording, readingStart, exercise, heard);
+					if (new URLSearchParams(window.location.search).has('debug')) {
+						void import('./capture').then(({ downloadCapture, encodeCapture }) =>
+							downloadCapture(encodeCapture(recording, readingStart, exercise, heard, notes))
+						);
+					}
+					onfinish({ input: 'voice', notes });
 				}, 30);
 			});
 		}, RECORDING_TAIL_MS);

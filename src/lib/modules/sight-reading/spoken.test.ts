@@ -4,6 +4,7 @@ import { buildProfile } from '#lib/audio/voice/calibration.ts';
 import { calibrationTake, NAME_SOUNDS, RATE, speak } from '#lib/audio/voice/testSignals.ts';
 import { createExercise, MIN_SPOKEN_TOLERANCE_MS, spokenTempo } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
+import { encodeCapture, replayCapture } from './capture';
 import { hearReading } from './hear';
 import { heardLabels, scoreRun } from './spoken';
 
@@ -113,5 +114,26 @@ describe('spoken exercises', () => {
 		const gaps = fast.expected.slice(1).map((note, i) => note.time - fast.expected[i].time);
 		expect(Math.min(...gaps)).toBeGreaterThanOrEqual(199);
 		expect(fast.slowedFrom).toBe(200);
+	});
+});
+
+describe('reading captures', () => {
+	it('replays a saved run to the same names and times', () => {
+		const lead = 0.4;
+		const samples = speak(
+			lead + exercise.durationMs / 1000 + 0.5,
+			exercise.expected.map((note) => ({
+				...NAME_SOUNDS[note.letter],
+				at: lead + note.time / 1000 + LATENCY,
+				duration: 0.2
+			})),
+			48_000
+		);
+		const recording = { samples, sampleRate: 48_000, startTime: 3 };
+		const heard = hearReading(recording, 3 + lead, exercise, profile);
+		const capture = encodeCapture(recording, 3 + lead, exercise, profile, heard);
+		const replayed = replayCapture(capture);
+		expect(replayed.map((note) => note.letter)).toEqual(heard.map((note) => note.letter));
+		replayed.forEach((note, i) => expect(Math.abs(note.time - heard[i].time)).toBeLessThan(15));
 	});
 });
