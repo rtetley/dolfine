@@ -92,8 +92,9 @@
 		border-style: dashed;
 	}
 
+	/* Locked, but still readable: the soft ink keeps the contrast text needs. */
 	.locked .number,
 	.locked .title {
-		color: var(--ink-faint);
+		color: var(--ink-soft);
 	}
 </style>
