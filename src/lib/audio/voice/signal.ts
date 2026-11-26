@@ -14,7 +14,24 @@ const MAX_LAG = ANALYSIS_RATE / 80;
 export interface Frames {
 	energyDb: Float32Array;
 	voicing: Float32Array;
+	/** Share of the energy below 1 kHz, where a voice's pitch and first formant sit. */
+	lowBand: Float32Array;
 	mfcc: Float32Array[];
+}
+
+const LOW_BAND_BINS = [MEL_LOW_HZ, 1000, MEL_HIGH_HZ].map((hz) =>
+	Math.round((hz * FFT_SIZE) / ANALYSIS_RATE)
+);
+
+function lowBandShare(power: Float64Array): number {
+	const [low, split, high] = LOW_BAND_BINS;
+	let below = 0;
+	let total = 1e-12;
+	for (let bin = low; bin <= high; bin++) {
+		total += power[bin];
+		if (bin < split) below += power[bin];
+	}
+	return below / total;
 }
 
 export const frameTime = (frame: number): number => (frame * HOP + FRAME / 2) / ANALYSIS_RATE;
@@ -162,6 +179,7 @@ export function analyseFrames(samples: Float32Array): Frames {
 	const count = Math.max(0, Math.floor((samples.length - FRAME) / HOP) + 1);
 	const energyDb = new Float32Array(count);
 	const voicing = new Float32Array(count);
+	const lowBand = new Float32Array(count);
 	const mfcc: Float32Array[] = [];
 	const re = new Float64Array(FFT_SIZE);
 	const im = new Float64Array(FFT_SIZE);
@@ -179,6 +197,7 @@ export function analyseFrames(samples: Float32Array): Frames {
 		const power = new Float64Array(FFT_SIZE / 2 + 1);
 		for (let bin = 0; bin <= FFT_SIZE / 2; bin++) power[bin] = re[bin] ** 2 + im[bin] ** 2;
 		mfcc.push(cepstra(power));
+		lowBand[f] = lowBandShare(power);
 		for (let i = 0; i < FFT_SIZE; i++) {
 			re[i] = re[i] ** 2 + im[i] ** 2;
 			im[i] = 0;
@@ -192,5 +211,5 @@ export function analyseFrames(samples: Float32Array): Frames {
 		}
 		voicing[f] = Math.min(best, 1);
 	}
-	return { energyDb, voicing, mfcc };
+	return { energyDb, voicing, lowBand, mfcc };
 }

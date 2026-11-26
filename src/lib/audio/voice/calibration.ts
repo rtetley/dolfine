@@ -1,6 +1,6 @@
 import { type Letter, LETTERS, type NoteNameSystem } from '#lib/music/pitch.ts';
 import { byLetter, dtwDistance } from './names';
-import type { VoiceProfile } from './profile';
+import { PROFILE_VERSION, type VoiceProfile } from './profile';
 import type { Syllable } from './syllables';
 
 /**
@@ -74,7 +74,13 @@ export function buildProfile(
 	);
 	return {
 		ok: true,
-		profile: { names, offsetMs, templates, rejectDistance: rejectDistance(templates) }
+		profile: {
+			version: PROFILE_VERSION,
+			names,
+			offsetMs,
+			templates,
+			rejectDistance: rejectDistance(templates)
+		}
 	};
 }
 

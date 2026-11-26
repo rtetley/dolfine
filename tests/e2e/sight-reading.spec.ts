@@ -162,6 +162,7 @@ test.describe('sight reading', () => {
 			'prefs:sight-reading': { ...QUICK_RUN, input: 'voice' },
 			settings: { noteNames: 'letters' },
 			'voice-profile': {
+				version: 2,
 				names: 'letters',
 				rejectDistance: 1,
 				offsetMs: Object.fromEntries(letters.map((letter) => [letter, 0])),

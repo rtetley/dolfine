@@ -10,7 +10,7 @@ import {
 	type ScoredNote,
 	type ScoreSummary,
 	scorePerformance,
-	scoreTimed
+	scoreInOrder
 } from '#lib/music/scoring.ts';
 import type { SightReadingExercise } from './exercise';
 
@@ -29,7 +29,7 @@ export const scoreRun = (
 	performance: Performance
 ): ScoreSummary<PlayedNote> | ScoreSummary<SpokenNote> =>
 	performance.input === 'voice'
-		? scoreTimed(
+		? scoreInOrder(
 				exercise.expected,
 				performance.notes,
 				exercise.toleranceMs,

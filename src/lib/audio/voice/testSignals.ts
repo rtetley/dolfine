@@ -173,3 +173,18 @@ export function calibrationTake(
 	}));
 	return { prompts, syllables };
 }
+
+/** A metronome click as the microphone hears it from speakers: a triangle tone ringing in the room. */
+export function addClick(out: Float32Array, at: number, frequency = 1175, rate = RATE): void {
+	const start = Math.round(at * rate);
+	const length = Math.round(0.25 * rate);
+	for (let n = 0; n < length && start + n < out.length; n++) {
+		const t = n / rate;
+		const envelope = Math.exp(-t / 0.06);
+		let value = 0;
+		for (let k = 1; k <= 9; k += 2) {
+			value += ((k % 4 === 1 ? 1 : -1) * Math.sin(2 * Math.PI * k * frequency * t)) / (k * k);
+		}
+		out[start + n] += 0.3 * envelope * value;
+	}
+}

@@ -5,7 +5,7 @@ import { isVoiceProfile } from './profile';
 import { classify, dtwDistance } from './names';
 import { analyseFrames, fft, resample } from './signal';
 import { findSyllables, voicedRegions } from './syllables';
-import { calibrationTake, NAME_SOUNDS, RATE, speak } from './testSignals';
+import { addClick, calibrationTake, NAME_SOUNDS, RATE, speak } from './testSignals';
 
 describe('signal analysis', () => {
 	it('computes a forward and inverse FFT', () => {
@@ -60,8 +60,7 @@ describe('syllables', () => {
 			{ vowel: 'e', at: 0.38, duration: 0.2, gain: 0.3 }
 		]);
 		for (let n = Math.round(0.37 * RATE); n < Math.round(0.39 * RATE); n++) signal[n] *= 0.1;
-		const { energyDb, voicing } = analyseFrames(signal);
-		expect(voicedRegions(energyDb, voicing)).toHaveLength(2);
+		expect(voicedRegions(analyseFrames(signal))).toHaveLength(2);
 	});
 
 	it('finds every name in a fluent legato reading with almost no silence', () => {
@@ -120,6 +119,38 @@ describe('syllables', () => {
 				0.5 * Math.exp(-n / (0.015 * RATE)) * Math.sin((2 * Math.PI * 1568 * n) / RATE);
 		}
 		expect(findSyllables(signal, RATE)).toHaveLength(2);
+	});
+
+	it('ignores metronome clicks ringing through the speakers, alone or on a name', () => {
+		const signal = speak(4, [
+			{ ...NAME_SOUNDS.D, at: 2.06, duration: 0.3 },
+			{ ...NAME_SOUNDS.E, at: 3.06, duration: 0.3 }
+		]);
+		[0, 0.5, 1, 1.5].forEach((at, i) => addClick(signal, at, i === 0 ? 1568 : 1175));
+		[2, 2.5, 3, 3.5].forEach((at) => addClick(signal, at));
+		const syllables = findSyllables(signal, RATE);
+		expect(syllables).toHaveLength(2);
+		expect(Math.abs(syllables[0].time - 2.06)).toBeLessThan(0.025);
+		expect(Math.abs(syllables[1].time - 3.06)).toBeLessThan(0.025);
+	});
+
+	it('merges two onsets too close together to be two names', () => {
+		const signal = speak(1, [
+			{ vowel: 'a', at: 0.3, duration: 0.07 },
+			{ vowel: 'e', at: 0.39, duration: 0.3 }
+		]);
+		expect(findSyllables(signal, RATE)).toHaveLength(1);
+	});
+
+	it('splits names run together where the score expects one, without a clear jump', () => {
+		const signal = speak(1.2, [
+			{ vowel: 'u', at: 0.2, duration: 0.42 },
+			{ vowel: 'oh', at: 0.6, duration: 0.4 }
+		]);
+		expect(findSyllables(signal, RATE)).toHaveLength(1);
+		const rescued = findSyllables(signal, RATE, [0.2, 0.6]);
+		expect(rescued).toHaveLength(2);
+		expect(Math.abs(rescued[1].time - 0.6)).toBeLessThan(0.025);
 	});
 
 	it('finds the same onsets in a 48 kHz recording', () => {

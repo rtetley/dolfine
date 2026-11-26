@@ -1,8 +1,12 @@
 import { type Letter, LETTERS, type NoteNameSystem } from '#lib/music/pitch.ts';
 import { isRecord } from '#lib/state/persisted.ts';
 
+/** Bumped whenever recognition changes what a template holds, so older set-ups are redone. */
+export const PROFILE_VERSION = 2;
+
 /** What calibration learns about one student's voice on one device. */
 export interface VoiceProfile {
+	version: typeof PROFILE_VERSION;
 	names: NoteNameSystem;
 	/** Delay from a click to the student's vowel for each name: device latency plus articulation. */
 	offsetMs: Record<Letter, number>;
@@ -23,6 +27,7 @@ export function isVoiceProfile(value: unknown): value is VoiceProfile {
 	if (!isRecord(value) || !isRecord(value.offsetMs) || !isRecord(value.templates)) return false;
 	const { offsetMs, templates } = value;
 	return (
+		value.version === PROFILE_VERSION &&
 		(value.names === 'letters' || value.names === 'solfege') &&
 		typeof value.rejectDistance === 'number' &&
 		LETTERS.every(

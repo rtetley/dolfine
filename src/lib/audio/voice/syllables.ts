@@ -1,4 +1,12 @@
-import { analyseFrames, ANALYSIS_RATE, frameTime, resample } from './signal';
+import {
+	analyseFrames,
+	ANALYSIS_RATE,
+	FRAME,
+	type Frames,
+	frameTime,
+	HOP,
+	resample
+} from './signal';
 
 /** Finds the spoken syllables in a recording, timed at their vowel, with features to classify them. */
 
@@ -10,6 +18,15 @@ const ABSOLUTE_FLOOR_DB = -60;
 const BRIDGE_FRAMES = 3;
 /** Longer than a metronome click, which is short but periodic enough to look voiced. */
 const MIN_FRAMES = 8;
+/**
+ * A voice keeps much of its energy below 1 kHz (its pitch and first formant); a metronome click
+ * heard through the speakers rings well above it, long and periodic enough to pass for a vowel.
+ */
+const LOW_BAND_SHARE = 0.3;
+/** Names come at most five a second, so two onsets this close are one name heard twice. */
+const MIN_GAP_FRAMES = 12;
+/** How far from a note the score expects a name, when looking for one that was not split off. */
+const RESCUE_FRAMES = 15;
 const VALLEY_DB = 6;
 const CHANGE_SPAN = 2;
 /** How much faster the spectrum must change than in the stretch's steady parts to mark a new name. */
@@ -20,10 +37,16 @@ const STEADY_PERCENTILE = 0.25;
 const MIN_JUMP = 30;
 const SPLIT_LOUDNESS_DB = 6;
 const ONSET_BELOW_PEAK_DB = 10;
-const CONSONANT_FRAMES = 8;
+/** A jump into a vowel lands near full loudness; the fade at the end of a name falls away. */
+const VOWEL_BELOW_PEAK_DB = 6;
 /** How far into a stretch a voiced consonant can run before its vowel. */
 const CONSONANT_SEARCH_FRAMES = 15;
-const MAX_FEATURE_FRAMES = 40;
+/**
+ * A name is recognised from a fixed window around its vowel onset: the consonant, which is all
+ * that tells "ré" from "mi" or "fa" from "la", and the start of the vowel, not all of a held one.
+ */
+const CONSONANT_FRAMES = 10;
+const VOWEL_FRAMES = 15;
 
 export interface Region {
 	start: number;
@@ -115,10 +138,11 @@ function splitAtChanges(energyDb: Float32Array, change: Float32Array, region: Re
 	];
 }
 
+export type FrameTrack = Pick<Frames, 'energyDb' | 'voicing' | 'lowBand'>;
+
 /** Voiced, loud-enough stretches of frames, as half-open [start, end) ranges. */
 export function voicedRegions(
-	energyDb: Float32Array,
-	voicing: Float32Array,
+	{ energyDb, voicing, lowBand }: FrameTrack,
 	change: Float32Array = new Float32Array(energyDb.length)
 ): Region[] {
 	const threshold = Math.max(
@@ -131,7 +155,7 @@ export function voicedRegions(
 	const regions: Region[] = [];
 	let current: Region | null = null;
 	for (let i = 0; i < energyDb.length; i++) {
-		if (energyDb[i] <= threshold || voicing[i] < VOICED) continue;
+		if (energyDb[i] <= threshold || voicing[i] < VOICED || lowBand[i] < LOW_BAND_SHARE) continue;
 		if (current && i - current.end <= BRIDGE_FRAMES) current.end = i + 1;
 		else {
 			current = { start: i, end: i + 1 };
@@ -158,7 +182,9 @@ export function vowelOnset(energyDb: Float32Array, change: Float32Array, region:
 	let strongest = jumpThreshold(change, region);
 	const last = Math.min(region.end, region.start + CONSONANT_SEARCH_FRAMES);
 	for (let i = region.start + 2 * CHANGE_SPAN; i < last; i++) {
-		if (isPeak(change, i) && change[i] > strongest) {
+		const intoVowel =
+			energyDb[Math.min(i + CHANGE_SPAN, region.end - 1)] >= peak - VOWEL_BELOW_PEAK_DB;
+		if (isPeak(change, i) && intoVowel && change[i] > strongest) {
 			strongest = change[i];
 			jump = i;
 		}
@@ -166,18 +192,80 @@ export function vowelOnset(energyDb: Float32Array, change: Float32Array, region:
 	return Math.max(loud, jump);
 }
 
-export function findSyllables(samples: Float32Array, sampleRate: number): Syllable[] {
+/** Merges stretches whose vowels start too close together to be two names. */
+function mergeClose(energyDb: Float32Array, change: Float32Array, regions: Region[]): Region[] {
+	const merged: Region[] = [];
+	for (const region of regions) {
+		const previous = merged.at(-1);
+		const close =
+			previous &&
+			region.start - previous.end <= BRIDGE_FRAMES &&
+			vowelOnset(energyDb, change, region) - vowelOnset(energyDb, change, previous) <
+				MIN_GAP_FRAMES;
+		if (previous && close) previous.end = region.end;
+		else merged.push({ ...region });
+	}
+	return merged;
+}
+
+/**
+ * Where the score expects a name and none was found, the name may have run into the one before
+ * without a clear enough jump. Splits there at the strongest change, against a lower bar.
+ */
+function rescue(
+	energyDb: Float32Array,
+	change: Float32Array,
+	regions: Region[],
+	expectedFrames: readonly number[]
+): Region[] {
+	const result = regions.map((region) => ({ ...region }));
+	for (const due of expectedFrames) {
+		const heard = result.some(
+			(region) => Math.abs(vowelOnset(energyDb, change, region) - due) <= RESCUE_FRAMES
+		);
+		const index = result.findIndex((region) => region.start < due && due < region.end);
+		if (heard || index < 0) continue;
+		const region = result[index];
+		const from = Math.max(region.start + MIN_FRAMES, due - RESCUE_FRAMES);
+		const to = Math.min(region.end - MIN_FRAMES, due + RESCUE_FRAMES);
+		const bar = jumpThreshold(change, region) / 2;
+		let at = -1;
+		for (let i = from; i <= to; i++) {
+			if (isPeak(change, i) && change[i] > bar && (at < 0 || change[i] > change[at])) at = i;
+		}
+		if (at < 0) continue;
+		result.splice(index, 1, { start: region.start, end: at }, { start: at, end: region.end });
+	}
+	return result;
+}
+
+const toFrame = (seconds: number): number =>
+	Math.round((seconds * ANALYSIS_RATE - FRAME / 2) / HOP);
+
+/**
+ * `expected` are the times, in seconds on the recording's clock, at which the score expects a
+ * vowel. They only help find names said legato; they never decide which name was said.
+ */
+export function findSyllables(
+	samples: Float32Array,
+	sampleRate: number,
+	expected: readonly number[] = []
+): Syllable[] {
 	const signal = resample(samples, sampleRate, ANALYSIS_RATE);
-	const { energyDb, voicing, mfcc } = analyseFrames(signal);
+	const frames = analyseFrames(signal);
+	const { energyDb, mfcc } = frames;
 	const change = spectralChange(mfcc);
-	const regions = voicedRegions(energyDb, voicing, change);
+	const regions = rescue(
+		energyDb,
+		change,
+		mergeClose(energyDb, change, voicedRegions(frames, change)),
+		expected.map(toFrame)
+	);
+	const onsets = regions.map((region) => vowelOnset(energyDb, change, region));
 	return regions.map((region, index) => {
-		const previousEnd = index > 0 ? regions[index - 1].end : 0;
-		const start = Math.max(previousEnd, region.start - CONSONANT_FRAMES);
-		const end = Math.min(region.end, start + MAX_FEATURE_FRAMES);
-		return {
-			time: frameTime(vowelOnset(energyDb, change, region)),
-			features: mfcc.slice(start, end)
-		};
+		const onset = onsets[index];
+		const start = Math.max(index > 0 ? onsets[index - 1] + 1 : 0, onset - CONSONANT_FRAMES);
+		const end = Math.max(start + 1, Math.min(region.end, onset + VOWEL_FRAMES));
+		return { time: frameTime(onset), features: mfcc.slice(start, end) };
 	});
 }

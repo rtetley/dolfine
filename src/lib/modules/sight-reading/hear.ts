@@ -16,7 +16,8 @@ const meanOffset = (profile: VoiceProfile): number =>
 
 /**
  * Names each syllable and places it on the exercise's clock. The note due nearest in time is the
- * prior for the name; the name's own calibrated offset then corrects the timing.
+ * prior for the name; the name's own calibrated offset then corrects the timing. A sound far from
+ * every note (a word during the count-in, a breath after the end) is not part of the reading.
  */
 export function hearSyllables(
 	syllables: readonly Syllable[],
@@ -35,21 +36,26 @@ export function hearSyllables(
 				? { letter: note.letter, gap }
 				: best;
 		}, null);
-		const heard = classify(syllable.features, names, due?.letter);
+		if (!due) return [];
+		const heard = classify(syllable.features, names, due.letter);
 		return heard ? [{ letter: heard.letter, time: heardAt - profile.offsetMs[heard.letter] }] : [];
 	});
 }
 
 /** `readingStart` is the AudioContext time of the first beat after the count-in. */
-export const hearReading = (
+export function hearReading(
 	recording: Recording,
 	readingStart: number,
 	exercise: Pick<SightReadingExercise, 'expected'>,
 	profile: VoiceProfile
-): SpokenNote[] =>
-	hearSyllables(
-		findSyllables(recording.samples, recording.sampleRate),
-		(recording.startTime - readingStart) * 1000,
+): SpokenNote[] {
+	const recordingStartMs = (recording.startTime - readingStart) * 1000;
+	const shift = meanOffset(profile);
+	const vowelsDue = exercise.expected.map((note) => (note.time + shift - recordingStartMs) / 1000);
+	return hearSyllables(
+		findSyllables(recording.samples, recording.sampleRate, vowelsDue),
+		recordingStartMs,
 		exercise,
 		profile
 	);
+}
