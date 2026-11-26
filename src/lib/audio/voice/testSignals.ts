@@ -1,5 +1,10 @@
 import type { Letter } from '#lib/music/pitch.ts';
-import { calibrationPrompts, CALIBRATION_BEAT_MS, type TimedSyllable } from './calibration';
+import {
+	type CalibrationPrompt,
+	calibrationPrompts,
+	CALIBRATION_BEAT_MS,
+	type TimedSyllable
+} from './calibration';
 import { findSyllables } from './syllables';
 
 /**
@@ -152,17 +157,45 @@ export const NAME_SOUNDS = {
 	B: { onset: 's', vowel: 'i' }
 } as const satisfies Record<Letter, NameSound>;
 
-/** A calibration take: every name on its click, three rounds, `latency` seconds late. */
+/** Made-up syllables a student might say for the decoy prompts. */
+export const DECOY_SOUNDS: readonly NameSound[] = [
+	{ onset: 'm', vowel: 'a' },
+	{ onset: 'r', vowel: 'u' },
+	{ onset: 'd', vowel: 'o' },
+	{ onset: 'f', vowel: 'y' },
+	{ onset: 's', vowel: 'oe' },
+	{ onset: 'l', vowel: 'e' },
+	{ onset: 'm', vowel: 'oh' }
+];
+
+/** Nonsense a student might say in place of a name: none of these is a name or a decoy. */
+export const NONSENSE_SOUNDS: readonly NameSound[] = [
+	{ onset: 'd', vowel: 'y' },
+	{ onset: 'r', vowel: 'o' },
+	{ onset: 'm', vowel: 'u' },
+	{ onset: 'f', vowel: 'i' },
+	{ onset: 's', vowel: 'e' },
+	{ onset: 'l', vowel: 'u' },
+	{ onset: 'd', vowel: 'a' },
+	{ vowel: 'oe' },
+	{ onset: 'r', vowel: 'a' },
+	{ onset: 'f', vowel: 'oh' }
+];
+
+const promptSound = (prompt: CalibrationPrompt, index: number): NameSound =>
+	prompt.kind === 'name' ? NAME_SOUNDS[prompt.letter] : DECOY_SOUNDS[index % DECOY_SOUNDS.length];
+
+/** A calibration take: every prompt on its click, `latency` seconds late. */
 export function calibrationTake(
 	latency: number,
 	f0 = 140
-): { prompts: Letter[]; syllables: TimedSyllable[] } {
-	const prompts = calibrationPrompts();
+): { prompts: CalibrationPrompt[]; syllables: TimedSyllable[] } {
+	const prompts = calibrationPrompts('solfege');
 	const lead = 0.5;
 	const audio = speak(
 		lead + (prompts.length * CALIBRATION_BEAT_MS) / 1000 + 0.5,
-		prompts.map((letter, i) => ({
-			...NAME_SOUNDS[letter],
+		prompts.map((prompt, i) => ({
+			...promptSound(prompt, i),
 			at: lead + (i * CALIBRATION_BEAT_MS) / 1000 + latency,
 			f0: f0 + (i % 3) * 6
 		}))

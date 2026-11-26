@@ -5,7 +5,14 @@ import { isVoiceProfile } from './profile';
 import { classify, dtwDistance } from './names';
 import { analyseFrames, fft, resample } from './signal';
 import { findSyllables, voicedRegions } from './syllables';
-import { addClick, calibrationTake, NAME_SOUNDS, RATE, speak } from './testSignals';
+import {
+	addClick,
+	calibrationTake,
+	NAME_SOUNDS,
+	NONSENSE_SOUNDS,
+	RATE,
+	speak
+} from './testSignals';
 
 describe('signal analysis', () => {
 	it('computes a forward and inverse FFT', () => {
@@ -186,22 +193,26 @@ describe('calibration', () => {
 			expect(result.profile.templates[letter]).toHaveLength(3);
 			expect(Math.abs(result.profile.offsetMs[letter] - 60)).toBeLessThan(30);
 		}
+		expect(result.profile.decoys).toHaveLength(7);
 		expect(result.profile.rejectDistance).toBeGreaterThan(0);
 		expect(isVoiceProfile(JSON.parse(JSON.stringify(result.profile)))).toBe(true);
 	});
 
 	it('reports the names it did not hear', () => {
-		const withoutE = syllables.filter((_, i) => prompts[i] !== 'E');
+		const isE = (i: number) => prompts[i].kind === 'name' && prompts[i].letter === 'E';
+		const withoutE = syllables.filter((_, i) => !isE(i));
 		expect(buildProfile(prompts, withoutE, 'letters')).toEqual({ ok: false, missing: ['E'] });
 	});
 
-	it('recognises the names in a new take, at another pitch', () => {
+	it('recognises the names in a new take, at another pitch, and turns the decoys away', () => {
 		if (!result.ok) throw new Error('calibration failed');
 		const take = calibrationTake(0.04, 190);
 		const heard = take.syllables.map(
-			(syllable) => classify(syllable.features, result.profile)?.letter
+			(syllable) => classify(syllable.features, result.profile)?.letter ?? null
 		);
-		expect(heard).toEqual(take.prompts);
+		expect(heard).toEqual(
+			take.prompts.map((prompt) => (prompt.kind === 'name' ? prompt.letter : null))
+		);
 	});
 
 	it('tells la from fa, which share their vowel, in a legato reading', () => {
@@ -223,6 +234,21 @@ describe('calibration', () => {
 		expect(syllables.map((s) => classify(s.features, profile)?.letter)).toEqual(order);
 	});
 
+	it('rarely takes nonsense, said at any pitch, for the name the score expects', () => {
+		if (!result.ok) throw new Error('calibration failed');
+		const profile = result.profile;
+		const trials = NONSENSE_SOUNDS.flatMap((sound) =>
+			[130, 160, 220].flatMap((f0) =>
+				findSyllables(speak(1, [{ ...sound, at: 0.4, duration: 0.25, f0 }]), RATE)
+			)
+		);
+		const passed = trials.flatMap((syllable) =>
+			LETTERS.filter((letter) => classify(syllable.features, profile, letter)?.letter === letter)
+		);
+		expect(trials.length).toBe(NONSENSE_SOUNDS.length * 3);
+		expect(passed.length / (trials.length * LETTERS.length)).toBeLessThan(0.08);
+	});
+
 	it('gives a near tie to the name the score expects, and ignores noise', () => {
 		if (!result.ok) throw new Error('calibration failed');
 		const profile = result.profile;
@@ -233,5 +259,7 @@ describe('calibration', () => {
 		expect(classify(syllable.features, tied, 'G')?.letter).toBe('G');
 		expect(classify(syllable.features, profile, 'G')?.letter).toBe('C');
 		expect(classify(syllable.features, { ...profile, rejectDistance: 0 })).toBeNull();
+		const asDecoy = { ...profile, decoys: [...profile.decoys, ...profile.templates.C] };
+		expect(classify(syllable.features, asDecoy, 'C')).toBeNull();
 	});
 });

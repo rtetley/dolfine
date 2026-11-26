@@ -6,6 +6,7 @@
 	import {
 		buildProfile,
 		CALIBRATION_BEAT_MS,
+		type CalibrationPrompt,
 		calibrationPrompts
 	} from '#lib/audio/voice/calibration.ts';
 	import {
@@ -22,16 +23,18 @@
 	type Phase = 'idle' | 'running' | 'listening' | 'missing' | 'denied' | 'unavailable';
 
 	const BEATS_PER_BAR = 7;
-	const prompts = calibrationPrompts();
 
 	let phase = $state<Phase>('idle');
 	let current = $state(-1);
 	let missing = $state<Letter[]>([]);
 
 	const names = $derived(settings.noteNames);
+	const prompts = $derived(calibrationPrompts(names));
 	const ready = $derived(voiceProfile.for(names) !== null);
 	const label = (letter: Letter): string => noteName({ letter, accidental: 0 }, names);
 	const allNames = $derived(LETTERS.map(label).join(' '));
+	const promptText = (prompt: CalibrationPrompt): string =>
+		prompt.kind === 'name' ? label(prompt.letter) : prompt.text;
 
 	let microphone: Microphone | null = null;
 	let recorder: Recorder | null = null;
@@ -57,6 +60,7 @@
 			return;
 		}
 		recorder = microphone.record();
+		const take = prompts;
 		current = -1;
 		phase = 'running';
 		const metronome = startMetronome({
@@ -68,17 +72,17 @@
 			muteMode: 'off',
 			muteProbability: 0,
 			countInBars: 1,
-			bars: prompts.length / BEATS_PER_BAR,
+			bars: take.length / BEATS_PER_BAR,
 			seed: 1,
 			onTick: (tick) => {
 				if (!tick.countIn) current = tick.bar * BEATS_PER_BAR + tick.beat;
 			},
-			onEnd: () => finish(metronome.readingStartTime)
+			onEnd: () => finish(metronome.readingStartTime, take)
 		});
 		handle = metronome;
 	}
 
-	function finish(firstClick: number): void {
+	function finish(firstClick: number, take: CalibrationPrompt[]): void {
 		const recording = recorder?.stop();
 		release();
 		if (!recording) return;
@@ -90,7 +94,7 @@
 				...syllable,
 				ms: startMs + syllable.time * 1000
 			}));
-			const result = buildProfile(prompts, syllables, names);
+			const result = buildProfile(take, syllables, names);
 			if (result.ok) {
 				voiceProfile.save(result.profile);
 				phase = 'idle';
@@ -111,7 +115,12 @@
 		<p class="prompt" aria-live="polite">
 			{#if current >= 0 && current < prompts.length}
 				<span class="label">{m.voice_setup_say()}</span>
-				<strong>{label(prompts[current])}</strong>
+				<strong class:decoy={prompts[current].kind === 'decoy'}>
+					{promptText(prompts[current])}
+				</strong>
+				{#if prompts[current].kind === 'decoy'}
+					<span class="label">{m.voice_setup_decoy()}</span>
+				{/if}
 				<span class="label">
 					{m.voice_setup_progress({ done: current + 1, total: prompts.length })}
 				</span>
@@ -157,6 +166,11 @@
 		font-size: var(--step-3);
 		min-width: 4ch;
 		text-align: center;
+	}
+
+	.prompt .decoy {
+		font-style: italic;
+		color: var(--ink-soft);
 	}
 
 	.status {

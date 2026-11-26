@@ -1,7 +1,13 @@
 import type { Letter } from '#lib/music/pitch.ts';
 import { describe, expect, it } from 'vitest';
 import { buildProfile } from '#lib/audio/voice/calibration.ts';
-import { calibrationTake, NAME_SOUNDS, RATE, speak } from '#lib/audio/voice/testSignals.ts';
+import {
+	calibrationTake,
+	NAME_SOUNDS,
+	NONSENSE_SOUNDS,
+	RATE,
+	speak
+} from '#lib/audio/voice/testSignals.ts';
 import { createExercise, MIN_SPOKEN_TOLERANCE_MS, spokenTempo } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
 import { encodeCapture, replayCapture } from './capture';
@@ -59,6 +65,28 @@ describe('spoken reading', () => {
 		const summary = scoreRun(exercise, { input: 'voice', notes: reading({ legato: true }) });
 		expect(summary.notes.filter((note) => note.outcome !== 'correct')).toEqual([]);
 		expect(summary.extras).toHaveLength(0);
+	});
+
+	it('gives almost no right notes to nonsense said on time', () => {
+		for (const f0 of [130, 200]) {
+			const lead = 0.4;
+			const samples = speak(
+				lead + exercise.durationMs / 1000 + 0.5,
+				exercise.expected.map((note, index) => ({
+					...NONSENSE_SOUNDS[index % NONSENSE_SOUNDS.length],
+					at: lead + note.time / 1000 + LATENCY,
+					duration: 0.25,
+					f0
+				}))
+			);
+			const notes = hearReading(
+				{ samples, sampleRate: RATE, startTime: 0 },
+				lead,
+				exercise,
+				profile
+			);
+			expect(scoreRun(exercise, { input: 'voice', notes }).pitchAccuracy).toBeLessThanOrEqual(10);
+		}
 	});
 
 	it('marks a misread name as wrong', () => {

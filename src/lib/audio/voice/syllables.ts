@@ -42,10 +42,12 @@ const VOWEL_BELOW_PEAK_DB = 6;
 /** How far into a stretch a voiced consonant can run before its vowel. */
 const CONSONANT_SEARCH_FRAMES = 15;
 /**
- * A name is recognised from a fixed window around its vowel onset: the consonant, which is all
- * that tells "ré" from "mi" or "fa" from "la", and the start of the vowel, not all of a held one.
+ * A name is recognised from a fixed window around its vowel onset: the consonant's transition into
+ * the vowel, which is all that tells "ré" from "mi" or "fa" from "la", and the start of the vowel,
+ * not all of a held one. The window stops short before the onset: in a legato reading, further
+ * back lies the previous name's vowel, where calibration had silence.
  */
-const CONSONANT_FRAMES = 10;
+const CONSONANT_FRAMES = 4;
 const VOWEL_FRAMES = 15;
 
 export interface Region {

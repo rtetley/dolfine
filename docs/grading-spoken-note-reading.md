@@ -19,7 +19,7 @@ The hard part is not recognising seven words. It is deciding when a spoken sylla
 ## 2. What the student does
 
 1. **Choose the names.** The app uses the existing setting, `NoteNameSystem` (`letters` | `solfege`, defaulting from the language). The student says the natural name of each written note head, with no octave and no accidental.
-2. **Calibrate once per device.** After a one-bar count-in, the student says each of the seven names on a click, three times round (one name a second, about 30 seconds). The recordings are the recogniser's samples of the student's voice (§4). The delay from each click to the vowel gives a per-name offset that covers both the device's latency and how that name is articulated.
+2. **Calibrate once per device.** After a one-bar count-in, the student says each of the seven names on a click, three times round, then seven made-up syllables (_ma, nu, to, ku, gou, zo, pi_), one a second, about 40 seconds. The recordings are the recogniser's samples of the student's voice (§4). The delay from each click to the vowel gives a per-name offset that covers both the device's latency and how that name is articulated.
 3. **Preview, then read.** The flow is the same as Performance mode today: a count-in, the cursor if the level allows it, and the metronome. The student speaks one name per note. Rests are silent. A tied or held note is said once, at its onset.
 4. **Results.** The existing per-note overlay (`correct` / `early` / `late` / `wrong` / `missed`) is reused unchanged, along with name % and rhythm %.
 
@@ -71,9 +71,11 @@ The audio is processed in the browser, frame by frame, through a Web Audio `Audi
    - Each name is timed at the jump from its voiced consonant into its vowel, when there is one. The _l_ of _la_ is sometimes nearly as loud as the vowel and sometimes cut off by a dip; timing on loudness alone put _la_ up to 60 ms early in one case and not the other. Solfège pairs that share a vowel (_fa_/_la_, _mi_/_si_, _do_/_sol_) are told apart by the consonant frames kept before each vowel.
 2. **Classify** each syllable as one of the seven names (plus "noise").
    - **Phase 1: template matching, no model.** Compute MFCC features for the syllable, then use dynamic time warping (DTW) against the student's own calibration recordings of the seven names. For one known speaker and seven words, this classic approach is accurate and needs no training data. It is a few hundred lines of TypeScript.
-   - A name is recognised from a fixed window around its vowel onset (100 ms before, 150 ms after), so the consonant, which alone tells _ré_ from _mi_ or _fa_ from _la_, weighs as much as the vowel. The profile carries a version; set-ups recorded with older recognition are asked to be redone.
-   - A sound counts as noise only if it is further from its nearest name than 1.5 times the typical gap between two different names (or 2.5 times the spread of a name's own calibration takes, if that is larger). Bounding on the calibration takes alone rejected names that were sung at pitch or held.
-   - **Phase 2, only if Phase 1 falls short: a small trained classifier.** A CNN on log-mel features, trained offline on a corpus of children's and adults' voices, exported to ONNX and run with `onnxruntime-web`. The model would be under 500 KB and lazy-loaded like VexFlow. This works without calibration, but it needs the corpus.
+   - A name is recognised from a fixed window around its vowel onset (40 ms before, 150 ms after), so the transition from the consonant, which alone tells _ré_ from _mi_ or _fa_ from _la_, weighs as much as the vowel. The window stops short before the onset because in a legato reading the previous name's vowel lies further back, where calibration had silence. Only the first seven cepstra are compared: the finer ones follow the spacing of the harmonics and shift when a name is sung higher than it was said.
+   - **Decoys.** Templates of the seven names alone can only say which name a sound is least unlike, so nonsense always came out as some name, and said on time it often counted as the expected one. The made-up syllables from calibration are examples of what is not a name: a sound at least as close to a decoy as to every name is turned away, and a near tie only goes to the expected name if the sound is closer to it than to every decoy.
+   - A sound counts as noise beyond 3 times the median distance between the student's own repeats of a name; to count as the expected name on a near tie it must sit within 80% of that. On synthetic voices this turns away all of a nonsense reading said on time, while names sung legato at pitch still pass. Nonsense that differs from a name by its consonant only (_ra_ for _la_) still passes about one time in two.
+   - The profile carries a version; set-ups recorded with older recognition are asked to be redone.
+   - **Phase 2, after v1: a small trained classifier** (see §8). A keyword-spotting model on log-mel features with the seven names plus "unknown" and "background" classes, exported to ONNX and run with `onnxruntime-web`, under 1 MB and lazy-loaded like VexFlow. Its "unknown" class, trained on many people's other syllables, is what decoys only approximate.
 3. **Align in order.** Spoken names come one after another, so the heard names are aligned to the score in order (an edit distance over time) rather than each note taking its nearest sound, which let one stray sound leave a said note marked missed.
 4. **Use the score as a prior.** Score each segment by how much more likely the expected name is than the best other name. That avoids failing a student for one mumbled consonant, while still catching real misreads, which are typically a third off (_mi_ for _sol_) or the wrong clef.
 
@@ -126,7 +128,20 @@ That is 6–8 weeks for Phase 1, with no pitch tracking and no per-instrument wo
 
 1. Make the spoken mode **the** microphone grading for sight reading, instead of listening to instruments. It checks what matters (the right note at the right time), covers every student, and needs no pitch detection.
 2. Start with solfège names (French users and English users who choose them). Turn on letter names once the corpus shows the rhyming letters are told apart reliably.
-3. Keep everything on the device. No audio leaves the browser, so there is no data processing agreement, and the consent wording only concerns microphone access.
+3. Keep everything on the device for v1. No audio leaves the browser, so there is no data processing agreement, and the consent wording only concerns microphone access. Collecting recordings to train a model (§8) is a later, opt-in step.
+
+## 8. After v1: training a model on students' recordings
+
+Phase 1 is a stopgap: three takes per name and seven decoys cannot model everything a student might say. General speech recognisers were tried and fall short (Nov 2026, offline, five French voices): Vosk's small French model limited to the seven names recognised 59% of names in a reading and still took 26% of nonsense for names; with its full vocabulary it rejected nonsense but recognised only 15 names in 120, hearing lone syllables as other words.
+
+The standard answer is a keyword-spotting model trained for exactly these words, which needs hundreds of speakers. Once v1 is in students' hands:
+
+1. **Collect, opt-in only.** Ask once, with wording a parent can read, whether the student agrees to share their microphone set-up and spoken readings to improve recognition. Many students are minors, so this needs parental consent where the law asks for it, a privacy notice, and a way to withdraw and have recordings deleted. Nothing is sent without that agreement; today nothing is sent at all.
+2. **What to send.** The calibration take (already labelled: each click says which name or decoy was asked), and spoken readings in the format `?debug` already downloads (`capture.ts`: 16 kHz audio, the exercise's timing, what was heard). Readings are labelled by the score only where the student is likely right; a sample is checked by ear.
+3. **Train** a small CNN or CRNN on log-mel features: seven names, "unknown" (decoys, other syllables, words), "background" (clicks, breath, room). Augment with noise, room echo, pitch and speed changes; keep a held-out set of speakers to measure on.
+4. **Ship** it as an ONNX file behind the current onset detector, which keeps doing the timing; the calibration then only measures latency and offsets. Keep the template matcher as a fallback until the model beats it on the held-out speakers.
+
+This needs a backend to receive recordings, which the app does not have yet.
 
 ## Open questions
 
