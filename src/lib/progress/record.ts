@@ -76,3 +76,13 @@ export function recordAnswer(state: ProgressState, answer: Answer): Recorded {
 	}
 	return { state: next, events };
 }
+
+/**
+ * Places the student on a track without making them climb from Level 1: the levels below
+ * count as passed. Used when a student says where they stand; it never lowers a track.
+ */
+export function placeOnLevel(state: ProgressState, track: TrackId, level: Level): ProgressState {
+	const current = trackOf(state, track);
+	if (current.unlocked >= level) return state;
+	return { ...state, tracks: { ...state.tracks, [track]: { ...current, unlocked: level } } };
+}

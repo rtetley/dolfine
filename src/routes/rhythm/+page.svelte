@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
 	import { m } from '#lib/i18n.ts';
@@ -106,6 +107,7 @@
 	</div>
 
 	{#if view === 'setup'}
+		<ModuleIntro module="rhythm" />
 		<section class="setup" aria-label={m.setup_label()}>
 			<LevelPicker
 				level={prefs.level}

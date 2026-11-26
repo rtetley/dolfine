@@ -1,6 +1,9 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
 	import LevelPicker from '#lib/components/LevelPicker.svelte';
+	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
+	import RelatedLessons from '#lib/components/RelatedLessons.svelte';
+	import { EAR_LESSONS } from '#lib/content/relatedLessons.ts';
 	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
 	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
 	import { m } from '#lib/i18n.ts';
@@ -26,7 +29,7 @@
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { onResume } from '#lib/state/resume.ts';
-	import { earTrack } from '#lib/progress/ladder.ts';
+	import { EAR_TRACKS, earTrack } from '#lib/progress/ladder.ts';
 	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
 
 	const stored = loadModulePrefs('ear', EAR_DEFAULTS);
@@ -94,7 +97,10 @@
 		{/each}
 	</div>
 
+	<RelatedLessons lessons={EAR_LESSONS[prefs.submodule]} />
+
 	{#if !question}
+		<ModuleIntro module="ear" tracks={EAR_TRACKS} onplace={(level: Level) => update({ level })} />
 		<section class="setup" aria-label={m.setup_label()}>
 			<LevelPicker
 				level={prefs.level}

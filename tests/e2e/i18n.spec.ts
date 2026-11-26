@@ -81,7 +81,7 @@ test.describe('the language setting', () => {
 		await page.getByRole('combobox', { name: 'Langue' }).selectOption('English');
 		await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 		await page.goto('theory');
-		await expect(page.getByRole('heading', { name: 'Music theory' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Music theory', exact: true })).toBeVisible();
 		await context.close();
 	});
 });

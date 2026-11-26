@@ -1,5 +1,6 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
+	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import { m } from '#lib/i18n.ts';
 	import { SIGHT_READING_GUIDES } from '#lib/content/guides.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
@@ -81,6 +82,7 @@
 	<p class="lede">{m.sight_reading_lede()}</p>
 
 	{#if view === 'setup'}
+		<ModuleIntro module="sight-reading" />
 		<Setup {prefs} onchange={updatePrefs} onstart={() => start()} />
 		<GuideText guide={SIGHT_READING_GUIDES.intro} open />
 		<GuideText guide={SIGHT_READING_GUIDES.dandelot} open={prefs.level <= 3} />

@@ -9,11 +9,12 @@ const useLocale = async (locale: 'en' | 'fr') => {
 	overwriteGetLocale(() => locale);
 };
 const loadModulePrefs = () => import('./modulePrefs.svelte');
+const loadOnboarding = () => import('./onboarding.svelte');
 
 // The stores pull in every compiled message; transform them once so the per-test
 // re-imports below only re-evaluate modules.
 beforeAll(async () => {
-	await Promise.all([loadSettings(), loadModulePrefs()]);
+	await Promise.all([loadSettings(), loadModulePrefs(), loadOnboarding()]);
 }, 60_000);
 
 beforeEach(() => {
@@ -115,5 +116,37 @@ describe('module prefs', () => {
 		saveModulePrefs('rhythm', { level: 6, tempo: 'fast' });
 		expect(load('rhythm', { level: 1, tempo: 90 })).toEqual({ level: 6, tempo: 90 });
 		expect(load('ear', { level: 1 })).toEqual({ level: 1 });
+	});
+});
+
+describe('onboarding store', () => {
+	it('starts with the tour pending and no module introduced', async () => {
+		const { onboarding } = await loadOnboarding();
+		expect(onboarding.tourPending).toBe(true);
+		expect(onboarding.hasSeen('theory')).toBe(false);
+	});
+
+	it('remembers the tour and each introduction put away', async () => {
+		const { onboarding } = await loadOnboarding();
+		onboarding.finishTour();
+		onboarding.markSeen('ear');
+		onboarding.markSeen('ear');
+		expect(JSON.parse(storage.getItem('dolfine:onboarding') ?? 'null')).toEqual({
+			tour: 'done',
+			seen: ['ear']
+		});
+		onboarding.showIntroAgain('ear');
+		expect(onboarding.hasSeen('ear')).toBe(false);
+		onboarding.replayTour();
+		expect(onboarding.tourPending).toBe(true);
+	});
+
+	it('reads damaged saves safely', async () => {
+		const { readOnboarding } = await loadOnboarding();
+		expect(readOnboarding({ tour: 'done', seen: ['theory', 'piano', 'theory', 4] })).toEqual({
+			tour: 'done',
+			seen: ['theory']
+		});
+		expect(readOnboarding('nope')).toEqual({ tour: 'pending', seen: [] });
 	});
 });

@@ -13,6 +13,7 @@
 		type ModuleId,
 		readSavedPrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { onboarding } from '#lib/state/onboarding.svelte.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 	import { RESUME_QUERY } from '#lib/state/resume.ts';
 
@@ -126,7 +127,7 @@
 		{/if}
 	</div>
 
-	<section aria-labelledby="modules-heading">
+	<section aria-labelledby="modules-heading" data-tour="modules">
 		<h2 id="modules-heading" class="label">{m.modules_heading()}</h2>
 		<ul class="modules">
 			{#each modules as module (module.id)}
@@ -158,6 +159,13 @@
 			{/each}
 		</ul>
 	</section>
+
+	{#if onboarding.tourPending}
+		<!-- Loaded only for the visit that shows it. -->
+		{#await import('#lib/components/Tour.svelte') then { default: Tour }}
+			<Tour onfinish={() => onboarding.finishTour()} />
+		{/await}
+	{/if}
 </div>
 
 <style>

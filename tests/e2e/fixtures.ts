@@ -20,6 +20,14 @@ function silentWav(seconds = 0.05, sampleRate = 8000): Buffer {
 
 const SILENCE = silentWav();
 
+interface Options {
+	/**
+	 * Starts each test as a student who has finished onboarding (tour taken, module
+	 * introductions put away), so flows can be tested on their own. Onboarding tests set it false.
+	 */
+	onboarded: boolean;
+}
+
 interface Fixtures {
 	/** Piano sample requests, answered with silence so tests never hit the network. */
 	samples: string[];
@@ -27,7 +35,20 @@ interface Fixtures {
 	errors: string[];
 }
 
-export const test = base.extend<Fixtures>({
+export const test = base.extend<Options & Fixtures>({
+	onboarded: [true, { option: true }],
+	page: async ({ page, onboarded }, use) => {
+		if (onboarded) {
+			await page.addInitScript(() => {
+				if (localStorage.getItem('dolfine:onboarding') !== null) return;
+				localStorage.setItem(
+					'dolfine:onboarding',
+					JSON.stringify({ tour: 'done', seen: ['sight-reading', 'rhythm', 'theory', 'ear'] })
+				);
+			});
+		}
+		await use(page);
+	},
 	samples: [
 		async ({ page }, use) => {
 			const requested: string[] = [];

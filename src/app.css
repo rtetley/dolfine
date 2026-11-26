@@ -288,3 +288,10 @@ hr {
 	font-weight: 500;
 	font-variant-numeric: lining-nums;
 }
+
+/* The element the app tour is pointing at. */
+.tour-target {
+	outline: 3px solid var(--focus);
+	outline-offset: 4px;
+	border-radius: var(--radius);
+}

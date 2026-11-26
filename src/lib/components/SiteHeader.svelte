@@ -25,7 +25,11 @@
 	</a>
 	<nav aria-label={m.nav_label()}>
 		{#each links as link (link.href)}
-			<a href={resolve(link.href)} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+			<a
+				href={resolve(link.href)}
+				aria-current={isCurrent(link.href) ? 'page' : undefined}
+				data-tour="nav-{link.href.slice(1) || 'dashboard'}"
+			>
 				{link.label()}
 			</a>
 		{/each}
