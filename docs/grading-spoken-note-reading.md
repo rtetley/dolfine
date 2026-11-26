@@ -137,11 +137,21 @@ Phase 1 is a stopgap: three takes per name and seven decoys cannot model everyth
 The standard answer is a keyword-spotting model trained for exactly these words, which needs hundreds of speakers. Once v1 is in students' hands:
 
 1. **Collect, opt-in only.** Ask once, with wording a parent can read, whether the student agrees to share their microphone set-up and spoken readings to improve recognition. Many students are minors, so this needs parental consent where the law asks for it, a privacy notice, and a way to withdraw and have recordings deleted. Nothing is sent without that agreement; today nothing is sent at all.
-2. **What to send.** The calibration take (already labelled: each click says which name or decoy was asked), and spoken readings in the format `?debug` already downloads (`capture.ts`: 16 kHz audio, the exercise's timing, what was heard). Readings are labelled by the score only where the student is likely right; a sample is checked by ear.
+2. **What to send.** The files collection mode already saves (below): set-ups, labelled as recorded, and readings with the labels the reader added. Unlabelled readings from students are labelled by the score only where the student is likely right; a sample is checked by ear.
 3. **Train** a small CNN or CRNN on log-mel features: seven names, "unknown" (decoys, other syllables, words), "background" (clicks, breath, room). Augment with noise, room echo, pitch and speed changes; keep a held-out set of speakers to measure on.
 4. **Ship** it as an ONNX file behind the current onset detector, which keeps doing the timing; the calibration then only measures latency and offsets. Keep the template matcher as a fallback until the model beats it on the held-out speakers.
 
 This needs a backend to receive recordings, which the app does not have yet.
+
+### Collecting before v1: collection mode
+
+Open the sight-reading page with `?collect` (`?collect=off` to stop; the choice is kept per browser). A notice stays on the microphone set-up panel while it is on. Then every spoken run saves files to the computer's downloads, and nothing is sent anywhere:
+
+- `dolfine-setup-….json`: the set-up audio at 16 kHz with its prompts (which name or decoy each click asked for).
+- `dolfine-reading-….json`: the reading's audio, the exercise's timing, the voice profile and what was heard; enough to replay it.
+- `dolfine-reading-….labels.json`: saved from the results screen, where each note starts as written and the reader corrects what was actually said (another name, nothing, or something else). Notes the app heard differently are flagged.
+
+`DOLFINE_CAPTURES=~/Downloads pnpm eval:voice` replays every reading in the folder with the current code and reports names right, wrong and missed, how often silence or nonsense was taken for a name, and what each name was heard as. Readings without labels are counted as read as written and reported apart. Friends can collect too; record their consent to their recordings being kept and used.
 
 ## Open questions
 

@@ -654,5 +654,16 @@
 	"voice_single_staff": "Spoken reading uses one staff: the grand staff is read as treble.",
 	"voice_slowed": "Tempo lowered from {from} to {tempo} so every name can be said clearly (at most 5 names a second).",
 	"voice_analysing": "Listening back to your reading…",
-	"results_names_accuracy": "right notes"
+	"results_names_accuracy": "right notes",
+	"collect_on": "Collection mode is on: every microphone set-up and spoken reading is saved to this computer’s downloads, so recognition can be tuned on real voices. Nothing is sent anywhere.",
+	"collect_turn_off": "Turn off",
+	"label_title": "What did you say?",
+	"label_intro": "Each note starts as written. Change the ones where you said another name, nothing, or something else, then save the labels next to the recording.",
+	"label_note": "What was said at note {number}",
+	"label_nothing": "nothing",
+	"label_other": "something else",
+	"label_app_heard": "app heard: {heard}",
+	"label_save": "Save labels",
+	"label_saved": "Saved as {file}.",
+	"label_unsaved": "Changed since saving."
 }

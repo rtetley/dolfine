@@ -98,6 +98,20 @@
 	</div>
 
 	<Score {score} label={m.results_score_label()} />
+
+	{#if summary && performance.input === 'voice' && performance.captureId}
+		{@const captureId = performance.captureId}
+		{@const heardNotes = performance.notes}
+		{#await import('./LabelPanel.svelte') then { default: LabelPanel }}
+			<LabelPanel
+				{captureId}
+				{exercise}
+				notes={summary.notes}
+				heard={heardNotes}
+				names={settings.noteNames}
+			/>
+		{/await}
+	{/if}
 </section>
 
 <style>

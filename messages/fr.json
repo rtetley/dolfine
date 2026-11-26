@@ -654,5 +654,16 @@
 	"voice_single_staff": "La lecture parlée se fait sur une seule portée : le grand système est lu en clé de sol.",
 	"voice_slowed": "Tempo abaissé de {from} à {tempo} pour que chaque nom puisse être dit clairement (5 noms par seconde au plus).",
 	"voice_analysing": "Écoute de votre lecture…",
-	"results_names_accuracy": "notes justes"
+	"results_names_accuracy": "notes justes",
+	"collect_on": "Le mode collecte est activé : chaque réglage du micro et chaque lecture parlée est enregistré dans les téléchargements de cet ordinateur, pour régler la reconnaissance sur de vraies voix. Rien n’est envoyé.",
+	"collect_turn_off": "Désactiver",
+	"label_title": "Qu’avez-vous dit ?",
+	"label_intro": "Chaque note part de ce qui est écrit. Modifiez celles où vous avez dit un autre nom, rien, ou autre chose, puis enregistrez les étiquettes à côté de l’enregistrement.",
+	"label_note": "Ce qui a été dit à la note {number}",
+	"label_nothing": "rien",
+	"label_other": "autre chose",
+	"label_app_heard": "entendu : {heard}",
+	"label_save": "Enregistrer les étiquettes",
+	"label_saved": "Enregistré sous {file}.",
+	"label_unsaved": "Modifié depuis l’enregistrement."
 }

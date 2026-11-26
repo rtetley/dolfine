@@ -11,6 +11,7 @@
 	import type { Microphone, MicrophoneError, Recorder } from '#lib/audio/voice/microphone.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import type { PlayedNote } from '#lib/music/scoring.ts';
+	import { collection } from '#lib/state/collection.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 	import Score from '#lib/notation/Score.svelte';
@@ -154,12 +155,20 @@
 				// Let the "listening back" state paint before the analysis blocks the main thread.
 				setTimeout(() => {
 					const notes = hearReading(recording, readingStart, exercise, heard);
-					if (new URLSearchParams(window.location.search).has('debug')) {
-						void import('./capture').then(({ downloadCapture, encodeCapture }) =>
-							downloadCapture(encodeCapture(recording, readingStart, exercise, heard, notes))
-						);
+					if (!collection.on) {
+						onfinish({ input: 'voice', notes });
+						return;
 					}
-					onfinish({ input: 'voice', notes });
+					void import('./capture').then(
+						({ captureFileName, captureId, download, encodeReading }) => {
+							const id = captureId('reading');
+							download(
+								captureFileName(id),
+								encodeReading(id, recording, readingStart, exercise, heard, notes)
+							);
+							onfinish({ input: 'voice', notes, captureId: id });
+						}
+					);
 				}, 30);
 			});
 		}, RECORDING_TAIL_MS);

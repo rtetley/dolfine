@@ -22,7 +22,13 @@ export interface SpokenNote {
 }
 
 export type Performance =
-	{ input: 'midi'; notes: PlayedNote[] } | { input: 'voice'; notes: SpokenNote[] };
+	| { input: 'midi'; notes: PlayedNote[] }
+	| {
+			input: 'voice';
+			notes: SpokenNote[];
+			/** In collection mode, the id of the reading saved to downloads, for its labels. */
+			captureId?: string;
+	  };
 
 export const scoreRun = (
 	exercise: Pick<SightReadingExercise, 'expected' | 'toleranceMs'>,

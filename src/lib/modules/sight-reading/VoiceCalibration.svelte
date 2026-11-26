@@ -13,10 +13,12 @@
 		type Microphone,
 		microphoneError,
 		openMicrophone,
-		type Recorder
+		type Recorder,
+		type Recording
 	} from '#lib/audio/voice/microphone.ts';
 	import { findSyllables } from '#lib/audio/voice/syllables.ts';
 	import { type Letter, LETTERS, noteName } from '#lib/music/pitch.ts';
+	import { collection } from '#lib/state/collection.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 
@@ -94,6 +96,7 @@
 				...syllable,
 				ms: startMs + syllable.time * 1000
 			}));
+			if (collection.on) saveTake(recording, firstClick, take);
 			const result = buildProfile(take, syllables, names);
 			if (result.ok) {
 				voiceProfile.save(result.profile);
@@ -105,11 +108,28 @@
 		}, 30);
 	}
 
+	function saveTake(recording: Recording, firstClick: number, take: CalibrationPrompt[]): void {
+		const system = names;
+		void import('./capture').then(({ captureFileName, captureId, download, encodeSetup }) => {
+			const id = captureId('setup');
+			download(
+				captureFileName(id),
+				encodeSetup(id, recording, firstClick, CALIBRATION_BEAT_MS, take, system)
+			);
+		});
+	}
+
 	onDestroy(release);
 </script>
 
 <section class="calibration" aria-label={m.voice_setup_label()}>
 	<p>{m.voice_intro()}</p>
+	{#if collection.on}
+		<p class="collecting" role="status">
+			{m.collect_on()}
+			<button type="button" onclick={() => collection.set(false)}>{m.collect_turn_off()}</button>
+		</p>
+	{/if}
 	{#if phase === 'running'}
 		<p>{m.voice_setup_instructions()}</p>
 		<p class="prompt" aria-live="polite">
@@ -166,6 +186,17 @@
 		font-size: var(--step-3);
 		min-width: 4ch;
 		text-align: center;
+	}
+
+	.collecting {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-3);
+		max-width: var(--measure);
+		padding: var(--space-2) var(--space-3);
+		border-left: 2px solid var(--accent);
+		font-size: var(--step--1);
 	}
 
 	.prompt .decoy {

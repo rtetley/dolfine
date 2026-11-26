@@ -155,6 +155,17 @@ test.describe('sight reading', () => {
 		await expect(page.getByRole('button', { name: 'Connect MIDI keyboard' })).toHaveCount(0);
 	});
 
+	test('collection mode is announced while on, and can be turned off', async ({ page }) => {
+		await seedStorage(page, { 'prefs:sight-reading': { ...QUICK_RUN, input: 'voice' } });
+		await page.goto('sight-reading?collect');
+		const notice = page.getByRole('status').filter({ hasText: 'Collection mode is on' });
+		await expect(notice).toBeVisible();
+		await notice.getByRole('button', { name: 'Turn off' }).click();
+		await expect(notice).toHaveCount(0);
+		await page.goto('sight-reading');
+		await expect(page.getByText('Collection mode is on')).toHaveCount(0);
+	});
+
 	test('a calibrated voice can start a spoken reading', async ({ page }) => {
 		const take = [[[0, 0]]];
 		const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];

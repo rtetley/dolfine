@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import { m } from '#lib/i18n.ts';
@@ -26,6 +27,7 @@
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { onResume } from '#lib/state/resume.ts';
+	import { collection } from '#lib/state/collection.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 
@@ -79,6 +81,9 @@
 
 	// Opened from Continue on the dashboard: go straight back to an exercise.
 	onResume(() => start());
+
+	// `?collect` turns collection mode on for this browser, `?collect=off` turns it off.
+	onMount(() => collection.syncWithQuery(window.location.search));
 </script>
 
 <svelte:head>
