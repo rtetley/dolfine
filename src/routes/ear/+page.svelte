@@ -25,6 +25,7 @@
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
+	import { onResume } from '#lib/state/resume.ts';
 	import { earTrack } from '#lib/progress/ladder.ts';
 	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
 
@@ -63,6 +64,9 @@
 			})
 		});
 	}
+
+	// Opened from Continue on the dashboard: go straight back to an exercise.
+	onResume(() => next());
 </script>
 
 <svelte:head>
