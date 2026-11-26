@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from './fixtures';
+import { drillButton, expect, startDrill, test } from './fixtures';
 
 test.describe('onboarding', () => {
 	test.use({ onboarded: false });
@@ -87,33 +87,33 @@ test.describe('onboarding', () => {
 		await intro.getByRole('combobox', { name: /Start at/ }).selectOption({ value: '4' });
 		await intro.getByRole('button', { name: 'Use this level' }).click();
 		await expect(intro.getByRole('status')).toHaveText('Levels 1 to 4 are open.');
-		await expect(page.getByRole('combobox', { name: 'Level' })).toHaveValue('4');
-		await expect(page.getByRole('option', { name: 'Level 5 · locked' })).toBeDisabled();
+		await expect(drillButton(page, 4, 'Name the mode')).toBeEnabled();
+		await expect(drillButton(page, 5, 'Name the chord')).toBeDisabled();
 	});
 
-	test('ear training places every sub-module and points at the theory behind it', async ({
-		page
-	}) => {
+	test('ear training places its ladder and points at the theory behind it', async ({ page }) => {
 		await page.goto('ear');
 		const intro = page.getByRole('region', { name: 'Getting started with ear training' });
 		await expect(intro).toBeVisible();
 		await intro.getByRole('combobox', { name: /Start at/ }).selectOption({ value: '3' });
 		await intro.getByRole('button', { name: 'Use this level' }).click();
 
-		const tabs = page.getByRole('group', { name: 'Sub-module' });
-		await tabs.getByRole('button', { name: 'Chords' }).click();
+		await expect(drillButton(page, 3, 'Voicings')).toBeEnabled();
+		await expect(drillButton(page, 4, 'Modes')).toBeDisabled();
+
+		await startDrill(page, 3, 'Chords');
 		const related = page.getByRole('navigation', { name: 'The theory behind this' });
 		await expect(related.getByRole('link')).toHaveText([
 			'Chord voicings',
 			'Harmonising the major scale'
 		]);
-		await expect(page.getByRole('combobox', { name: 'Level' })).toHaveValue('3');
+		await page.getByRole('button', { name: 'Back to the levels' }).click();
 
-		await tabs.getByRole('button', { name: 'Intervals' }).click();
+		await startDrill(page, 3, 'Intervals');
 		await expect(related).toBeHidden();
-		await expect(page.getByRole('combobox', { name: 'Level' })).toHaveValue('3');
+		await page.getByRole('button', { name: 'Back to the levels' }).click();
 
-		await tabs.getByRole('button', { name: 'Voicings' }).click();
+		await startDrill(page, 3, 'Voicings');
 		await related.getByRole('link', { name: 'Chord voicings' }).click();
 		await expect(page).toHaveTitle(/Chord voicings/);
 	});

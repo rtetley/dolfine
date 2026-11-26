@@ -27,15 +27,11 @@ class ProgressStore {
 		return settings.value.levelLadder === 'open' ? 10 : trackOf(this.state, track).unlocked;
 	}
 
-	/** The level to open a track on: its frontier, unless every level is open. */
-	levelFor(track: TrackId, current: Level): Level {
-		return settings.value.levelLadder === 'open' ? current : trackOf(this.state, track).unlocked;
-	}
-
-	record(track: TrackId, level: Level, correct: boolean): ProgressEvent[] {
+	record(track: TrackId, level: Level, exercise: string, correct: boolean): ProgressEvent[] {
 		const { state, events } = recordAnswer(this.state, {
 			track,
 			level,
+			exercise,
 			correct,
 			today: localDay()
 		});
@@ -74,7 +70,3 @@ function save(state: ProgressState): void {
 }
 
 export const progress = new ProgressStore();
-
-/** Keeps a chosen level within what the ladder allows. */
-export const allowedLevel = (level: Level, unlocked: Level): Level =>
-	level > unlocked ? unlocked : level;

@@ -1,5 +1,10 @@
 import { expect, seedStorage, test } from './fixtures';
 
+const LEVEL_3 = ['voice-chord', 'name-chord', 'build-chord', 'name-mode', 'write-mode'];
+const halfway = Object.fromEntries(
+	LEVEL_3.map((exercise) => [exercise, { recent: Array(9).fill(true), answered: 9, correct: 9 }])
+);
+
 test.describe('dashboard', () => {
 	test('a first visit shows the welcome and every module from Level 1', async ({ page }) => {
 		await page.goto('');
@@ -7,9 +12,9 @@ test.describe('dashboard', () => {
 		const modules = page.getByRole('region', { name: 'Modules' });
 		const theory = modules.getByRole('link', { name: /Music theory/ });
 		await expect(theory).toContainText('Level 1 · start here');
-		await expect(theory.getByRole('img', { name: 'Estimated level: 1' })).toBeVisible();
+		await expect(theory.getByRole('img', { name: 'Open level: 1' })).toBeVisible();
 		await expect(modules.getByRole('link', { name: /Ear training/ })).toContainText(
-			'Chords · Level 1 · start here'
+			'Level 1 · start here'
 		);
 		await expect(modules.getByRole('link', { name: /Sight reading/ })).toContainText(
 			'Not graded yet'
@@ -20,7 +25,6 @@ test.describe('dashboard', () => {
 		page
 	}) => {
 		await seedStorage(page, {
-			'prefs:ear': { submodule: 'modes' },
 			'prefs:sight-reading': { level: 5 },
 			progress: {
 				xp: 230,
@@ -30,9 +34,9 @@ test.describe('dashboard', () => {
 				tracks: {
 					theory: {
 						unlocked: 3,
-						levels: { 3: { recent: Array(9).fill(true), answered: 9, correct: 9 } }
+						levels: { 3: { answered: 45, correct: 45, drills: halfway } }
 					},
-					'ear:modes': { unlocked: 4, levels: {} }
+					ear: { unlocked: 4, levels: {} }
 				},
 				achievements: { 'first-answer': '2026-01-01' }
 			}
@@ -44,10 +48,10 @@ test.describe('dashboard', () => {
 
 		const modules = page.getByRole('region', { name: 'Modules' });
 		const theory = modules.getByRole('link', { name: /Music theory/ });
-		await expect(theory.getByRole('img', { name: 'Estimated level: 3' })).toBeVisible();
+		await expect(theory.getByRole('img', { name: 'Open level: 3' })).toBeVisible();
 		await expect(theory).toContainText('Level 3 · 50% towards Level 4');
 		const ear = modules.getByRole('link', { name: /Ear training/ });
-		await expect(ear).toContainText('Modes · Level 4 · 0% towards Level 5');
+		await expect(ear).toContainText('Level 4 · 0% towards Level 5');
 		await expect(modules.getByRole('link', { name: /Sight reading/ })).toContainText(
 			'Level 5 · not graded yet'
 		);

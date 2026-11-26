@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import type { Level } from '#lib/music/levels.ts';
-	import { type TrackId, trackOf } from '#lib/progress/ladder.ts';
+	import type { TrackId } from '#lib/progress/ladder.ts';
 	import { achievementDetail, achievementTitle } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 	import LevelProgress from './LevelProgress.svelte';
@@ -9,11 +9,13 @@
 	interface Props {
 		track: TrackId;
 		level: Level;
+		exercise: string;
+		label: string;
 		/** Offered when the answer just opened a new level. */
 		onlevel: (level: Level) => void;
 	}
 
-	let { track, level, onlevel }: Props = $props();
+	let { track, level, exercise, label, onlevel }: Props = $props();
 
 	const events = $derived(progress.lastEvents);
 	const xp = $derived(events.reduce((sum, e) => sum + (e.kind === 'xp' ? e.amount : 0), 0));
@@ -43,7 +45,7 @@
 				<strong>{achievementTitle(id)}</strong> · {achievementDetail(id)}
 			</p>
 		{/each}
-		<LevelProgress track={trackOf(progress.state, track)} {level} />
+		<LevelProgress {track} {level} exercise={{ id: exercise, label }} />
 	{/if}
 </div>
 

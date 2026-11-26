@@ -7,23 +7,21 @@
 	import { ACHIEVEMENTS } from '#lib/progress/achievements.ts';
 	import {
 		dayStreak,
-		EAR_TRACKS,
-		estimatedLevel,
 		localDay,
 		percent,
 		REQUIRED_CORRECT,
 		trackOf,
 		UNLOCK_WINDOW
 	} from '#lib/progress/ladder.ts';
-	import { achievementDetail, achievementTitle, trackShortLabel } from '#lib/progress/labels.ts';
+	import { achievementDetail, achievementTitle } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 
 	const state = $derived(progress.state);
 	const accuracy = $derived(state.answered > 0 ? percent(state.correct / state.answered) : 0);
 	const streak = $derived(dayStreak(state.days, localDay()));
 	const earned = $derived(ACHIEVEMENTS.filter((id) => id in state.achievements).length);
-	const theoryLevel = $derived(estimatedLevel(state, 'theory'));
-	const earLevel = $derived(estimatedLevel(state, 'ear'));
+	const theoryLevel = $derived(trackOf(state, 'theory').unlocked);
+	const earLevel = $derived(trackOf(state, 'ear').unlocked);
 
 	const formatDay = (day: string): string =>
 		new Date(`${day}T12:00:00`).toLocaleDateString(getLocale(), {
@@ -69,7 +67,7 @@
 				</p>
 			</div>
 		</div>
-		<TrackLadder track={trackOf(state, 'theory')} label={m.nav_theory()} />
+		<TrackLadder module="theory" label={m.nav_theory()} />
 		<p class="go">
 			<a href={resolve('/theory')}>{m.progress_practise({ module: m.nav_theory() })} →</a>
 		</p>
@@ -85,12 +83,7 @@
 				</p>
 			</div>
 		</div>
-		{#each EAR_TRACKS as track (track)}
-			<div class="sub-track">
-				<h3>{trackShortLabel(track)}</h3>
-				<TrackLadder track={trackOf(state, track)} label={trackShortLabel(track)} />
-			</div>
-		{/each}
+		<TrackLadder module="ear" label={m.nav_ear()} />
 		<p class="go"><a href={resolve('/ear')}>{m.progress_practise({ module: m.nav_ear() })} →</a></p>
 	</section>
 
@@ -144,19 +137,6 @@
 
 	.equivalent {
 		font-size: var(--step--1);
-	}
-
-	.sub-track {
-		margin-bottom: var(--space-5);
-	}
-
-	.sub-track h3 {
-		font-size: var(--step-0);
-		font-variant: small-caps;
-		letter-spacing: 0.06em;
-		text-transform: lowercase;
-		color: var(--ink-soft);
-		margin: 0 0 var(--space-2);
 	}
 
 	.go {

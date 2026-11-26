@@ -1,13 +1,30 @@
 import type { Page } from '@playwright/test';
-import { expect, installFakeMidi, pressKeys, test } from './fixtures';
+import {
+	expect,
+	installFakeMidi,
+	openOptions,
+	pressKeys,
+	seedStorage,
+	startDrill,
+	test
+} from './fixtures';
+
+const LEVEL_OF: Record<string, number> = {
+	'Write the mode': 1,
+	'Voice the chord': 3,
+	'Voice-leading sheet': 7
+};
 
 async function start(page: Page, exercise: string, liveRules = true): Promise<void> {
 	await installFakeMidi(page);
+	await seedStorage(page, { settings: { levelLadder: 'open' } });
 	await page.goto('theory');
-	await page.getByRole('combobox', { name: 'Exercise' }).selectOption(exercise);
-	if (!liveRules) await page.getByRole('checkbox', { name: /voicing rule problems/ }).uncheck();
+	if (!liveRules) {
+		await openOptions(page);
+		await page.getByRole('checkbox', { name: /voicing rule problems/ }).uncheck();
+	}
 	await page.getByRole('button', { name: 'Connect MIDI keyboard' }).click();
-	await page.getByRole('button', { name: 'Start' }).click();
+	await startDrill(page, LEVEL_OF[exercise] ?? 1, exercise);
 }
 
 const noteheads = (page: Page, label: string) =>

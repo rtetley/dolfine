@@ -58,7 +58,6 @@ export const THEORY_EXERCISE_LABELS: Record<TheoryExercise, string> = {
 export interface TheoryPrefs extends Record<string, unknown> {
 	level: Level;
 	exercise: TheoryExercise;
-	parent: ParentScale | 'level';
 	answerFormat: 'level' | 'choice' | 'naming';
 	voicingType: VoicingType | 'alternate';
 	liveRules: boolean;
@@ -67,7 +66,6 @@ export interface TheoryPrefs extends Record<string, unknown> {
 export const THEORY_DEFAULTS: TheoryPrefs = {
 	level: 1,
 	exercise: 'name-mode',
-	parent: 'level',
 	answerFormat: 'level',
 	voicingType: 'alternate',
 	liveRules: true
@@ -98,9 +96,6 @@ export function pickParentRoot(rng: Rng, maxAccidentals: number): PitchClassName
 
 export const answerFormatFor = (prefs: TheoryPrefs): 'choice' | 'naming' =>
 	prefs.answerFormat === 'level' ? THEORY_LEVELS[prefs.level].answerFormat : prefs.answerFormat;
-
-const parentsFor = (prefs: TheoryPrefs): ParentScale[] =>
-	prefs.parent === 'level' ? THEORY_LEVELS[prefs.level].parents : [prefs.parent];
 
 export interface ParentChoice {
 	root: number | null;
@@ -164,7 +159,7 @@ function sameFamily(mode: ModeId): ModeId[] {
 export function createQuestion(prefs: TheoryPrefs, seed: number): TheoryQuestion {
 	const rng = createRng(seed);
 	const level = THEORY_LEVELS[prefs.level];
-	const parents = parentsFor(prefs);
+	const { parents } = level;
 	const parent = rng.pick(parents);
 	const parentRoot = pickParentRoot(rng, level.maxAccidentals);
 	const degree = rng.pick([1, 2, 3, 4, 5, 6, 7] as const);

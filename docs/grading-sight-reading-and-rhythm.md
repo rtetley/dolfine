@@ -2,7 +2,7 @@
 
 _Design note for issue #13 (progress tracking). Status: proposal, for a later release. Nothing here is implemented._
 
-Music theory and ear training already have a progress ladder: every answer is right or wrong, and a level opens once the student gets 18 of their last 20 answers right (`src/lib/progress/`). Sight reading and inner rhythm don't fit that model. A performance is never just right or wrong. It is _mostly_ right, a little late, and it drifts. This note covers how to grade them, and what microphone grading with AI would cost.
+Music theory and ear training already have a progress ladder: every answer is right or wrong, each level has a few exercises, and the next level opens once the student gets 18 of their last 20 answers right on every one of them (`src/lib/progress/`). Sight reading and inner rhythm don't fit that model. A performance is never just right or wrong. It is _mostly_ right, a little late, and it drifts. This note covers how to grade them, and what microphone grading with AI would cost.
 
 ## 1. What a grade should measure
 

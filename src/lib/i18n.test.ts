@@ -28,7 +28,8 @@ const placeholders = (message: unknown): string[] =>
 
 const IDENTICAL_ON_PURPOSE = new Set([
 	'progress_xp',
-	'dashboard_track_detail',
+	'options_label',
+	'drill_label',
 	'progress_xp_gained',
 	'page_title',
 	'modules_heading',

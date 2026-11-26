@@ -86,6 +86,33 @@ export async function seedStorage(page: Page, entries: Record<string, unknown>):
 	}, entries);
 }
 
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The section of a level on the music theory or ear training level map. */
+export const levelSection = (page: Page, level: number, word = 'Level') =>
+	page.getByRole('region', { name: new RegExp(`^${word} ${level} `) });
+
+/** An exercise button on the level map, found by its name. */
+export const drillButton = (page: Page, level: number, exercise: string, word = 'Level') =>
+	levelSection(page, level, word).getByRole('button', {
+		name: new RegExp(`^${escapeRegExp(exercise)} · `)
+	});
+
+/** Starts an exercise from the level map. */
+export async function startDrill(
+	page: Page,
+	level: number,
+	exercise: string,
+	word = 'Level'
+): Promise<void> {
+	await drillButton(page, level, exercise, word).click();
+}
+
+/** Opens the folded options under the level map. */
+export async function openOptions(page: Page, label = 'Options'): Promise<void> {
+	await page.locator('summary', { hasText: label }).click();
+}
+
 /** Installs a fake Web MIDI keyboard; press keys with `pressKeys`. */
 export async function installFakeMidi(page: Page, deviceName = 'E2E Keyboard'): Promise<void> {
 	await page.addInitScript((name) => {

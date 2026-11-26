@@ -1,4 +1,4 @@
-import { expect, seedStorage, test } from './fixtures';
+import { drillButton, expect, levelSection, seedStorage, startDrill, test } from './fixtures';
 
 test('the dashboard continues the last exercise with its settings', async ({ page }) => {
 	await seedStorage(page, { progress: { tracks: { theory: { unlocked: 4, levels: {} } } } });
@@ -6,23 +6,20 @@ test('the dashboard continues the last exercise with its settings', async ({ pag
 	await expect(page.getByText(/elcome to D\.O\.lfine/)).toBeVisible();
 
 	await page.goto('theory');
-	await page.getByRole('combobox', { name: 'Level' }).selectOption('Level 4');
-	await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Name the chord');
-	await page.getByRole('button', { name: 'Start' }).click();
+	await startDrill(page, 4, 'Write the mode');
 
 	await page.getByRole('link', { name: 'Dashboard' }).click();
 	const resume = page.getByRole('link', { name: /^Continue/ });
-	await expect(resume).toContainText('Music theory · Level 4 · Name the chord');
+	await expect(resume).toContainText('Music theory · Level 4 · Write the mode');
 	await expect(page.getByText(/elcome to D\.O\.lfine/)).toBeHidden();
 
 	await resume.click();
 	await expect(page).toHaveTitle('Music theory · D.O.lfine');
-	await expect(page.getByText('Level 4 · Name the chord')).toBeVisible();
+	await expect(page.getByText('Level 4 · Write the mode')).toBeVisible();
 	await expect(page).toHaveURL(/\/theory$/);
 
-	await page.getByRole('button', { name: 'Back to setup' }).click();
-	await expect(page.getByRole('combobox', { name: 'Level' })).toHaveValue('4');
-	await expect(page.getByRole('combobox', { name: 'Exercise' })).toHaveValue('name-chord');
+	await page.getByRole('button', { name: 'Back to the levels' }).click();
+	await expect(drillButton(page, 4, 'Write the mode')).toBeEnabled();
 });
 
 test('Continue can also open the setup first', async ({ page }) => {
@@ -32,7 +29,7 @@ test('Continue can also open the setup first', async ({ page }) => {
 	await page.goto('');
 	await page.getByRole('link', { name: 'Or change the settings first' }).click();
 	await expect(page).toHaveTitle('Ear training · D.O.lfine');
-	await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+	await expect(levelSection(page, 1)).toBeVisible();
 });
 
 for (const [module, title] of [

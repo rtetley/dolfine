@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, startDrill, test } from './fixtures';
 
 test.describe('settings', () => {
 	test('switches the theme and keeps it after a reload', async ({ page }) => {
@@ -24,8 +24,7 @@ test.describe('settings', () => {
 			.getByRole('navigation', { name: 'Main' })
 			.getByRole('link', { name: 'Music theory' })
 			.click();
-		await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Name the mode');
-		await page.getByRole('button', { name: 'Start' }).click();
+		await startDrill(page, 1, 'Name the mode');
 		const roots = page.getByRole('group', { name: 'Parent scale' }).getByRole('combobox').first();
 		await expect(roots.getByRole('option', { name: 'Do', exact: true })).toHaveCount(1);
 	});

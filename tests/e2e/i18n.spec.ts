@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, startDrill, test } from './fixtures';
 
 const FRENCH_PAGES = [
 	{ path: '', title: 'Tableau de bord · D.O.lfine', heading: 'Modules' },
@@ -24,8 +24,7 @@ test.describe('a French browser', () => {
 
 	test('names notes in solfège and modes in French by default', async ({ page }) => {
 		await page.goto('theory');
-		await page.getByRole('combobox', { name: 'Exercice' }).selectOption('Écrire le mode');
-		await page.getByRole('button', { name: 'Commencer' }).click();
+		await startDrill(page, 1, 'Écrire le mode', 'Niveau');
 		await expect(page.locator('.prompt strong')).toHaveText(
 			/^(Do|Ré|Mi|Fa|Sol|La|Si)[♯♭]? [a-zéèûô♭♯♮ ]+\d?$/
 		);
@@ -37,16 +36,14 @@ test.describe('a French browser', () => {
 		await page.goto('settings');
 		await page.getByRole('combobox', { name: 'Noms des notes' }).selectOption('C D E');
 		await page.getByRole('navigation').getByRole('link', { name: 'Théorie musicale' }).click();
-		await page.getByRole('button', { name: 'Commencer' }).click();
+		await startDrill(page, 1, 'Nommer le mode', 'Niveau');
 		const root = page.getByRole('combobox', { name: 'Tonique' });
 		await expect(root.getByRole('option', { name: 'C', exact: true })).toHaveCount(1);
 	});
 
 	test('runs a theory question with French feedback', async ({ page }) => {
 		await page.goto('theory');
-		await page.getByRole('combobox', { name: 'Exercice' }).selectOption('Nommer le mode');
-		await page.getByRole('combobox', { name: 'Format de réponse' }).selectOption('Choix multiple');
-		await page.getByRole('button', { name: 'Commencer' }).click();
+		await startDrill(page, 1, 'Nommer le mode', 'Niveau');
 		await expect(
 			page.getByText('Quel est ce mode, et quelle est sa gamme mère\u202f?')
 		).toBeVisible();

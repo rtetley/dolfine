@@ -1,12 +1,11 @@
-import { expect, installFakeMidi, pressKeys, test } from './fixtures';
+import { expect, installFakeMidi, pressKeys, seedStorage, startDrill, test } from './fixtures';
 
 test('a MIDI keyboard writes notes into the theory exercises', async ({ page }) => {
 	await installFakeMidi(page);
 	await page.goto('theory');
-	await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Write the mode');
 	await page.getByRole('button', { name: 'Connect MIDI keyboard' }).click();
 	await expect(page.getByText('MIDI ready · E2E Keyboard')).toBeVisible();
-	await page.getByRole('button', { name: 'Start' }).click();
+	await startDrill(page, 1, 'Write the mode');
 
 	await expect(page.getByText(/MIDI keys toggle notes too/)).toBeVisible();
 	await pressKeys(page, [60, 62, 64]);
@@ -22,10 +21,10 @@ test('a MIDI keyboard writes notes into the theory exercises', async ({ page }) 
 
 test('a voice-leading sheet can be written from the keyboard and checked', async ({ page }) => {
 	await installFakeMidi(page);
+	await seedStorage(page, { settings: { levelLadder: 'open' } });
 	await page.goto('theory');
-	await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Voice-leading sheet');
 	await page.getByRole('button', { name: 'Connect MIDI keyboard' }).click();
-	await page.getByRole('button', { name: 'Start' }).click();
+	await startDrill(page, 7, 'Voice-leading sheet');
 
 	const write = page.getByRole('button', { name: 'Write this chord' });
 	while (await write.isVisible()) {

@@ -64,7 +64,7 @@ src/lib/music/        pure music core: pitch, scales/modes, chords, voicings, vo
 src/lib/notation/     score model (pure) + VexFlow renderer + <Score> component
 src/lib/audio/        Tone.js engine, metronome, polyrhythm / metric-modulation scheduling
 src/lib/midi/         Web MIDI input
-src/lib/progress/     progress ladder (pure): level unlocking, XP, streaks, achievements
+src/lib/progress/     progress ladder (pure): curriculum, per-exercise grades, level unlocking, XP, streaks, achievements
 src/lib/state/        browser-persisted settings, module prefs, Continue, progress
 src/lib/modules/      one folder per module: exercise logic (pure, tested) + Svelte views
 src/lib/components/   shared UI: piano, choices, level picker, metronome pulse, logo

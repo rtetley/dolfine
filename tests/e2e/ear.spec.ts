@@ -1,16 +1,18 @@
-import { expect, seedStorage, test } from './fixtures';
+import { expect, seedStorage, startDrill, test } from './fixtures';
 
-const SUBMODULES = ['Intervals', 'Chords', 'Voicings', 'Modes', 'Progressions'];
+/** Each sub-module at the first and the last level that grades it. */
+const SUBMODULES: readonly [string, readonly number[]][] = [
+	['Intervals', [1, 10]],
+	['Chords', [1, 10]],
+	['Voicings', [3, 10]],
+	['Modes', [2, 10]],
+	['Progressions', [4, 10]]
+];
 
 test.describe('ear training', () => {
 	test('plays a chord question and grades the answer', async ({ page, samples }) => {
 		await page.goto('ear');
-		await page
-			.getByRole('group', { name: 'Sub-module' })
-			.getByRole('button', { name: 'Chords' })
-			.click();
-		await page.getByRole('combobox', { name: 'Answer' }).selectOption('Choose from options');
-		await page.getByRole('button', { name: 'Start' }).click();
+		await startDrill(page, 1, 'Chords');
 
 		await expect(
 			page.getByText('The root sounds first, then the chord. Name its quality.')
@@ -24,36 +26,25 @@ test.describe('ear training', () => {
 		await expect(page.getByRole('button', { name: 'Check' })).toBeDisabled();
 	});
 
-	for (const submodule of SUBMODULES) {
-		test(`${submodule} questions start at levels 1 and 10`, async ({ page }) => {
+	for (const [submodule, levels] of SUBMODULES) {
+		test(`${submodule} questions start at the levels that grade them`, async ({ page }) => {
 			await seedStorage(page, { settings: { levelLadder: 'open' } });
 			await page.goto('ear');
-			await page
-				.getByRole('group', { name: 'Sub-module' })
-				.getByRole('button', { name: submodule })
-				.click();
-			for (const level of ['Level 1', 'Level 10']) {
-				await page.getByRole('combobox', { name: 'Level' }).selectOption(level);
-				await page.getByRole('button', { name: 'Start' }).click();
+			for (const level of levels) {
+				await startDrill(page, level, submodule);
+				await expect(page.getByText(`Level ${level} · ${submodule}`)).toBeVisible();
 				await expect(
 					page.getByRole('button', { name: /^(Check|Replay|Play)/ }).first()
 				).toBeVisible();
-				await page
-					.getByRole('group', { name: 'Sub-module' })
-					.getByRole('button', { name: submodule })
-					.click();
+				await page.getByRole('button', { name: 'Back to the levels' }).click();
 			}
 		});
 	}
 
 	test('a wrong mode can be heard next to the right one', async ({ page }) => {
+		await seedStorage(page, { progress: { tracks: { ear: { unlocked: 2, levels: {} } } } });
 		await page.goto('ear');
-		await page
-			.getByRole('group', { name: 'Sub-module' })
-			.getByRole('button', { name: 'Modes' })
-			.click();
-		await page.getByRole('combobox', { name: 'Answer' }).selectOption('Choose from options');
-		await page.getByRole('button', { name: 'Start' }).click();
+		await startDrill(page, 2, 'Modes');
 
 		const yours = page.getByRole('button', { name: /^Hear your answer · / });
 		for (let attempt = 0; attempt < 12; attempt++) {

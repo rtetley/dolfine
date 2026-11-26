@@ -1,21 +1,20 @@
-import { expect, seedStorage, test } from './fixtures';
+import { expect, seedStorage, startDrill, test } from './fixtures';
 
-const EXERCISES = [
-	'Name the mode',
-	'Write the mode',
-	'Mode in context',
-	'Name the chord',
-	'Build the chord',
-	'Voice the chord',
-	'Voice-leading sheet'
+/** Each exercise at the first and the last level that grades it. */
+const EXERCISES: readonly [string, readonly number[]][] = [
+	['Name the mode', [1, 7]],
+	['Write the mode', [1, 9]],
+	['Mode in context', [7, 10]],
+	['Name the chord', [2, 10]],
+	['Build the chord', [2, 9]],
+	['Voice the chord', [3, 10]],
+	['Voice-leading sheet', [7, 10]]
 ];
 
 test.describe('music theory', () => {
 	test('answers a name-the-mode question end to end', async ({ page }) => {
 		await page.goto('theory');
-		await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Name the mode');
-		await page.getByRole('combobox', { name: 'Answer format' }).selectOption('Multiple choice');
-		await page.getByRole('button', { name: 'Start' }).click();
+		await startDrill(page, 1, 'Name the mode');
 
 		await expect(page.getByRole('figure', { name: 'Scale to name' }).locator('svg')).toBeVisible();
 		const check = page.getByRole('button', { name: 'Check' });
@@ -37,20 +36,38 @@ test.describe('music theory', () => {
 		await expect(page.getByRole('button', { name: 'Check' })).toBeDisabled();
 	});
 
-	for (const exercise of EXERCISES) {
-		test(`“${exercise}” renders at every level band`, async ({ page }) => {
+	test('shows each level as a section, with locked levels saying what opens them', async ({
+		page
+	}) => {
+		await page.goto('theory');
+		await expect(page.getByRole('heading', { name: 'Level 1 The major scale' })).toBeVisible();
+		await expect(
+			page.getByRole('region', { name: /^Level 1 / }).getByRole('link', {
+				name: 'Harmonising the major scale'
+			})
+		).toBeVisible();
+		const second = page.getByRole('region', { name: /^Level 2 / });
+		await expect(second.getByText('Locked', { exact: true })).toBeVisible();
+		await expect(second).toContainText(
+			'To open it, reach 90% on these exercises of Level 1: Name the mode · Write the mode'
+		);
+		await expect(page.getByRole('region', { name: /^Level 3 / })).toContainText(
+			'Opens once Level 2 is passed'
+		);
+	});
+
+	for (const [exercise, levels] of EXERCISES) {
+		test(`“${exercise}” renders at the levels that grade it`, async ({ page }) => {
 			await seedStorage(page, { settings: { levelLadder: 'open' } });
 			await page.goto('theory');
-			await page.getByRole('combobox', { name: 'Exercise' }).selectOption(exercise);
-			for (const level of ['Level 1', 'Level 5', 'Level 10']) {
-				await page.getByRole('combobox', { name: 'Level' }).selectOption(level);
-				await page.getByRole('button', { name: 'Start' }).click();
-				await expect(page.getByText(`${level} · ${exercise}`)).toBeVisible();
+			for (const level of levels) {
+				await startDrill(page, level, exercise);
+				await expect(page.getByText(`Level ${level} · ${exercise}`)).toBeVisible();
 				await expect(page.locator('.prompt').first()).toBeVisible();
 				await expect(
 					page.getByRole('button', { name: /^(Check|Write this chord)/ }).first()
 				).toBeVisible();
-				await page.getByRole('button', { name: 'Back to setup' }).click();
+				await page.getByRole('button', { name: 'Back to the levels' }).click();
 			}
 		});
 	}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/i18n.ts';
-	import { JAZZ_MAPPING, type Level } from '#lib/music/levels.ts';
+	import { JAZZ_MAPPING } from '#lib/music/levels.ts';
 	import { type TrackId, trackOf } from '#lib/progress/ladder.ts';
 	import { trackLabel } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
@@ -11,11 +11,9 @@
 
 	interface Props {
 		track: TrackId;
-		/** The level picked in setup; progress is shown for it. */
-		level: Level;
 	}
 
-	let { track, level }: Props = $props();
+	let { track }: Props = $props();
 
 	const state = $derived(trackOf(progress.state, track));
 	const open = $derived(state.unlocked);
@@ -30,7 +28,7 @@
 			{open === 1 ? m.progress_first_level() : m.progress_open_level({ level: open })}
 		</p>
 		<p class="equivalent">≈ {equivalent.abrsm} · {equivalent.french}</p>
-		<LevelProgress track={state} {level} />
+		<LevelProgress {track} level={open} />
 		<p class="links">
 			{#if settings.value.levelLadder === 'open'}
 				<span class="note">{m.progress_ladder_open_note()}</span> ·

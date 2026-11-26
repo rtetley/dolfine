@@ -1,26 +1,19 @@
 import type { Level } from '#lib/music/levels.ts';
 import type { ModuleId } from '#lib/state/modulePrefs.svelte.ts';
 import {
-	EAR_TRACK_SUBMODULES,
-	earTrack,
-	estimatedLevel,
+	type GradedModule,
 	hasPractised,
 	isLevel,
-	levelStanding,
+	moduleStanding,
 	percent,
 	type ProgressState,
-	type TrackId,
 	trackOf
 } from './ladder';
 
 /** What the dashboard shows for a graded module (music theory, ear training). */
 export interface GradedStatus {
 	graded: true;
-	/** The badge: the app's estimate of the student's level in this module. */
-	estimate: Level;
-	/** The track the student is on now (the ear sub-module last chosen). */
-	track: TrackId;
-	/** The open level on that track, and how far they are towards the next one. */
+	/** The open level, and how far the student is towards the next one. */
 	level: Level;
 	percent: number;
 	atTop: boolean;
@@ -39,27 +32,20 @@ export type ModuleStatus = GradedStatus | UngradedStatus;
 /** The saved setup of each module, as far as the dashboard needs it. */
 export type SavedPrefs = Partial<Record<ModuleId, Record<string, unknown>>>;
 
-function graded(state: ProgressState, module: 'theory' | 'ear', track: TrackId): GradedStatus {
-	const progress = trackOf(state, track);
-	const standing = levelStanding(progress, progress.unlocked);
+function graded(state: ProgressState, module: GradedModule): GradedStatus {
+	const { unlocked } = trackOf(state, module);
+	const standing = moduleStanding(state, module, unlocked);
 	return {
 		graded: true,
-		estimate: estimatedLevel(state, module),
-		track,
-		level: progress.unlocked,
+		level: unlocked,
 		percent: percent(standing.ratio),
-		atTop: progress.unlocked === 10 && standing.passed,
-		started: progress.unlocked > 1 || hasPractised(state, track)
+		atTop: unlocked === 10 && standing.passed,
+		started: unlocked > 1 || hasPractised(state, module)
 	};
 }
 
 const savedLevel = (prefs: Record<string, unknown> | undefined): Level | null =>
 	isLevel(prefs?.level) ? prefs.level : null;
-
-const savedEarTrack = (prefs: Record<string, unknown> | undefined): TrackId => {
-	const submodule = EAR_TRACK_SUBMODULES.find((s) => s === prefs?.submodule);
-	return earTrack(submodule ?? 'chords');
-};
 
 export function moduleStatuses(
 	state: ProgressState,
@@ -68,7 +54,7 @@ export function moduleStatuses(
 	return {
 		'sight-reading': { graded: false, level: savedLevel(prefs['sight-reading']) },
 		rhythm: { graded: false, level: savedLevel(prefs.rhythm) },
-		theory: graded(state, 'theory', 'theory'),
-		ear: graded(state, 'ear', savedEarTrack(prefs.ear))
+		theory: graded(state, 'theory'),
+		ear: graded(state, 'ear')
 	};
 }
