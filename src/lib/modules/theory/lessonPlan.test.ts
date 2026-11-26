@@ -19,16 +19,26 @@ describe('lesson plans', () => {
 	});
 
 	it('open with the level that first teaches them, in that order', () => {
-		expect(LESSON_ORDER).toEqual(['major', 'voicings', 'melodic-minor', 'harmonic-minor']);
+		expect(LESSON_ORDER).toEqual([
+			'major',
+			'chord-colours',
+			'four-colours',
+			'melodic-minor',
+			'voicings',
+			'harmonic-minor'
+		]);
 		expect(lessonLevel('major')).toBe(1);
 		expect(isLessonOpen('major', 1)).toBe(true);
-		expect(isLessonOpen('voicings', 1)).toBe(false);
-		expect(isLessonOpen('voicings', 2)).toBe(true);
+		expect(isLessonOpen('chord-colours', 1)).toBe(false);
+		expect(isLessonOpen('chord-colours', 2)).toBe(true);
+		expect(isLessonOpen('voicings', 4)).toBe(false);
+		expect(isLessonOpen('voicings', 5)).toBe(true);
 		expect(isLessonOpen('harmonic-minor', 7)).toBe(false);
 	});
 
 	it('point to the exercises of their level', () => {
 		expect(lessonExercises('major')).toEqual(['name-mode', 'write-mode']);
-		expect(lessonExercises('voicings')).toContain('build-chord');
+		expect(lessonExercises('chord-colours')).toContain('build-chord');
+		expect(LESSON_PLANS['four-colours']).toEqual(['intro', 'colours', 'further', 'exercises']);
 	});
 });

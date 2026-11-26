@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { colourMidis, COLOUR_SETS } from '#lib/music/colours.ts';
 import { earChordById, voiceEarChord } from '#lib/music/earChords.ts';
 import { LEVELS } from '#lib/music/levels.ts';
 import { defaultVoicing } from '#lib/music/voicings.ts';
@@ -95,5 +96,35 @@ describe('answerSound', () => {
 					expect(answerSound(question, id), `${submodule} ${id}`).not.toBeNull();
 			}
 		}
+	});
+});
+
+describe('chord colours', () => {
+	it('offers exactly the colours of each step, and plays the answer in its voicing', () => {
+		for (const level of LEVELS) {
+			for (const seed of [1, 2, 3, 4, 5]) {
+				const question = createEarQuestion({ ...EAR_DEFAULTS, submodule: 'colours', level }, seed);
+				if (question.kind !== 'colours') throw new Error('expected a colour question');
+				expect(question.options.map((o) => o.id).sort()).toEqual([...COLOUR_SETS[level]].sort());
+				expect(question.options.map((o) => o.id)).toContain(question.answer);
+				expect(question.midis).toEqual(
+					colourMidis(question.answer, question.root, question.voicing)
+				);
+			}
+		}
+	});
+
+	it('replays a wrong answer in the same key and voicing, to compare', () => {
+		const question = createEarQuestion({ ...EAR_DEFAULTS, submodule: 'colours', level: 1 }, 7);
+		if (question.kind !== 'colours') throw new Error('expected a colour question');
+		const other = question.answer === 'maj9' ? '69' : 'maj9';
+		const sound = answerSound(question, other);
+		expect(sound).toEqual({
+			kind: 'chord',
+			root: colourMidis(other, question.root, question.voicing)[0],
+			midis: colourMidis(other, question.root, question.voicing)
+		});
+		expect(answerSound(question, 'not-a-colour')).toBeNull();
+		expect(questionSound(question)).toMatchObject({ kind: 'chord', midis: question.midis });
 	});
 });

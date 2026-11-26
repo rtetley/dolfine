@@ -6,7 +6,8 @@ const SUBMODULES: readonly [string, readonly number[]][] = [
 	['Chords', [1, 10]],
 	['Voicings', [3, 10]],
 	['Modes', [2, 10]],
-	['Progressions', [4, 10]]
+	['Progressions', [4, 10]],
+	['Chord colours', [1, 10]]
 ];
 
 test.describe('ear training', () => {
@@ -24,6 +25,25 @@ test.describe('ear training', () => {
 		await expect(page.getByText(/(Right|Not this time)\. It was/)).toBeVisible();
 		await page.getByRole('button', { name: 'Next', exact: true }).click();
 		await expect(page.getByRole('button', { name: 'Check' })).toBeDisabled();
+	});
+
+	test('chord colours start with Δ9 against 6/9, then grow to all sixteen', async ({ page }) => {
+		await seedStorage(page, { settings: { levelLadder: 'open' } });
+		await page.goto('ear');
+		await startDrill(page, 1, 'Chord colours');
+		await expect(page.getByText('Which chord colour is it?')).toBeVisible();
+		// The options come shuffled: just these two.
+		const choices = page.locator('.choices button');
+		await expect(choices).toHaveCount(2);
+		await expect(choices.and(page.getByRole('button', { name: 'Δ9', exact: true }))).toHaveCount(1);
+		await expect(choices.and(page.getByRole('button', { name: '6/9', exact: true }))).toHaveCount(
+			1
+		);
+		await page.getByRole('button', { name: 'Back to the levels' }).click();
+		await startDrill(page, 10, 'Chord colours');
+		await expect(page.getByRole('combobox', { name: 'Your answer' }).locator('option')).toHaveCount(
+			17
+		);
 	});
 
 	for (const [submodule, levels] of SUBMODULES) {

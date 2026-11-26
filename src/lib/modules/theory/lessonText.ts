@@ -17,6 +17,18 @@ export const LESSON_TEXT: Record<LessonId, LessonText> = {
 		paragraphs: () => [m.lesson_major_p1(), m.lesson_major_p2()],
 		further: () => [m.lesson_major_further_p1(), m.lesson_major_further_p2()]
 	},
+	'chord-colours': {
+		title: m.lesson_chord_colours_title,
+		summary: m.lesson_chord_colours_summary,
+		paragraphs: () => [m.lesson_chord_colours_p1(), m.lesson_chord_colours_p2()],
+		further: () => [m.lesson_chord_colours_further_p1()]
+	},
+	'four-colours': {
+		title: m.lesson_four_colours_title,
+		summary: m.lesson_four_colours_summary,
+		paragraphs: () => [m.lesson_four_colours_p1(), m.lesson_four_colours_p2()],
+		further: () => [m.lesson_four_colours_further_p1()]
+	},
 	'melodic-minor': {
 		title: m.lesson_melodic_minor_title,
 		summary: m.lesson_melodic_minor_summary,
@@ -52,6 +64,7 @@ export const SECTION_TITLES: Record<LessonSection, () => string> = {
 	intro: m.lesson_section_intro,
 	harmonization: m.lesson_section_harmonization,
 	modes: m.lesson_section_modes,
+	colours: m.lesson_section_colours,
 	voicings: m.lesson_section_voicings,
 	further: m.lesson_section_further,
 	exercises: m.lesson_section_exercises

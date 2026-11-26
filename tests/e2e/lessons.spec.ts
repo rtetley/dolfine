@@ -4,13 +4,15 @@ import { expect, seedStorage, test } from './fixtures';
 const allOpen = { settings: { levelLadder: 'open' } };
 
 test.describe('theory lessons', () => {
-	test('the theory module leads to four lessons', async ({ page }) => {
+	test('the theory module leads to six lessons', async ({ page }) => {
 		await page.goto('theory');
 		await page.getByRole('link', { name: 'Theory lessons →' }).click();
 		await expect(page).toHaveTitle('Theory lessons · D.O.lfine');
 		const lessons = page.getByRole('listitem');
-		await expect(lessons).toHaveCount(4);
+		await expect(lessons).toHaveCount(6);
 		await expect(lessons.first()).toContainText('Harmonising the major scale');
+		await expect(lessons.nth(1)).toContainText('Chords and modes: twelve colours');
+		await expect(lessons.nth(2)).toContainText('Four more colours');
 		await expect(page.getByRole('link', { name: /Music theory/ }).first()).toHaveAttribute(
 			'aria-current',
 			'page'
@@ -94,6 +96,32 @@ test.describe('theory lessons', () => {
 		await expect(page.getByRole('heading', { name: 'G7' })).toBeVisible();
 		await page.getByRole('button', { name: 'Hear them all' }).click();
 		await expect.poll(() => samples.length).toBeGreaterThan(0);
+	});
+
+	test('the colour lessons voice each colour two ways, beside its nearest neighbour', async ({
+		page,
+		samples
+	}) => {
+		await seedStorage(page, allOpen);
+		await page.goto('theory/lessons/chord-colours');
+		await expect(page.getByRole('heading', { level: 3 })).toHaveCount(12);
+		await expect(page.getByRole('heading', { level: 3 }).first()).toHaveText('CΔ9');
+		await expect(page.getByText('1 7 / 3 5 9').first()).toBeVisible();
+		await expect(page.getByText(/James Bond theme/)).toBeVisible();
+		await page.getByRole('combobox', { name: 'Key' }).selectOption('E♭');
+		await expect(page.getByRole('heading', { level: 3 }).first()).toHaveText('E♭Δ9');
+		await page.getByRole('button', { name: 'Compare with E♭6/9' }).click();
+		await expect.poll(() => samples.length).toBeGreaterThan(0);
+
+		await page.goto('theory/lessons/four-colours');
+		await expect(page.getByRole('heading', { level: 3 })).toHaveText([
+			'C-11',
+			'C7sus4(♭9)',
+			'CΔ9(♯11)',
+			'C-7(♭13)'
+		]);
+		await page.getByRole('button', { name: 'Train your ear on the colours →' }).click();
+		await expect(page.getByText(/Level \d+ · Chord colours/)).toBeVisible();
 	});
 
 	test('unknown lessons are not served', async ({ page, errors }) => {

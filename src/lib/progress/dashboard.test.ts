@@ -41,7 +41,7 @@ describe('dashboard statuses', () => {
 	});
 
 	it('follows the single ear-training ladder', () => {
-		const state = answered(18, 'ear', ['intervals', 'chords']);
+		const state = answered(18, 'ear', ['intervals', 'chords', 'colours']);
 		expect(moduleStatuses(state, {}).ear).toMatchObject({ level: 2, percent: 0 });
 	});
 

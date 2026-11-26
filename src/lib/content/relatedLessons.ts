@@ -7,5 +7,6 @@ export const EAR_LESSONS: Record<EarSubmodule, readonly LessonId[]> = {
 	chords: ['voicings', 'major'],
 	voicings: ['voicings'],
 	modes: ['major', 'melodic-minor', 'harmonic-minor'],
-	progressions: ['major', 'harmonic-minor']
+	progressions: ['major', 'harmonic-minor'],
+	colours: ['chord-colours', 'four-colours']
 };

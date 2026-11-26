@@ -24,15 +24,26 @@ import {
 } from '#lib/music/scales.ts';
 import { defaultVoicing, voicingSpec } from '#lib/music/voicings.ts';
 
-export const LESSONS = ['major', 'melodic-minor', 'harmonic-minor', 'voicings'] as const;
+export const LESSONS = [
+	'major',
+	'chord-colours',
+	'four-colours',
+	'melodic-minor',
+	'harmonic-minor',
+	'voicings'
+] as const;
 export type LessonId = (typeof LESSONS)[number];
-export type ScaleLessonId = Exclude<LessonId, 'voicings'>;
+export type ScaleLessonId = 'major' | 'melodic-minor' | 'harmonic-minor';
+export type ColourLessonId = 'chord-colours' | 'four-colours';
 
 export const LESSON_PARENTS: Record<ScaleLessonId, ParentScale> = {
 	major: 'major',
 	'melodic-minor': 'melodicMinor',
 	'harmonic-minor': 'harmonicMinor'
 };
+
+export const isScaleLesson = (lesson: LessonId): lesson is ScaleLessonId =>
+	lesson in LESSON_PARENTS;
 
 export const isLessonId = (value: string): value is LessonId =>
 	(LESSONS as readonly string[]).includes(value);

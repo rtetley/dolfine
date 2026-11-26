@@ -10,12 +10,13 @@
 	import {
 		samePitchClasses,
 		type ChordEarQuestion,
+		type ColourEarQuestion,
 		type IntervalQuestion,
 		type VoicingEarQuestion
 	} from './questions';
 
 	interface Props {
-		question: IntervalQuestion | ChordEarQuestion | VoicingEarQuestion;
+		question: IntervalQuestion | ChordEarQuestion | VoicingEarQuestion | ColourEarQuestion;
 		format: 'choice' | 'naming' | 'play';
 		onnext: () => void;
 		/** Called once, when the answer is checked. */
@@ -42,9 +43,11 @@
 			? m.ear_prompt_interval()
 			: question.kind === 'chords'
 				? m.ear_prompt_chord()
-				: question.ask === 'type'
-					? m.ear_prompt_voicing_type({ chord: question.chordLabel })
-					: m.ear_prompt_top_note({ chord: question.chordLabel })
+				: question.kind === 'colours'
+					? m.ear_prompt_colour()
+					: question.ask === 'type'
+						? m.ear_prompt_voicing_type({ chord: question.chordLabel })
+						: m.ear_prompt_top_note({ chord: question.chordLabel })
 	);
 
 	const play = (): Promise<void> => playSounds(questionSound(question));
