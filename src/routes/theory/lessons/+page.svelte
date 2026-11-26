@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { m } from '#lib/i18n.ts';
+	import { isLessonOpen, LESSON_ORDER, lessonLevel } from '#lib/modules/theory/lessonPlan.ts';
 	import { LESSON_TEXT } from '#lib/modules/theory/lessonText.ts';
-	import { LESSONS } from '#lib/modules/theory/lessons.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
+
+	const unlocked = $derived(progress.unlocked('theory'));
 </script>
 
 <svelte:head>
@@ -14,13 +17,18 @@
 	<p class="lede">{m.lessons_lede()}</p>
 
 	<ol class="lessons">
-		{#each LESSONS as lesson, i (lesson)}
-			<li>
+		{#each LESSON_ORDER as lesson, i (lesson)}
+			{@const open = isLessonOpen(lesson, unlocked)}
+			<li class:locked={!open}>
 				<a href={resolve('/theory/lessons/[lesson]', { lesson })}>
 					<span class="number">{i + 1}</span>
 					<span class="title">{LESSON_TEXT[lesson].title()}</span>
 					<span class="summary">{LESSON_TEXT[lesson].summary()}</span>
-					<span class="open">{m.lesson_open()}</span>
+					<span class="open">
+						{open
+							? m.lesson_open_at({ level: lessonLevel(lesson) })
+							: m.lesson_locked_short({ level: lessonLevel(lesson) - 1 })}
+					</span>
 				</a>
 			</li>
 		{/each}
@@ -78,5 +86,14 @@
 
 	.open {
 		margin-top: var(--space-2);
+	}
+
+	.locked a {
+		border-style: dashed;
+	}
+
+	.locked .number,
+	.locked .title {
+		color: var(--ink-faint);
 	}
 </style>

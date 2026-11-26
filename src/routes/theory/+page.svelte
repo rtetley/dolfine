@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import GuideText from '#lib/components/GuideText.svelte';
 	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
@@ -24,6 +26,7 @@
 	} from '#lib/modules/theory/questions.ts';
 	import SheetExercise from '#lib/modules/theory/SheetExercise.svelte';
 	import { findDrill, openDrill, THEORY_CURRICULUM } from '#lib/progress/curriculum.ts';
+	import { isLevel } from '#lib/progress/ladder.ts';
 	import {
 		continueStore,
 		loadModulePrefs,
@@ -77,6 +80,15 @@
 
 	// Opened from Continue on the dashboard: go straight back to an exercise.
 	onResume(() => next());
+
+	// Opened from a lesson's exercises: start that one, if its level is open.
+	onMount(() => {
+		const level = Number(page.url.searchParams.get('level'));
+		const exercise = page.url.searchParams.get('exercise');
+		if (!isLevel(level) || level > progress.unlocked('theory') || !exercise) return;
+		const drill = findDrill(THEORY_CURRICULUM, level, exercise);
+		if (drill) pick(level, drill.exercise);
+	});
 </script>
 
 <svelte:head>

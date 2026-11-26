@@ -8,14 +8,15 @@
 	import { scaleScore } from '../display';
 	import { harmonise } from '../lessons';
 	import DegreeCard from './DegreeCard.svelte';
-	import LessonIntro from './LessonIntro.svelte';
+	import HarmonizationStaff from './HarmonizationStaff.svelte';
 
 	interface Props {
 		parent: ParentScale;
-		paragraphs: string[];
+		/** The headings of the lesson's two scale sections, from its plan. */
+		titles: { harmonization: string; modes: string };
 	}
 
-	let { parent, paragraphs }: Props = $props();
+	let { parent, titles }: Props = $props();
 
 	let rootIndex = $state(0);
 	const parentRoot = $derived(ALL_ROOTS[rootIndex] ?? ALL_ROOTS[0]);
@@ -32,11 +33,9 @@
 	}
 </script>
 
-<LessonIntro {paragraphs} />
-
-<section aria-labelledby="the-scale">
+<section id="harmonization" aria-labelledby="harmonization-title">
 	<div class="heading-row">
-		<h2 id="the-scale">{m.lesson_the_scale()} · {scaleName}</h2>
+		<h2 id="harmonization-title">{titles.harmonization} · {scaleName}</h2>
 		<label class="field">
 			<span class="label">{m.parent_root_label()}</span>
 			<select bind:value={rootIndex}>
@@ -50,10 +49,12 @@
 	<div class="actions">
 		<button type="button" onclick={() => void hearScale()}>{m.hear_the_scale()}</button>
 	</div>
+	<p class="caption">{m.lesson_harmonization_caption()}</p>
+	<HarmonizationStaff {studies} {scaleName} />
 </section>
 
-<section aria-labelledby="the-modes">
-	<h2 id="the-modes">{m.lesson_its_modes()}</h2>
+<section id="modes" aria-labelledby="modes-title">
+	<h2 id="modes-title">{titles.modes}</h2>
 	{#each studies as study (study.mode)}
 		<DegreeCard {study} {parent} {parentRoot} />
 	{/each}
@@ -74,5 +75,11 @@
 
 	.heading-row select {
 		min-width: 6rem;
+	}
+
+	.caption {
+		max-width: var(--measure);
+		margin: var(--space-5) 0 var(--space-2);
+		color: var(--ink-soft);
 	}
 </style>

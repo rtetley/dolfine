@@ -53,7 +53,8 @@ const IDENTICAL_ON_PURPOSE = new Set([
 	'voicing_shell_37',
 	'voicing_shell_73',
 	'voicing_type_a',
-	'voicing_type_b'
+	'voicing_type_b',
+	'lesson_section_intro'
 ]);
 
 describe('message catalogues', () => {

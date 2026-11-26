@@ -1,7 +1,8 @@
-import { expect, test } from './fixtures';
+import { expect, seedStorage, test } from './fixtures';
 
 test.describe('typography', () => {
 	test('accidentals come from the bundled music font and sit tight', async ({ page }) => {
+		await seedStorage(page, { settings: { levelLadder: 'open' } });
 		await page.goto('theory/lessons/melodic-minor');
 		await expect(page.getByRole('heading', { name: 'E♭ Lydian augmented' })).toBeVisible();
 
