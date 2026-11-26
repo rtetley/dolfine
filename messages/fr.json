@@ -667,5 +667,7 @@
 	"label_app_heard": "entendu : {heard}",
 	"label_save": "Enregistrer les étiquettes",
 	"label_saved": "Enregistré sous {file}.",
-	"label_unsaved": "Modifié depuis l’enregistrement."
+	"label_unsaved": "Modifié depuis l’enregistrement.",
+	"settings_credits_heading": "Crédits",
+	"settings_credits_piano": "Son de piano : Salamander Grand Piano V3 par Alexander Holm, raccourci et réencodé, sous licence"
 }

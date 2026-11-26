@@ -52,7 +52,7 @@ export const test = base.extend<Options & Fixtures>({
 	samples: [
 		async ({ page }, use) => {
 			const requested: string[] = [];
-			await page.route('**/audio/salamander/**', (route) => {
+			await page.route('**/samples/piano/**', (route) => {
 				requested.push(new URL(route.request().url()).pathname.split('/').pop() ?? '');
 				return route.fulfill({ body: SILENCE, contentType: 'audio/wav' });
 			});

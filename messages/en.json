@@ -667,5 +667,7 @@
 	"label_app_heard": "app heard: {heard}",
 	"label_save": "Save labels",
 	"label_saved": "Saved as {file}.",
-	"label_unsaved": "Changed since saving."
+	"label_unsaved": "Changed since saving.",
+	"settings_credits_heading": "Credits",
+	"settings_credits_piano": "Piano sound: Salamander Grand Piano V3 by Alexander Holm, trimmed and re-encoded, under"
 }
