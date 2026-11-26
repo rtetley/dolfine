@@ -13,7 +13,7 @@
 		trackOf,
 		UNLOCK_WINDOW
 	} from '#lib/progress/ladder.ts';
-	import { achievementDetail, achievementTitle } from '#lib/progress/labels.ts';
+	import { achievementDetail, achievementTitle, stageTitle } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 
 	const state = $derived(progress.state);
@@ -22,6 +22,7 @@
 	const earned = $derived(ACHIEVEMENTS.filter((id) => id in state.achievements).length);
 	const theoryLevel = $derived(trackOf(state, 'theory').unlocked);
 	const earLevel = $derived(trackOf(state, 'ear').unlocked);
+	const readingLevel = $derived(trackOf(state, 'sight-reading').unlocked);
 
 	const formatDay = (day: string): string =>
 		new Date(`${day}T12:00:00`).toLocaleDateString(getLocale(), {
@@ -85,6 +86,22 @@
 		</div>
 		<TrackLadder module="ear" label={m.nav_ear()} />
 		<p class="go"><a href={resolve('/ear')}>{m.progress_practise({ module: m.nav_ear() })} →</a></p>
+	</section>
+
+	<section aria-labelledby="reading-ladder">
+		<div class="module-head">
+			<LevelBadge level={readingLevel} size="large" />
+			<div>
+				<h2 id="reading-ladder">{m.nav_sight_reading()}</h2>
+				<p class="equivalent">{stageTitle('sight-reading', readingLevel)}</p>
+			</div>
+		</div>
+		<TrackLadder module="sight-reading" label={m.nav_sight_reading()} />
+		<p class="go">
+			<a href={resolve('/sight-reading')}>
+				{m.progress_practise({ module: m.nav_sight_reading() })} →
+			</a>
+		</p>
 	</section>
 
 	<section aria-labelledby="ungraded">

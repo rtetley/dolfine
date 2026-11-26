@@ -10,8 +10,10 @@ import {
 	type ScoredNote,
 	type ScoreSummary,
 	scorePerformance,
-	scoreInOrder
+	scoreInOrder,
+	type Timed
 } from '#lib/music/scoring.ts';
+import { RUN_PASS_PERCENT } from '#lib/progress/passRule.ts';
 import type { SightReadingExercise } from './exercise';
 
 /** Spoken reading: the student says the note names; only the name and its timing are graded. */
@@ -29,6 +31,15 @@ export type Performance =
 			/** In collection mode, the id of the reading saved to downloads, for its labels. */
 			captureId?: string;
 	  };
+
+/**
+ * Whether a run counts as a pass on the ladder: enough right notes and enough of them on time.
+ * A run at a slower tempo than the level's (set in the options) is practice and doesn't count.
+ */
+export const runPasses = (
+	summary: Pick<ScoreSummary<Timed>, 'pitchAccuracy' | 'rhythmAccuracy'>
+): boolean =>
+	summary.pitchAccuracy >= RUN_PASS_PERCENT && summary.rhythmAccuracy >= RUN_PASS_PERCENT;
 
 export const scoreRun = (
 	exercise: Pick<SightReadingExercise, 'expected' | 'toleranceMs'>,

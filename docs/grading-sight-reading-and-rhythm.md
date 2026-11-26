@@ -1,6 +1,6 @@
 # Grading sight reading and inner rhythm
 
-_Design note for issue #13 (progress tracking). Status: proposal, for a later release. Nothing here is implemented._
+_Design note for issue #13 (progress tracking). Status: the sight-reading ladder rule below is implemented (issue #38: Dandelot levels, `src/lib/music/sightReadingLevels.ts`, `src/lib/progress/passRule.ts`); the rest is a proposal._
 
 _See also [Grading sight reading by speaking the note names](grading-spoken-note-reading.md), the microphone variant where the student reads the notes aloud._
 
@@ -22,7 +22,8 @@ A single right/wrong window doesn't work here. Instead:
 
 - A run **counts** for the ladder only if it was played in Performance mode, at or above the level's minimum tempo, with the cursor and metronome settings the level prescribes (no easier overrides).
 - A run **passes** when both pitch and rhythm accuracy are ≥ 85 % (sight reading), or onset accuracy ≥ 85 % and steadiness within the level's spread (rhythm).
-- A level **opens the next** after 4 passes among the last 5 counted runs. Runs are long, so the window is shorter than theory's 20 answers.
+- A level **opens the next** after 4 passes among the last 5 counted runs on each of its drills (its new element and its review). Runs are long, so the window is shorter than theory's 20 answers. Level 1 (landmark notes) is a tutorial: 2 passes among 3.
+- _Implemented (#38):_ a run counts when it is scored (MIDI keyboard or spoken names) and not slowed below the level's tempo in the options; it passes at 85 % right notes and 85 % on time. Key and meter overrides still count.
 - The thresholds tighten with the level, the same way the timing tolerance already does.
 
 All numbers are drafts to review with conservatory teachers, like the level mappings.

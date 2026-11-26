@@ -1,5 +1,6 @@
 import { LEVELS, type Level } from '#lib/music/levels.ts';
-import { exercisesAt, type GradedModule } from './curriculum';
+import { drillsOf, type GradedModule } from './curriculum';
+import { ANSWER_RULE, type PassRule } from './passRule';
 
 /**
  * The progress ladder for the graded modules (music theory and ear training).
@@ -13,13 +14,17 @@ import { exercisesAt, type GradedModule } from './curriculum';
  * decides where it is saved.
  */
 
-export const UNLOCK_WINDOW = 20;
-export const UNLOCK_ACCURACY = 0.9;
-export const REQUIRED_CORRECT = Math.ceil(UNLOCK_WINDOW * UNLOCK_ACCURACY);
+export {
+	ANSWER_RULE,
+	type PassRule,
+	REQUIRED_CORRECT,
+	UNLOCK_ACCURACY,
+	UNLOCK_WINDOW
+} from './passRule';
 
 export type { GradedModule };
 export type TrackId = GradedModule;
-export const TRACKS: readonly TrackId[] = ['theory', 'ear'];
+export const TRACKS: readonly TrackId[] = ['theory', 'ear', 'sight-reading'];
 
 export interface DrillRecord {
 	/** The most recent answers to this exercise, oldest first, at most {@link UNLOCK_WINDOW}. */
@@ -75,9 +80,12 @@ export const xpFor = (level: Level, correct: boolean): number => (correct ? 8 + 
 
 export interface DrillStanding {
 	exercise: string;
-	/** Right answers among the last {@link UNLOCK_WINDOW} to this exercise at this level. */
+	/** Right answers among the last `window` to this exercise at this level. */
 	recentCorrect: number;
 	recentAnswered: number;
+	/** The drill's pass rule: `required` right among the last `window`. */
+	required: number;
+	window: number;
 	/** 0–1: how far the student is towards this exercise's grade. */
 	ratio: number;
 	passed: boolean;
@@ -91,15 +99,22 @@ export interface LevelStanding {
 	passed: boolean;
 }
 
-export function drillStanding(track: TrackProgress, level: Level, exercise: string): DrillStanding {
-	const recent = track.levels[level]?.drills[exercise]?.recent ?? [];
+export function drillStanding(
+	track: TrackProgress,
+	level: Level,
+	exercise: string,
+	rule: PassRule = ANSWER_RULE
+): DrillStanding {
+	const recent = (track.levels[level]?.drills[exercise]?.recent ?? []).slice(-rule.window);
 	const recentCorrect = recent.filter(Boolean).length;
-	const passed = level < track.unlocked || recentCorrect >= REQUIRED_CORRECT;
+	const passed = level < track.unlocked || recentCorrect >= rule.required;
 	return {
 		exercise,
 		recentCorrect,
 		recentAnswered: recent.length,
-		ratio: passed ? 1 : recentCorrect / REQUIRED_CORRECT,
+		required: rule.required,
+		window: rule.window,
+		ratio: passed ? 1 : recentCorrect / rule.required,
 		passed
 	};
 }
@@ -107,9 +122,13 @@ export function drillStanding(track: TrackProgress, level: Level, exercise: stri
 export function levelStanding(
 	track: TrackProgress,
 	level: Level,
-	exercises: readonly string[]
+	exercises: readonly (string | { exercise: string; rule: PassRule })[]
 ): LevelStanding {
-	const drills = exercises.map((exercise) => drillStanding(track, level, exercise));
+	const drills = exercises.map((drill) =>
+		typeof drill === 'string'
+			? drillStanding(track, level, drill)
+			: drillStanding(track, level, drill.exercise, drill.rule)
+	);
 	const ratio =
 		drills.length > 0 ? drills.reduce((sum, drill) => sum + drill.ratio, 0) / drills.length : 1;
 	return { level, drills, ratio, passed: drills.every((drill) => drill.passed) };
@@ -120,7 +139,7 @@ export const moduleStanding = (
 	state: ProgressState,
 	module: GradedModule,
 	level: Level
-): LevelStanding => levelStanding(trackOf(state, module), level, exercisesAt(module, level));
+): LevelStanding => levelStanding(trackOf(state, module), level, drillsOf(module, level));
 
 export const percent = (ratio: number): number => Math.round(Math.min(1, Math.max(0, ratio)) * 100);
 

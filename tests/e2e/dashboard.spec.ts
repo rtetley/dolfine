@@ -17,7 +17,7 @@ test.describe('dashboard', () => {
 			'Level 1 · start here'
 		);
 		await expect(modules.getByRole('link', { name: /Sight reading/ })).toContainText(
-			'Not graded yet'
+			'Level 1 · start here'
 		);
 	});
 
@@ -53,7 +53,7 @@ test.describe('dashboard', () => {
 		const ear = modules.getByRole('link', { name: /Ear training/ });
 		await expect(ear).toContainText('Level 4 · 0% towards Level 5');
 		await expect(modules.getByRole('link', { name: /Sight reading/ })).toContainText(
-			'Level 5 · not graded yet'
+			'Level 1 · start here'
 		);
 
 		await totals.getByRole('link', { name: 'See your progress' }).click();

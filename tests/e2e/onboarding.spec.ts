@@ -119,14 +119,23 @@ test.describe('onboarding', () => {
 	});
 
 	test('ungraded modules explain how to move up and link to their neighbour', async ({ page }) => {
-		await page.goto('sight-reading');
-		const intro = page.getByRole('region', { name: 'Getting started with sight reading' });
+		await page.goto('rhythm');
+		const intro = page.getByRole('region', { name: 'Getting started with inner rhythm' });
 		await expect(intro).toContainText('This module isn’t graded yet');
 		await expect(intro.getByRole('combobox')).toHaveCount(0);
-		await intro.getByRole('link', { name: 'Inner rhythm →' }).click();
+		await intro.getByRole('link', { name: 'Sight reading →' }).click();
 		await expect(
-			page.getByRole('region', { name: 'Getting started with inner rhythm' })
+			page.getByRole('region', { name: 'Getting started with sight reading' })
 		).toBeVisible();
+	});
+
+	test('sight reading explains its ladder and lets the student place themself', async ({
+		page
+	}) => {
+		await page.goto('sight-reading');
+		const intro = page.getByRole('region', { name: 'Getting started with sight reading' });
+		await expect(intro).toContainText('4 passing runs among your last 5');
+		await expect(intro.getByRole('combobox')).toHaveCount(1);
 	});
 
 	test('Settings can bring the module introductions back', async ({ page }) => {

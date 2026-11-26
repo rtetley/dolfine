@@ -318,14 +318,16 @@ function drawTie(
 function tripletGroups(notes: readonly RenderableNote[]): number[][] {
 	const groups: number[][] = [];
 	let current: number[] = [];
+	// Eighth-note (4 ticks) or sixteenth-note (2 ticks) triplets, three of the same value per group.
 	notes.forEach((note, i) => {
-		if (note.triplet && note.ticks === 4) {
-			current.push(i);
-			if (current.length === 3) {
-				groups.push(current);
-				current = [];
-			}
-		} else {
+		if (!note.triplet || (note.ticks !== 4 && note.ticks !== 2)) {
+			current = [];
+			return;
+		}
+		if (current.length > 0 && notes[current[0]].ticks !== note.ticks) current = [];
+		current.push(i);
+		if (current.length === 3) {
+			groups.push(current);
 			current = [];
 		}
 	});

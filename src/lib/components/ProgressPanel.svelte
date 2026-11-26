@@ -3,7 +3,7 @@
 	import { m } from '#lib/i18n.ts';
 	import { JAZZ_MAPPING } from '#lib/music/levels.ts';
 	import { type TrackId, trackOf } from '#lib/progress/ladder.ts';
-	import { trackLabel } from '#lib/progress/labels.ts';
+	import { stageTitle, trackLabel } from '#lib/progress/labels.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import LevelBadge from './LevelBadge.svelte';
@@ -27,7 +27,10 @@
 		<p class="standing">
 			{open === 1 ? m.progress_first_level() : m.progress_open_level({ level: open })}
 		</p>
-		<p class="equivalent">≈ {equivalent.abrsm} · {equivalent.french}</p>
+		<p class="equivalent">
+			{#if track === 'sight-reading'}{stageTitle(track, open)}{:else}≈ {equivalent.abrsm} ·
+				{equivalent.french}{/if}
+		</p>
 		<LevelProgress {track} level={open} />
 		<p class="links">
 			{#if settings.value.levelLadder === 'open'}

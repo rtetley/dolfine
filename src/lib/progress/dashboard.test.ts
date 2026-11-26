@@ -61,12 +61,19 @@ describe('dashboard statuses', () => {
 		expect(moduleStatuses(state, {}).theory).toMatchObject({ atTop: true, percent: 100 });
 	});
 
-	it('shows the level chosen for ungraded modules, if any', () => {
-		const statuses = moduleStatuses(emptyProgress(), {
-			'sight-reading': { level: 6 },
-			rhythm: { level: 'fast' }
+	it('shows the level chosen for the ungraded module, if any', () => {
+		expect(moduleStatuses(emptyProgress(), { rhythm: { level: 7 } }).rhythm).toEqual({
+			graded: false,
+			level: 7
 		});
-		expect(statuses['sight-reading']).toEqual({ graded: false, level: 6 });
-		expect(statuses.rhythm).toEqual({ graded: false, level: null });
+		expect(moduleStatuses(emptyProgress(), { rhythm: { level: 'fast' } }).rhythm).toEqual({
+			graded: false,
+			level: null
+		});
+	});
+
+	it('grades sight reading on its ladder, whatever level was last picked in setup', () => {
+		const status = moduleStatuses(emptyProgress(), { 'sight-reading': { level: 6 } });
+		expect(status['sight-reading']).toMatchObject({ graded: true, level: 1, started: false });
 	});
 });

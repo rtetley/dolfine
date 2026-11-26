@@ -10,7 +10,14 @@ import {
 	toMidi
 } from './pitch';
 import type { Rng } from './random';
-import { generateRhythm, type Meter, type RhythmEvent, type RhythmFeature } from './rhythm';
+import {
+	generateRhythm,
+	type Meter,
+	type RhythmEvent,
+	type RhythmFeature,
+	type UniformValue,
+	uniformRhythm
+} from './rhythm';
 
 export type Clef = 'treble' | 'bass';
 export type StaffSetup = Clef | 'grand';
@@ -35,6 +42,12 @@ export interface MelodySettings {
 	features: ReadonlySet<RhythmFeature>;
 	maxLeap: number;
 	accidentalRate: number;
+	/** Only these staff positions, as letter and octave ("C4"), whatever the key's accidentals. */
+	pool?: readonly string[];
+	/** Only these moves, in scale steps (3 = a fourth … 7 = an octave), instead of steps and leaps. */
+	moves?: readonly number[];
+	/** Every note the same value, as in Dandelot's exercises. */
+	uniform?: UniformValue;
 }
 
 const SHARP_ORDER: readonly Letter[] = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
@@ -126,9 +139,14 @@ const isTonic = (pitch: Pitch, tonic: PitchClassName): boolean => pitch.letter =
 
 export function generateMelody(settings: MelodySettings, rng: Rng): MelodyNote[][] {
 	const [low, high] = staffRange(settings.clef, settings.range);
-	const scale = diatonicPitches(settings.key, low, high);
+	const pool = settings.pool ? new Set(settings.pool) : null;
+	const scale = diatonicPitches(settings.key, low, high).filter(
+		(pitch) => !pool || pool.has(`${pitch.letter}${pitch.octave}`)
+	);
 	const tonic = tonicName(settings.key);
-	const rhythm = generateRhythm(settings.meter, settings.bars, settings.features, rng);
+	const rhythm = settings.uniform
+		? uniformRhythm(settings.meter, settings.bars, settings.uniform)
+		: generateRhythm(settings.meter, settings.bars, settings.features, rng);
 	const starts = scale
 		.map((pitch, index) => ({ pitch, index }))
 		.filter(({ pitch }) => isTonicTriad(pitch, tonic));
@@ -146,7 +164,11 @@ export function generateMelody(settings: MelodySettings, rng: Rng): MelodyNote[]
 		measure.map((event): MelodyNote => {
 			if (event.rest) return { ...event };
 			placed++;
-			if (placed > 1) current = nextIndex(current, scale.length, settings.maxLeap, rng);
+			if (placed > 1) {
+				current = settings.moves
+					? nextMove(current, scale.length, settings.moves, rng)
+					: nextIndex(current, scale.length, settings.maxLeap, rng);
+			}
 			if (placed === notesTotal) current = closestTonic(scale, current, tonic);
 			const base = scale[current];
 			const pitch = decorate(
@@ -172,12 +194,23 @@ function nextIndex(current: number, size: number, maxLeap: number, rng: Rng): nu
 		[-3, maxLeap >= 3 ? 1 : 0],
 		[4, maxLeap >= 4 ? 1 : 0],
 		[-4, maxLeap >= 4 ? 1 : 0],
+		[5, maxLeap >= 5 ? 1 : 0],
+		[-5, maxLeap >= 5 ? 1 : 0],
+		[7, maxLeap >= 7 ? 1 : 0],
+		[-7, maxLeap >= 7 ? 1 : 0],
 		[0, 1]
 	]);
 	const target = current + step;
 	if (target < 0 || target >= size)
 		return current - step >= 0 && current - step < size ? current - step : current;
 	return target;
+}
+
+/** A move of one of the given sizes, up or down, turned back at the edges of the range. */
+function nextMove(current: number, size: number, moves: readonly number[], rng: Rng): number {
+	const options = moves.flatMap((move) => [current + move, current - move]);
+	const inRange = options.filter((target) => target >= 0 && target < size);
+	return inRange.length > 0 ? rng.pick(inRange) : current;
 }
 
 function closestTonic(scale: readonly Pitch[], current: number, tonic: PitchClassName): number {

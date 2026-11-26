@@ -1,7 +1,9 @@
 import type { Level } from '#lib/music/levels.ts';
+import type { SightReadingDrill } from '#lib/music/sightReadingLevels.ts';
 import type { EarSubmodule } from '#lib/modules/ear/questions.ts';
 import type { LessonId } from '#lib/modules/theory/lessons.ts';
 import type { TheoryExercise } from '#lib/modules/theory/questions.ts';
+import { ANSWER_RULE, type PassRule, RUN_RULE, TUTORIAL_RULE } from './passRule';
 
 /**
  * What each level of the graded modules asks for. A level is a lesson to read and a handful
@@ -14,6 +16,7 @@ import type { TheoryExercise } from '#lib/modules/theory/questions.ts';
 export interface Drill<E extends string> {
 	exercise: E;
 	difficulty: Level;
+	rule: PassRule;
 }
 
 export interface Stage<E extends string> {
@@ -27,14 +30,15 @@ export type Curriculum<E extends string> = Record<Level, Stage<E>>;
 const stage = <E extends string>(
 	level: Level,
 	lesson: LessonId | undefined,
-	drills: readonly (E | readonly [E, Level])[]
+	drills: readonly (E | readonly [E, Level])[],
+	rule: PassRule = ANSWER_RULE
 ): Stage<E> => ({
 	level,
 	lesson,
 	drills: drills.map((drill) =>
 		typeof drill === 'string'
-			? { exercise: drill, difficulty: level }
-			: { exercise: drill[0], difficulty: drill[1] }
+			? { exercise: drill, difficulty: level, rule }
+			: { exercise: drill[0], difficulty: drill[1], rule }
 	)
 });
 
@@ -92,7 +96,25 @@ export const EAR_CURRICULUM: Curriculum<EarSubmodule> = {
 	10: stage(10, undefined, ['modes', 'voicings', 'progressions', 'chords', 'intervals'])
 };
 
-export type GradedModule = 'theory' | 'ear';
+/**
+ * Each sight-reading level's drills, as in the level table (a test keeps them the same; they are
+ * repeated so pages can read progress without loading the generators). A run counts as one answer.
+ */
+const FOCUS_AND_REVIEW = ['focus', 'review'] as const;
+export const SIGHT_READING_CURRICULUM: Curriculum<SightReadingDrill> = {
+	1: stage(1, undefined, ['focus'], TUTORIAL_RULE),
+	2: stage(2, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	3: stage(3, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	4: stage(4, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	5: stage(5, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	6: stage(6, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	7: stage(7, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	8: stage(8, undefined, FOCUS_AND_REVIEW, RUN_RULE),
+	9: stage(9, undefined, ['dotted', 'syncopation', 'compound', 'review'], RUN_RULE),
+	10: stage(10, undefined, ['review'], RUN_RULE)
+};
+
+export type GradedModule = 'theory' | 'ear' | 'sight-reading';
 
 /** The ear sub-modules, repeated here (type-checked) so pages can read progress without loading the generators. */
 export const EAR_SUBMODULES_GRADED = [
@@ -103,14 +125,32 @@ export const EAR_SUBMODULES_GRADED = [
 	'progressions'
 ] as const satisfies readonly EarSubmodule[];
 
-export const CURRICULA: { theory: Curriculum<TheoryExercise>; ear: Curriculum<EarSubmodule> } = {
+export const CURRICULA: {
+	theory: Curriculum<TheoryExercise>;
+	ear: Curriculum<EarSubmodule>;
+	'sight-reading': Curriculum<SightReadingDrill>;
+} = {
 	theory: THEORY_CURRICULUM,
-	ear: EAR_CURRICULUM
+	ear: EAR_CURRICULUM,
+	'sight-reading': SIGHT_READING_CURRICULUM
 };
 
 /** The exercises graded at a level, as the keys their records are saved under. */
 export const exercisesAt = (module: GradedModule, level: Level): readonly string[] =>
-	CURRICULA[module][level].drills.map((drill) => drill.exercise);
+	drillsOf(module, level).map((drill) => drill.exercise);
+
+/** The pass rule of one drill (the default rule if the level doesn't grade it). */
+export const ruleFor = (module: GradedModule, level: Level, exercise: string): PassRule =>
+	drillsOf(module, level).find((drill) => drill.exercise === exercise)?.rule ?? ANSWER_RULE;
+
+/** Sight reading counts runs, the other modules answers. */
+export const countsRuns = (module: GradedModule): boolean => module === 'sight-reading';
+
+/** The drills graded at a level, with their pass rules. */
+export const drillsOf = (
+	module: GradedModule,
+	level: Level
+): readonly { exercise: string; rule: PassRule }[] => CURRICULA[module][level].drills;
 
 export const findDrill = <E extends string>(
 	curriculum: Curriculum<E>,
