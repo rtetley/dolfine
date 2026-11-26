@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, startDrill, test } from './fixtures';
 
 async function seriousViolations(page: Page): Promise<string[]> {
 	const results = await new AxeBuilder({ page })
@@ -42,8 +42,7 @@ test.describe('accessibility', () => {
 				theme
 			);
 			await page.reload();
-			await page.getByRole('combobox', { name: 'Exercise' }).selectOption('Name the mode');
-			await page.getByRole('button', { name: 'Start' }).click();
+			await startDrill(page, 1, 'Name the mode');
 			await expect(page.locator('figure.score svg')).toBeVisible();
 			expect(await seriousViolations(page)).toEqual([]);
 		});

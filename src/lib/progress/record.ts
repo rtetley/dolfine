@@ -2,10 +2,11 @@ import type { Level } from '#lib/music/levels.ts';
 import { type AchievementId, newlyEarned } from './achievements';
 import {
 	emptyTrack,
-	levelStanding,
+	moduleStanding,
 	type ProgressState,
 	type TrackId,
 	trackOf,
+	type TrackProgress,
 	UNLOCK_WINDOW,
 	xpFor
 } from './ladder';
@@ -13,6 +14,8 @@ import {
 export interface Answer {
 	track: TrackId;
 	level: Level;
+	/** The exercise answered, as named in the curriculum. */
+	exercise: string;
 	correct: boolean;
 	/** Local `YYYY-MM-DD`. */
 	today: string;
@@ -30,23 +33,41 @@ export interface Recorded {
 
 /** Folds one checked answer into the progress state. Pure: returns a new state. */
 export function recordAnswer(state: ProgressState, answer: Answer): Recorded {
-	const { track: trackId, level, correct, today } = answer;
+	const { track: trackId, level, exercise, correct, today } = answer;
 	const track = trackOf(state, trackId);
-	const record = track.levels[level] ?? { recent: [], answered: 0, correct: 0 };
-	const updatedRecord = {
-		recent: [...record.recent, correct].slice(-UNLOCK_WINDOW),
-		answered: record.answered + 1,
-		correct: record.correct + (correct ? 1 : 0)
+	const levelRecord = track.levels[level] ?? { answered: 0, correct: 0, drills: {} };
+	const drill = levelRecord.drills[exercise] ?? { recent: [], answered: 0, correct: 0 };
+	const point = correct ? 1 : 0;
+	let updatedTrack: TrackProgress = {
+		...emptyTrack(track.unlocked),
+		levels: {
+			...track.levels,
+			[level]: {
+				answered: levelRecord.answered + 1,
+				correct: levelRecord.correct + point,
+				drills: {
+					...levelRecord.drills,
+					[exercise]: {
+						recent: [...drill.recent, correct].slice(-UNLOCK_WINDOW),
+						answered: drill.answered + 1,
+						correct: drill.correct + point
+					}
+				}
+			}
+		}
 	};
-	let updatedTrack = { ...emptyTrack(track.unlocked), levels: { ...track.levels } };
-	updatedTrack.levels[level] = updatedRecord;
 
 	const events: ProgressEvent[] = [];
 	const amount = xpFor(level, correct);
 	events.push({ kind: 'xp', amount });
 
+	const withTrack = (tracked: TrackProgress): ProgressState => ({
+		...state,
+		tracks: { ...state.tracks, [trackId]: tracked }
+	});
+
 	// Passing any level at or above the frontier opens the one after it (or holds the top).
-	if (level >= track.unlocked && levelStanding(updatedTrack, level).passed) {
+	if (level >= track.unlocked && moduleStanding(withTrack(updatedTrack), trackId, level).passed) {
 		const next = Math.min(10, level + 1) as Level;
 		if (next > track.unlocked) {
 			updatedTrack = { ...updatedTrack, unlocked: next };

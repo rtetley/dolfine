@@ -1,34 +1,53 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
+	import type { Level } from '#lib/music/levels.ts';
 	import {
-		levelStanding,
+		drillStanding,
+		type GradedModule,
+		moduleStanding,
 		percent,
 		REQUIRED_CORRECT,
-		type TrackProgress,
+		trackOf,
 		UNLOCK_WINDOW
 	} from '#lib/progress/ladder.ts';
-	import type { Level } from '#lib/music/levels.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
 
 	interface Props {
-		track: TrackProgress;
+		track: GradedModule;
 		level: Level;
+		/** Shows one exercise's grade instead of the whole level. */
+		exercise?: { id: string; label: string };
 	}
 
-	let { track, level }: Props = $props();
+	let { track, level, exercise }: Props = $props();
 
-	const standing = $derived(levelStanding(track, level));
-	const value = $derived(percent(standing.ratio));
-	const detail = $derived(
-		level === 10 && standing.passed
-			? m.progress_top()
-			: standing.passed
-				? m.progress_passed({ level })
-				: m.progress_towards({
-						correct: standing.recentCorrect,
+	const standing = $derived(moduleStanding(progress.state, track, level));
+	const drill = $derived(
+		exercise ? drillStanding(trackOf(progress.state, track), level, exercise.id) : null
+	);
+	const value = $derived(percent(drill ? drill.ratio : standing.ratio));
+	const detail = $derived.by(() => {
+		if (level === 10 && standing.passed) return m.progress_top();
+		if (drill && exercise) {
+			return drill.passed
+				? m.drill_progress_graded({ exercise: exercise.label })
+				: m.drill_progress_towards({
+						correct: drill.recentCorrect,
 						required: REQUIRED_CORRECT,
 						window: UNLOCK_WINDOW,
-						level
-					})
+						exercise: exercise.label
+					});
+		}
+		return standing.passed
+			? m.progress_passed({ level })
+			: m.level_progress_towards({
+					graded: standing.drills.filter((d) => d.passed).length,
+					total: standing.drills.length,
+					level
+				});
+	});
+	const barLabel = $derived(
+		exercise ? m.drill_bar_label({ exercise: exercise.label }) : m.progress_bar_label({ level })
 	);
 </script>
 
@@ -39,7 +58,7 @@
 		aria-valuemin={0}
 		aria-valuemax={100}
 		aria-valuenow={value}
-		aria-label={m.progress_bar_label({ level })}
+		aria-label={barLabel}
 	>
 		<span class="fill" style:width="{value}%"></span>
 	</div>

@@ -1,22 +1,41 @@
 import { m } from '#lib/i18n.ts';
 import type { AchievementId } from './achievements';
+import type { Level } from '#lib/music/levels.ts';
 import type { TrackId } from './ladder';
 
-const EAR_LABELS: Record<string, () => string> = {
-	'ear:intervals': m.ear_submodule_intervals,
-	'ear:chords': m.ear_submodule_chords,
-	'ear:voicings': m.ear_submodule_voicings,
-	'ear:modes': m.ear_submodule_modes,
-	'ear:progressions': m.ear_submodule_progressions
+/** The module a track belongs to: "Music theory". */
+export const trackLabel = (track: TrackId): string =>
+	track === 'theory' ? m.nav_theory() : m.nav_ear();
+
+const THEORY_STAGE_TITLES: Record<Level, () => string> = {
+	1: m.stage_theory_1,
+	2: m.stage_theory_2,
+	3: m.stage_theory_3,
+	4: m.stage_theory_4,
+	5: m.stage_theory_5,
+	6: m.stage_theory_6,
+	7: m.stage_theory_7,
+	8: m.stage_theory_8,
+	9: m.stage_theory_9,
+	10: m.stage_theory_10
 };
 
-/** A sub-module name on its own: "Chords". */
-export const trackShortLabel = (track: TrackId): string =>
-	track === 'theory' ? m.nav_theory() : (EAR_LABELS[track]?.() ?? track);
+const EAR_STAGE_TITLES: Record<Level, () => string> = {
+	1: m.stage_ear_1,
+	2: m.stage_ear_2,
+	3: m.stage_ear_3,
+	4: m.stage_ear_4,
+	5: m.stage_ear_5,
+	6: m.stage_ear_6,
+	7: m.stage_ear_7,
+	8: m.stage_ear_8,
+	9: m.stage_ear_9,
+	10: m.stage_ear_10
+};
 
-/** A track with its module: "Ear training · Chords". */
-export const trackLabel = (track: TrackId): string =>
-	track === 'theory' ? m.nav_theory() : `${m.nav_ear()} · ${trackShortLabel(track)}`;
+/** What a level of a graded module is about: "The major scale". */
+export const stageTitle = (track: TrackId, level: Level): string =>
+	(track === 'theory' ? THEORY_STAGE_TITLES : EAR_STAGE_TITLES)[level]();
 
 const ACHIEVEMENT_TEXT: Record<AchievementId, [() => string, () => string]> = {
 	'first-answer': [m.achievement_first_answer, m.achievement_first_answer_detail],

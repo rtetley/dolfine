@@ -9,7 +9,7 @@ import {
 	INTERVALS_BY_LEVEL,
 	voiceEarChord
 } from '#lib/music/earChords.ts';
-import { type Level, THEORY_LEVELS } from '#lib/music/levels.ts';
+import { earScaleLevel, type Level } from '#lib/music/levels.ts';
 import { mod, toMidi } from '#lib/music/pitch.ts';
 import {
 	buildProgression,
@@ -202,7 +202,7 @@ function chordQuestion(prefs: EarPrefs, rng: Rng): ChordEarQuestion {
 function voicingQuestion(prefs: EarPrefs, rng: Rng): VoicingEarQuestion {
 	if (prefs.level <= 4 || rng.chance(0.4)) {
 		const mode = rng.pick(
-			MODES.filter((m) => THEORY_LEVELS[prefs.level].parents.includes(m.parent))
+			MODES.filter((m) => earScaleLevel(prefs.level).parents.includes(m.parent))
 		).id;
 		const chord: ChordRef = { root: pickParentRoot(rng, 3), mode };
 		const type: VoicingType = rng.pick(['A', 'B'] as const);
@@ -242,7 +242,7 @@ function voicingQuestion(prefs: EarPrefs, rng: Rng): VoicingEarQuestion {
 }
 
 function modeQuestion(level: Level, rng: Rng): ModeEarQuestion {
-	const parents = THEORY_LEVELS[level].parents;
+	const { parents } = earScaleLevel(level);
 	const pool = MODES.filter((m) => parents.includes(m.parent)).map((m) => m.id);
 	const mode = rng.pick(pool);
 	const info = modeInfo(mode);
@@ -260,7 +260,7 @@ function modeQuestion(level: Level, rng: Rng): ModeEarQuestion {
 }
 
 function progressionQuestion(level: Level, rng: Rng): ProgressionEarQuestion {
-	const kinds = THEORY_LEVELS[level].progressions.filter(
+	const kinds = earScaleLevel(level).progressions.filter(
 		(k): k is ProgressionKind => k !== 'blues'
 	);
 	const kind = rng.pick(kinds.length > 0 ? kinds : (['ii-v-i-major'] as ProgressionKind[]));

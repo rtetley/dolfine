@@ -1,11 +1,11 @@
 <script lang="ts">
 	import GuideText from '#lib/components/GuideText.svelte';
-	import LevelPicker from '#lib/components/LevelPicker.svelte';
 	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import RelatedLessons from '#lib/components/RelatedLessons.svelte';
 	import { EAR_LESSONS } from '#lib/content/relatedLessons.ts';
 	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
 	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
+	import StageMap from '#lib/components/StageMap.svelte';
 	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { EAR_GUIDES } from '#lib/content/guides.ts';
@@ -17,37 +17,41 @@
 		createEarQuestion,
 		EAR_DEFAULTS,
 		EAR_SUBMODULE_LABELS,
-		EAR_SUBMODULES,
 		type EarPrefs,
 		type EarQuestion,
+		type EarSubmodule,
 		earFormatFor
 	} from '#lib/modules/ear/questions.ts';
 	import SoundQuestion from '#lib/modules/ear/SoundQuestion.svelte';
+	import { EAR_CURRICULUM, findDrill, openDrill } from '#lib/progress/curriculum.ts';
 	import {
 		continueStore,
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { onResume } from '#lib/state/resume.ts';
-	import { EAR_TRACKS, earTrack } from '#lib/progress/ladder.ts';
-	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
 
 	const stored = loadModulePrefs('ear', EAR_DEFAULTS);
-	let prefs = $state<EarPrefs>({
-		...stored,
-		level: allowedLevel(stored.level, progress.unlocked(earTrack(stored.submodule)))
-	});
+	const opened = openDrill(
+		EAR_CURRICULUM,
+		{ level: stored.level, exercise: stored.submodule },
+		progress.unlocked('ear')
+	);
+	let prefs = $state<EarPrefs>({ ...stored, level: opened.level, submodule: opened.exercise });
 	let question = $state<EarQuestion | null>(null);
 	let questionKey = $state(0);
 
-	const format = $derived(earFormatFor(prefs));
-	const track = $derived(earTrack(prefs.submodule));
-	const unlocked = $derived(progress.unlocked(track));
+	const difficulty = $derived(
+		findDrill(EAR_CURRICULUM, prefs.level, prefs.submodule)?.difficulty ?? prefs.level
+	);
+	const questionPrefs = $derived({ ...prefs, level: difficulty });
+	const format = $derived(earFormatFor(questionPrefs));
 
 	progress.clearEvents();
 
 	const record = (correct: boolean): void => {
-		progress.record(track, prefs.level, correct);
+		progress.record('ear', prefs.level, prefs.submodule, correct);
 	};
 
 	function update(patch: Partial<EarPrefs>): void {
@@ -57,7 +61,7 @@
 
 	function next(): void {
 		progress.clearEvents();
-		question = createEarQuestion(prefs, newSeed());
+		question = createEarQuestion(questionPrefs, newSeed());
 		questionKey++;
 		continueStore.record({
 			module: 'ear',
@@ -66,6 +70,16 @@
 				submodule: EAR_SUBMODULE_LABELS[prefs.submodule]
 			})
 		});
+	}
+
+	function pick(level: Level, submodule: EarSubmodule): void {
+		update({ level, submodule });
+		next();
+	}
+
+	function place(level: Level): void {
+		const drill = openDrill(EAR_CURRICULUM, { level, exercise: prefs.submodule }, level);
+		update({ level: drill.level, submodule: drill.exercise });
 	}
 
 	// Opened from Continue on the dashboard: go straight back to an exercise.
@@ -80,48 +94,32 @@
 	<h1>{m.nav_ear()}</h1>
 	<p class="lede">{m.ear_lede()}</p>
 
-	<div class="tabs" role="group" aria-label={m.submodule_label()}>
-		{#each EAR_SUBMODULES as submodule (submodule)}
-			<button
-				type="button"
-				aria-pressed={prefs.submodule === submodule}
-				onclick={() => {
-					// Each sub-module has its own ladder: open it on the level the student has reached.
-					update({ submodule, level: progress.levelFor(earTrack(submodule), prefs.level) });
-					progress.clearEvents();
-					question = null;
-				}}
-			>
-				{EAR_SUBMODULE_LABELS[submodule]}
-			</button>
-		{/each}
-	</div>
-
-	<RelatedLessons lessons={EAR_LESSONS[prefs.submodule]} />
-
 	{#if !question}
-		<ModuleIntro module="ear" tracks={EAR_TRACKS} onplace={(level: Level) => update({ level })} />
-		<section class="setup" aria-label={m.setup_label()}>
-			<LevelPicker
-				level={prefs.level}
-				mapping="jazz"
-				{unlocked}
-				onchange={(level: Level) => update({ level })}
-			/>
-			<label class="field">
-				<span class="label">{m.ear_answer_label()}</span>
-				<select
-					value={prefs.answerFormat}
-					onchange={(e) =>
-						update({ answerFormat: e.currentTarget.value as EarPrefs['answerFormat'] })}
-				>
-					<option value="level">{m.from_level()}</option>
-					<option value="choice">{m.ear_answer_choice()}</option>
-					<option value="naming">{m.answer_format_naming()}</option>
-					<option value="play">{m.ear_answer_play()}</option>
-				</select>
-			</label>
-			{#if prefs.submodule === 'chords' || prefs.submodule === 'voicings'}
+		<ModuleIntro module="ear" tracks={['ear']} onplace={place} />
+		<ProgressPanel track="ear" />
+		{#if format === 'play'}<div class="actions"><MidiStatus /></div>{/if}
+		<StageMap
+			module="ear"
+			curriculum={EAR_CURRICULUM}
+			labels={EAR_SUBMODULE_LABELS}
+			onpick={pick}
+		/>
+		<details class="options">
+			<summary>{m.options_label()}</summary>
+			<section class="setup" aria-label={m.setup_label()}>
+				<label class="field">
+					<span class="label">{m.ear_answer_label()}</span>
+					<select
+						value={prefs.answerFormat}
+						onchange={(e) =>
+							update({ answerFormat: e.currentTarget.value as EarPrefs['answerFormat'] })}
+					>
+						<option value="level">{m.from_level()}</option>
+						<option value="choice">{m.ear_answer_choice()}</option>
+						<option value="naming">{m.answer_format_naming()}</option>
+						<option value="play">{m.ear_answer_play()}</option>
+					</select>
+				</label>
 				<label class="field">
 					<span class="label">{m.ear_voicing_label()}</span>
 					<select
@@ -135,18 +133,14 @@
 						<option value="close">{m.ear_voicing_close()}</option>
 					</select>
 				</label>
-			{/if}
-		</section>
-		<div class="actions">
-			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
-			{#if format === 'play'}<MidiStatus />{/if}
-		</div>
-		<ProgressPanel {track} level={prefs.level} />
+			</section>
+		</details>
 		<GuideText guide={EAR_GUIDES.intro} open />
 	{:else}
 		<p class="label">
 			{m.level_heading({ level: prefs.level, detail: EAR_SUBMODULE_LABELS[prefs.submodule] })}
 		</p>
+		<RelatedLessons lessons={EAR_LESSONS[prefs.submodule]} />
 		{#key questionKey}
 			{#if question.kind === 'modes'}
 				<ModeListening {question} {format} onnext={next} onresult={record} />
@@ -157,15 +151,27 @@
 			{/if}
 		{/key}
 		<ProgressNotice
-			{track}
+			track="ear"
 			level={prefs.level}
-			onlevel={(level: Level) => {
-				update({ level });
-				next();
-			}}
+			exercise={prefs.submodule}
+			label={EAR_SUBMODULE_LABELS[prefs.submodule]}
+			onlevel={(level: Level) => pick(level, EAR_CURRICULUM[level].drills[0].exercise)}
 		/>
 		<div class="actions">
-			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
+			<button type="button" onclick={() => (question = null)}>{m.action_back_to_levels()}</button>
 		</div>
 	{/if}
 </div>
+
+<style>
+	.options {
+		margin: var(--space-5) 0;
+		max-width: var(--measure);
+	}
+
+	.options summary {
+		cursor: pointer;
+		font-variant: small-caps;
+		letter-spacing: 0.06em;
+	}
+</style>

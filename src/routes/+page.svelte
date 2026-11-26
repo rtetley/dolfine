@@ -6,7 +6,6 @@
 	import { ACHIEVEMENTS } from '#lib/progress/achievements.ts';
 	import { type ModuleStatus, moduleStatuses } from '#lib/progress/dashboard.ts';
 	import { dayStreak, localDay } from '#lib/progress/ladder.ts';
-	import { trackShortLabel } from '#lib/progress/labels.ts';
 	import {
 		continueStore,
 		MODULE_ROUTES,
@@ -62,18 +61,13 @@
 				? m.dashboard_ungraded()
 				: m.dashboard_ungraded_level({ level: status.level });
 		}
-		const detail = status.atTop
-			? m.dashboard_level_top()
-			: !status.started
-				? m.dashboard_start_here({ level: status.level })
-				: m.dashboard_level_towards({
-						level: status.level,
-						percent: status.percent,
-						next: status.level + 1
-					});
-		return status.track === 'theory'
-			? detail
-			: m.dashboard_track_detail({ track: trackShortLabel(status.track), detail });
+		if (status.atTop) return m.dashboard_level_top();
+		if (!status.started) return m.dashboard_start_here({ level: status.level });
+		return m.dashboard_level_towards({
+			level: status.level,
+			percent: status.percent,
+			next: status.level + 1
+		});
 	}
 </script>
 
@@ -138,8 +132,8 @@
 							<span class="module-name">{module.name()}</span>
 							{#if status.graded}
 								<LevelBadge
-									level={status.estimate}
-									label={m.dashboard_badge_label({ level: status.estimate })}
+									level={status.level}
+									label={m.dashboard_badge_label({ level: status.level })}
 								/>
 							{/if}
 						</span>

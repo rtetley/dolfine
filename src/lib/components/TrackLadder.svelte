@@ -1,21 +1,24 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { LEVELS } from '#lib/music/levels.ts';
-	import { levelStanding, percent, type TrackProgress } from '#lib/progress/ladder.ts';
+	import { type GradedModule, moduleStanding, percent, trackOf } from '#lib/progress/ladder.ts';
 	import { ROMAN_NUMERALS } from '#lib/progress/labels.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
 	import LevelProgress from './LevelProgress.svelte';
 
 	interface Props {
-		track: TrackProgress;
+		module: GradedModule;
 		label: string;
 	}
 
-	let { track, label }: Props = $props();
+	let { module, label }: Props = $props();
+
+	const track = $derived(trackOf(progress.state, module));
 
 	type Rung = 'passed' | 'current' | 'locked';
 	const rungs = $derived(
 		LEVELS.map((level) => {
-			const standing = levelStanding(track, level);
+			const standing = moduleStanding(progress.state, module, level);
 			const state: Rung =
 				level < track.unlocked || (level === 10 && standing.passed)
 					? 'passed'
@@ -45,7 +48,7 @@
 			</li>
 		{/each}
 	</ol>
-	<LevelProgress {track} level={track.unlocked} />
+	<LevelProgress track={module} level={track.unlocked} />
 </div>
 
 <style>

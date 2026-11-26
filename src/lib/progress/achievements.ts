@@ -1,4 +1,12 @@
-import { dayStreak, EAR_TRACKS, hasPractised, type ProgressState, TRACKS, trackOf } from './ladder';
+import { EAR_SUBMODULES_GRADED } from './curriculum';
+import {
+	dayStreak,
+	hasPractised,
+	practisedExercises,
+	type ProgressState,
+	TRACKS,
+	trackOf
+} from './ladder';
 
 /**
  * Achievements: quiet milestones in the editorial voice of the app, earned once and kept.
@@ -40,9 +48,11 @@ const EARNED: Record<AchievementId, (state: ProgressState, today: string) => boo
 	'first-level-up': (s) => highestLevel(s) >= 2,
 	'level-5': (s) => highestLevel(s) >= 5,
 	'level-10': (s) => highestLevel(s) >= 10,
-	'all-ears': (s) => EAR_TRACKS.every((track) => hasPractised(s, track)),
-	'theory-and-ear': (s) =>
-		hasPractised(s, 'theory') && EAR_TRACKS.some((track) => hasPractised(s, track))
+	'all-ears': (s) => {
+		const practised = practisedExercises(s, 'ear');
+		return EAR_SUBMODULES_GRADED.every((submodule) => practised.has(submodule));
+	},
+	'theory-and-ear': (s) => hasPractised(s, 'theory') && hasPractised(s, 'ear')
 };
 
 /** Achievements the state now qualifies for but has not been awarded yet. */

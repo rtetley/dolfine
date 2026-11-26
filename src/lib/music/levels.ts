@@ -59,75 +59,61 @@ export interface TheoryLevel {
 	chords: number;
 }
 
+const MAJOR_TURNAROUND: ProgressionKind[] = ['ii-v-i-major', 'turnaround'];
+const ALL_PROGRESSIONS: ProgressionKind[] = [
+	'ii-v-i-major',
+	'ii-v-i-minor',
+	'turnaround',
+	'modal-vamp',
+	'blues'
+];
+
+const theoryLevel = (
+	parents: ParentScale[],
+	maxAccidentals: number,
+	answerFormat: AnswerFormat,
+	progressions: ProgressionKind[] = ['ii-v-i-major'],
+	chords = 3
+): TheoryLevel => ({ parents, maxAccidentals, answerFormat, progressions, chords });
+
+/**
+ * Content settings for each theory level, following the curriculum: the major scale
+ * (levels 1–3), melodic minor (4–6), both together (7), harmonic minor (8–9), all three (10).
+ * Within a scale, each level widens the keys used.
+ */
 export const THEORY_LEVELS: Record<Level, TheoryLevel> = {
-	1: {
-		maxAccidentals: 1,
-		parents: ['major'],
-		answerFormat: 'choice',
-		progressions: ['ii-v-i-major'],
-		chords: 3
-	},
-	2: {
-		maxAccidentals: 2,
-		parents: ['major'],
-		answerFormat: 'choice',
-		progressions: ['ii-v-i-major'],
-		chords: 3
-	},
-	3: {
-		maxAccidentals: 3,
-		parents: ['major', 'melodicMinor'],
-		answerFormat: 'choice',
-		progressions: ['ii-v-i-major', 'turnaround'],
-		chords: 4
-	},
-	4: {
-		maxAccidentals: 4,
-		parents: ['major', 'melodicMinor'],
-		answerFormat: 'choice',
-		progressions: ['ii-v-i-major', 'turnaround'],
-		chords: 4
-	},
-	5: {
-		maxAccidentals: 4,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'turnaround', 'modal-vamp'],
-		chords: 4
-	},
-	6: {
-		maxAccidentals: 5,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'ii-v-i-minor', 'turnaround', 'modal-vamp'],
-		chords: 4
-	},
-	7: {
-		maxAccidentals: 6,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'ii-v-i-minor', 'turnaround', 'modal-vamp'],
-		chords: 4
-	},
-	8: {
-		maxAccidentals: 6,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'ii-v-i-minor', 'turnaround', 'modal-vamp', 'blues'],
-		chords: 4
-	},
-	9: {
-		maxAccidentals: 7,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'ii-v-i-minor', 'turnaround', 'modal-vamp', 'blues'],
-		chords: 4
-	},
-	10: {
-		maxAccidentals: 7,
-		parents: ['major', 'melodicMinor', 'harmonicMinor'],
-		answerFormat: 'naming',
-		progressions: ['ii-v-i-major', 'ii-v-i-minor', 'turnaround', 'modal-vamp', 'blues'],
-		chords: 4
-	}
+	1: theoryLevel(['major'], 1, 'choice'),
+	2: theoryLevel(['major'], 3, 'choice'),
+	3: theoryLevel(['major'], 5, 'choice'),
+	4: theoryLevel(['melodicMinor'], 1, 'choice'),
+	5: theoryLevel(['melodicMinor'], 3, 'choice'),
+	6: theoryLevel(['melodicMinor'], 5, 'naming'),
+	7: theoryLevel(['major', 'melodicMinor'], 6, 'naming', [...MAJOR_TURNAROUND, 'modal-vamp'], 4),
+	8: theoryLevel(['harmonicMinor'], 2, 'naming'),
+	9: theoryLevel(['harmonicMinor'], 4, 'naming'),
+	10: theoryLevel(['major', 'melodicMinor', 'harmonicMinor'], 7, 'naming', ALL_PROGRESSIONS, 4)
 };
+
+export interface EarScaleLevel {
+	parents: ParentScale[];
+	progressions: ProgressionKind[];
+}
+
+/** The parent scales and progressions heard at each ear-training difficulty. */
+export function earScaleLevel(level: Level): EarScaleLevel {
+	const parents: ParentScale[] =
+		level <= 2
+			? ['major']
+			: level <= 4
+				? ['major', 'melodicMinor']
+				: ['major', 'melodicMinor', 'harmonicMinor'];
+	const progressions =
+		level <= 2
+			? ['ii-v-i-major' as const]
+			: level <= 4
+				? MAJOR_TURNAROUND
+				: ALL_PROGRESSIONS.filter(
+						(kind) => (kind !== 'ii-v-i-minor' || level >= 6) && (kind !== 'blues' || level >= 8)
+					);
+	return { parents, progressions };
+}

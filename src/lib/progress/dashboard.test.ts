@@ -1,62 +1,62 @@
 import { describe, expect, it } from 'vitest';
+import { exercisesAt } from './curriculum';
 import { moduleStatuses } from './dashboard';
 import { emptyProgress, type ProgressState } from './ladder';
 import { recordAnswer } from './record';
 
 const DAY = '2026-11-25';
 
-function answered(n: number, track: 'theory' | 'ear:chords' | 'ear:modes', correct = true) {
+function answered(n: number, track: 'theory' | 'ear', exercises: readonly string[]) {
 	let state: ProgressState = emptyProgress();
-	for (let i = 0; i < n; i++) {
-		state = recordAnswer(state, { track, level: 1, correct, today: DAY }).state;
+	for (const exercise of exercises) {
+		for (let i = 0; i < n; i++) {
+			state = recordAnswer(state, { track, level: 1, exercise, correct: true, today: DAY }).state;
+		}
 	}
 	return state;
 }
+
+const THEORY_1 = ['name-mode', 'write-mode'];
 
 describe('dashboard statuses', () => {
 	it('starts every graded module at Level 1, not yet started', () => {
 		const statuses = moduleStatuses(emptyProgress(), {});
 		expect(statuses.theory).toEqual({
 			graded: true,
-			estimate: 1,
-			track: 'theory',
 			level: 1,
 			percent: 0,
 			atTop: false,
 			started: false
 		});
-		expect(statuses.ear).toMatchObject({ graded: true, track: 'ear:chords', started: false });
+		expect(statuses.ear).toMatchObject({ graded: true, level: 1, started: false });
 	});
 
-	it('shows the progress towards the next level on the current track', () => {
-		const statuses = moduleStatuses(answered(9, 'theory'), {});
+	it('shows the progress towards the next level as the mean over its exercises', () => {
+		const statuses = moduleStatuses(answered(9, 'theory', THEORY_1), {});
 		expect(statuses.theory).toMatchObject({ level: 1, percent: 50, started: true });
-		const passed = moduleStatuses(answered(18, 'theory'), {});
-		expect(passed.theory).toMatchObject({ estimate: 2, level: 2, percent: 0, started: true });
+		const half = moduleStatuses(answered(18, 'theory', ['name-mode']), {});
+		expect(half.theory).toMatchObject({ level: 1, percent: 50 });
+		const passed = moduleStatuses(answered(18, 'theory', THEORY_1), {});
+		expect(passed.theory).toMatchObject({ level: 2, percent: 0, started: true });
 	});
 
-	it('follows the ear sub-module last chosen in setup', () => {
-		const state = answered(18, 'ear:modes');
-		expect(moduleStatuses(state, { ear: { submodule: 'modes' } }).ear).toMatchObject({
-			track: 'ear:modes',
-			level: 2,
-			estimate: 2
-		});
-		expect(moduleStatuses(state, { ear: { submodule: 'chords' } }).ear).toMatchObject({
-			track: 'ear:chords',
-			level: 1,
-			estimate: 2
-		});
-		expect(moduleStatuses(state, { ear: { submodule: 'kazoo' } }).ear).toMatchObject({
-			track: 'ear:chords'
-		});
+	it('follows the single ear-training ladder', () => {
+		const state = answered(18, 'ear', ['intervals', 'chords']);
+		expect(moduleStatuses(state, {}).ear).toMatchObject({ level: 2, percent: 0 });
 	});
 
 	it('marks the top of the ladder', () => {
 		const state = emptyProgress();
+		const graded = { recent: Array<boolean>(18).fill(true), answered: 18, correct: 18 };
 		state.tracks.theory = {
 			unlocked: 10,
-			levels: { 10: { recent: Array<boolean>(18).fill(true), answered: 18, correct: 18 } }
+			levels: {
+				10: {
+					answered: 0,
+					correct: 0,
+					drills: Object.fromEntries(exercisesAt('theory', 10).map((e) => [e, graded]))
+				}
+			}
 		};
 		expect(moduleStatuses(state, {}).theory).toMatchObject({ atTop: true, percent: 100 });
 	});

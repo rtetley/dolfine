@@ -1,12 +1,13 @@
 import { LEVELS, type Level } from '#lib/music/levels.ts';
-import type { EarSubmodule } from '#lib/modules/ear/questions.ts';
+import { exercisesAt, type GradedModule } from './curriculum';
 
 /**
  * The progress ladder for the graded modules (music theory and ear training).
  *
- * A level unlocks the next one once the student gets {@link REQUIRED_CORRECT} of their last
- * {@link UNLOCK_WINDOW} answers right at that level (90 %). The numbers are a draft, to be
- * reviewed with conservatory teachers along with the level mappings.
+ * Each level has a few exercises (see `curriculum.ts`). An exercise gets its grade once the
+ * student answers {@link REQUIRED_CORRECT} of their last {@link UNLOCK_WINDOW} questions right
+ * (90 %), and the next level opens once every exercise of this one has its grade. The numbers
+ * are a draft, to be reviewed with conservatory teachers along with the level mappings.
  *
  * Everything here is pure: the store in `#lib/state/progress.svelte.ts` keeps the state and
  * decides where it is saved.
@@ -16,31 +17,21 @@ export const UNLOCK_WINDOW = 20;
 export const UNLOCK_ACCURACY = 0.9;
 export const REQUIRED_CORRECT = Math.ceil(UNLOCK_WINDOW * UNLOCK_ACCURACY);
 
-export type TrackId = 'theory' | `ear:${EarSubmodule}`;
-export type GradedModule = 'theory' | 'ear';
+export type { GradedModule };
+export type TrackId = GradedModule;
+export const TRACKS: readonly TrackId[] = ['theory', 'ear'];
 
-/** The ear sub-modules, repeated here (type-checked) so pages can read progress without loading the generators. */
-export const EAR_TRACK_SUBMODULES = [
-	'intervals',
-	'chords',
-	'voicings',
-	'modes',
-	'progressions'
-] as const satisfies readonly EarSubmodule[];
-
-export const earTrack = (submodule: EarSubmodule): TrackId => `ear:${submodule}`;
-export const EAR_TRACKS: readonly TrackId[] = EAR_TRACK_SUBMODULES.map(earTrack);
-export const TRACKS: readonly TrackId[] = ['theory', ...EAR_TRACKS];
-export const MODULE_TRACKS: Record<GradedModule, readonly TrackId[]> = {
-	theory: ['theory'],
-	ear: EAR_TRACKS
-};
-
-export interface LevelRecord {
-	/** The most recent answers at this level, oldest first, at most {@link UNLOCK_WINDOW}. */
+export interface DrillRecord {
+	/** The most recent answers to this exercise, oldest first, at most {@link UNLOCK_WINDOW}. */
 	recent: boolean[];
 	answered: number;
 	correct: number;
+}
+
+export interface LevelRecord {
+	answered: number;
+	correct: number;
+	drills: Partial<Record<string, DrillRecord>>;
 }
 
 export interface TrackProgress {
@@ -82,22 +73,30 @@ export const trackOf = (state: ProgressState, track: TrackId): TrackProgress =>
 /** XP for one answer: harder levels pay more, and a wrong answer still earns a point for trying. */
 export const xpFor = (level: Level, correct: boolean): number => (correct ? 8 + 2 * level : 1);
 
-export interface LevelStanding {
-	level: Level;
-	/** Right answers among the last {@link UNLOCK_WINDOW} at this level. */
+export interface DrillStanding {
+	exercise: string;
+	/** Right answers among the last {@link UNLOCK_WINDOW} to this exercise at this level. */
 	recentCorrect: number;
 	recentAnswered: number;
-	/** 0–1: how far the student is towards unlocking the next level. */
+	/** 0–1: how far the student is towards this exercise's grade. */
 	ratio: number;
 	passed: boolean;
 }
 
-export function levelStanding(track: TrackProgress, level: Level): LevelStanding {
-	const recent = track.levels[level]?.recent ?? [];
+export interface LevelStanding {
+	level: Level;
+	drills: DrillStanding[];
+	/** 0–1: the mean progress over the level's exercises. */
+	ratio: number;
+	passed: boolean;
+}
+
+export function drillStanding(track: TrackProgress, level: Level, exercise: string): DrillStanding {
+	const recent = track.levels[level]?.drills[exercise]?.recent ?? [];
 	const recentCorrect = recent.filter(Boolean).length;
 	const passed = level < track.unlocked || recentCorrect >= REQUIRED_CORRECT;
 	return {
-		level,
+		exercise,
 		recentCorrect,
 		recentAnswered: recent.length,
 		ratio: passed ? 1 : recentCorrect / REQUIRED_CORRECT,
@@ -105,23 +104,38 @@ export function levelStanding(track: TrackProgress, level: Level): LevelStanding
 	};
 }
 
+export function levelStanding(
+	track: TrackProgress,
+	level: Level,
+	exercises: readonly string[]
+): LevelStanding {
+	const drills = exercises.map((exercise) => drillStanding(track, level, exercise));
+	const ratio =
+		drills.length > 0 ? drills.reduce((sum, drill) => sum + drill.ratio, 0) / drills.length : 1;
+	return { level, drills, ratio, passed: drills.every((drill) => drill.passed) };
+}
+
+/** The standing of a graded module at one of its levels, against that level's exercises. */
+export const moduleStanding = (
+	state: ProgressState,
+	module: GradedModule,
+	level: Level
+): LevelStanding => levelStanding(trackOf(state, module), level, exercisesAt(module, level));
+
 export const percent = (ratio: number): number => Math.round(Math.min(1, Math.max(0, ratio)) * 100);
 
 export const hasPractised = (state: ProgressState, track: TrackId): boolean =>
 	Object.values(trackOf(state, track).levels).some((record) => (record?.answered ?? 0) > 0);
 
-/**
- * The level the app estimates for a module: the open level of a single-track module, or the
- * rounded mean over the sub-modules the student has practised.
- */
-export function estimatedLevel(state: ProgressState, module: GradedModule): Level {
-	const tracks = MODULE_TRACKS[module];
-	const practised = tracks.filter((track) => hasPractised(state, track));
-	const counted = practised.length > 0 ? practised : tracks;
-	const mean =
-		counted.reduce((sum, track) => sum + trackOf(state, track).unlocked, 0) / counted.length;
-	return clampLevel(Math.round(mean));
-}
+/** Every exercise the student has answered on a track, at any level. */
+export const practisedExercises = (state: ProgressState, track: TrackId): Set<string> =>
+	new Set(
+		Object.values(trackOf(state, track).levels).flatMap((record) =>
+			Object.entries(record?.drills ?? {}).flatMap(([exercise, drill]) =>
+				(drill?.answered ?? 0) > 0 ? [exercise] : []
+			)
+		)
+	);
 
 export const clampLevel = (value: number): Level =>
 	Math.min(10, Math.max(1, Math.trunc(value) || 1)) as Level;

@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import GuideText from '#lib/components/GuideText.svelte';
-	import LevelPicker from '#lib/components/LevelPicker.svelte';
 	import ModuleIntro from '#lib/components/ModuleIntro.svelte';
 	import ProgressNotice from '#lib/components/ProgressNotice.svelte';
 	import ProgressPanel from '#lib/components/ProgressPanel.svelte';
+	import StageMap from '#lib/components/StageMap.svelte';
 	import { m } from '#lib/i18n.ts';
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import { THEORY_GUIDES } from '#lib/content/guides.ts';
 	import type { Level } from '#lib/music/levels.ts';
 	import { newSeed } from '#lib/music/random.ts';
-	import { PARENT_NAMES, PARENT_SCALES } from '#lib/music/scales.ts';
 	import ChordExercise from '#lib/modules/theory/ChordExercise.svelte';
 	import ContextExercise from '#lib/modules/theory/ContextExercise.svelte';
 	import ModeExercise from '#lib/modules/theory/ModeExercise.svelte';
@@ -19,35 +18,38 @@
 		createQuestion,
 		THEORY_DEFAULTS,
 		THEORY_EXERCISE_LABELS,
-		THEORY_EXERCISES,
+		type TheoryExercise,
 		type TheoryPrefs,
 		type TheoryQuestion
 	} from '#lib/modules/theory/questions.ts';
 	import SheetExercise from '#lib/modules/theory/SheetExercise.svelte';
+	import { findDrill, openDrill, THEORY_CURRICULUM } from '#lib/progress/curriculum.ts';
 	import {
 		continueStore,
 		loadModulePrefs,
 		saveModulePrefs
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { onResume } from '#lib/state/resume.ts';
-	import { allowedLevel, progress } from '#lib/state/progress.svelte.ts';
-	import { settings } from '#lib/state/settings.svelte.ts';
+	import { progress } from '#lib/state/progress.svelte.ts';
 
 	const stored = loadModulePrefs('theory', THEORY_DEFAULTS);
 	let prefs = $state<TheoryPrefs>({
 		...stored,
-		level: allowedLevel(stored.level, progress.unlocked('theory'))
+		...openDrill(THEORY_CURRICULUM, stored, progress.unlocked('theory'))
 	});
 	let question = $state<TheoryQuestion | null>(null);
 	let questionKey = $state(0);
 
-	const format = $derived(answerFormatFor(prefs));
-	const unlocked = $derived(progress.unlocked('theory'));
+	const difficulty = $derived(
+		findDrill(THEORY_CURRICULUM, prefs.level, prefs.exercise)?.difficulty ?? prefs.level
+	);
+	const questionPrefs = $derived({ ...prefs, level: difficulty });
+	const format = $derived(answerFormatFor(questionPrefs));
 
 	progress.clearEvents();
 
 	const record = (correct: boolean): void => {
-		progress.record('theory', prefs.level, correct);
+		progress.record('theory', prefs.level, prefs.exercise, correct);
 	};
 
 	function update(patch: Partial<TheoryPrefs>): void {
@@ -57,20 +59,20 @@
 
 	function next(): void {
 		progress.clearEvents();
-		question = createQuestion(prefs, newSeed());
+		question = createQuestion(questionPrefs, newSeed());
 		questionKey++;
-		const parent =
-			prefs.parent === 'level'
-				? m.parent_from_level()
-				: PARENT_NAMES[prefs.parent][settings.modeLanguage];
 		continueStore.record({
 			module: 'theory',
 			summary: m.theory_summary({
 				level: prefs.level,
-				exercise: THEORY_EXERCISE_LABELS[prefs.exercise],
-				parent
+				exercise: THEORY_EXERCISE_LABELS[prefs.exercise]
 			})
 		});
+	}
+
+	function pick(level: Level, exercise: TheoryExercise): void {
+		update({ level, exercise });
+		next();
 	}
 
 	// Opened from Continue on the dashboard: go straight back to an exercise.
@@ -92,78 +94,60 @@
 		<ModuleIntro
 			module="theory"
 			tracks={['theory']}
-			onplace={(level: Level) => update({ level })}
+			onplace={(level: Level) =>
+				update({ ...openDrill(THEORY_CURRICULUM, { ...prefs, level }, level) })}
 		/>
-		<section class="setup" aria-label={m.setup_label()}>
-			<LevelPicker
-				level={prefs.level}
-				mapping="jazz"
-				{unlocked}
-				onchange={(level: Level) => update({ level })}
-			/>
-			<label class="field">
-				<span class="label">{m.exercise_label()}</span>
-				<select
-					value={prefs.exercise}
-					onchange={(e) => update({ exercise: e.currentTarget.value as TheoryPrefs['exercise'] })}
-				>
-					{#each THEORY_EXERCISES as exercise (exercise)}<option value={exercise}>
-							{THEORY_EXERCISE_LABELS[exercise]}
-						</option>{/each}
-				</select>
-			</label>
-			<label class="field">
-				<span class="label">{m.parent_scale_label()}</span>
-				<select
-					value={prefs.parent}
-					onchange={(e) => update({ parent: e.currentTarget.value as TheoryPrefs['parent'] })}
-				>
-					<option value="level">{m.from_level()}</option>
-					{#each PARENT_SCALES as scale (scale)}<option value={scale}>
-							{PARENT_NAMES[scale][settings.modeLanguage]}
-						</option>{/each}
-				</select>
-			</label>
-			<label class="field">
-				<span class="label">{m.answer_format_label()}</span>
-				<select
-					value={prefs.answerFormat}
-					onchange={(e) =>
-						update({ answerFormat: e.currentTarget.value as TheoryPrefs['answerFormat'] })}
-				>
-					<option value="level">
-						{format === 'choice' ? m.answer_format_level_choice() : m.answer_format_level_naming()}
-					</option>
-					<option value="choice">{m.answer_format_choice()}</option>
-					<option value="naming">{m.answer_format_naming()}</option>
-				</select>
-			</label>
-			<label class="field">
-				<span class="label">{m.voicing_type_label()}</span>
-				<select
-					value={prefs.voicingType}
-					onchange={(e) =>
-						update({ voicingType: e.currentTarget.value as TheoryPrefs['voicingType'] })}
-				>
-					<option value="alternate">{m.voicing_type_alternate()}</option>
-					<option value="A">Type A · 1 7 / 3 5 9</option>
-					<option value="B">Type B · 1 3 7 / 9 5</option>
-				</select>
-			</label>
-			<label class="field inline">
-				<input
-					type="checkbox"
-					checked={prefs.liveRules}
-					onchange={(e) => update({ liveRules: e.currentTarget.checked })}
-				/>
-				<span>{m.live_rules_label()}</span>
-			</label>
-		</section>
+		<ProgressPanel track="theory" />
 		<div class="actions">
-			<button type="button" class="primary" onclick={next}>{m.action_start()}</button>
 			<MidiStatus />
 		</div>
-		<ProgressPanel track="theory" level={prefs.level} />
+		<StageMap
+			module="theory"
+			curriculum={THEORY_CURRICULUM}
+			labels={THEORY_EXERCISE_LABELS}
+			onpick={pick}
+		/>
+		<details class="options">
+			<summary>{m.options_label()}</summary>
+			<section class="setup" aria-label={m.setup_label()}>
+				<label class="field">
+					<span class="label">{m.answer_format_label()}</span>
+					<select
+						value={prefs.answerFormat}
+						onchange={(e) =>
+							update({ answerFormat: e.currentTarget.value as TheoryPrefs['answerFormat'] })}
+					>
+						<option value="level">
+							{format === 'choice'
+								? m.answer_format_level_choice()
+								: m.answer_format_level_naming()}
+						</option>
+						<option value="choice">{m.answer_format_choice()}</option>
+						<option value="naming">{m.answer_format_naming()}</option>
+					</select>
+				</label>
+				<label class="field">
+					<span class="label">{m.voicing_type_label()}</span>
+					<select
+						value={prefs.voicingType}
+						onchange={(e) =>
+							update({ voicingType: e.currentTarget.value as TheoryPrefs['voicingType'] })}
+					>
+						<option value="alternate">{m.voicing_type_alternate()}</option>
+						<option value="A">Type A · 1 7 / 3 5 9</option>
+						<option value="B">Type B · 1 3 7 / 9 5</option>
+					</select>
+				</label>
+				<label class="field inline">
+					<input
+						type="checkbox"
+						checked={prefs.liveRules}
+						onchange={(e) => update({ liveRules: e.currentTarget.checked })}
+					/>
+					<span>{m.live_rules_label()}</span>
+				</label>
+			</section>
+		</details>
 		<GuideText guide={THEORY_GUIDES.intro} open />
 		<GuideText guide={THEORY_GUIDES.voicings} />
 		<GuideText guide={THEORY_GUIDES.voiceLeading} />
@@ -191,13 +175,12 @@
 		<ProgressNotice
 			track="theory"
 			level={prefs.level}
-			onlevel={(level: Level) => {
-				update({ level });
-				next();
-			}}
+			exercise={prefs.exercise}
+			label={THEORY_EXERCISE_LABELS[prefs.exercise]}
+			onlevel={(level: Level) => pick(level, THEORY_CURRICULUM[level].drills[0].exercise)}
 		/>
 		<div class="actions">
-			<button type="button" onclick={() => (question = null)}>{m.action_back_to_setup()}</button>
+			<button type="button" onclick={() => (question = null)}>{m.action_back_to_levels()}</button>
 		</div>
 	{/if}
 </div>
@@ -205,5 +188,16 @@
 <style>
 	.lessons-link {
 		margin: 0 0 var(--space-4);
+	}
+
+	.options {
+		margin: var(--space-5) 0;
+		max-width: var(--measure);
+	}
+
+	.options summary {
+		cursor: pointer;
+		font-variant: small-caps;
+		letter-spacing: 0.06em;
 	}
 </style>

@@ -1,6 +1,8 @@
 import { isRecord } from '#lib/state/persisted.ts';
 import { ACHIEVEMENTS } from './achievements';
 import {
+	clampLevel,
+	type DrillRecord,
 	emptyProgress,
 	isLevel,
 	type LevelRecord,
@@ -16,13 +18,26 @@ const count = (value: unknown): number =>
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const isDay = (value: unknown): value is string => typeof value === 'string' && DAY.test(value);
 
-function readLevelRecord(value: unknown): LevelRecord | null {
+function readDrill(value: unknown): DrillRecord | null {
 	if (!isRecord(value)) return null;
 	const recent = Array.isArray(value.recent)
 		? value.recent.filter((x): x is boolean => typeof x === 'boolean').slice(-UNLOCK_WINDOW)
 		: [];
 	const answered = Math.max(count(value.answered), recent.length);
 	return { recent, answered, correct: Math.min(count(value.correct), answered) };
+}
+
+function readLevelRecord(value: unknown): LevelRecord | null {
+	if (!isRecord(value)) return null;
+	const drills: LevelRecord['drills'] = {};
+	if (isRecord(value.drills)) {
+		for (const [exercise, raw] of Object.entries(value.drills)) {
+			const drill = readDrill(raw);
+			if (drill) drills[exercise] = drill;
+		}
+	}
+	const answered = count(value.answered);
+	return { answered, correct: Math.min(count(value.correct), answered), drills };
 }
 
 function readTrack(value: unknown): TrackProgress | null {
@@ -36,6 +51,22 @@ function readTrack(value: unknown): TrackProgress | null {
 		}
 	}
 	return { unlocked: isLevel(value.unlocked) ? value.unlocked : 1, levels };
+}
+
+/**
+ * Saves made before ear training had a single ladder kept one track per sub-module
+ * (`ear:chords`…). The ear ladder starts on the mean level reached on the ones practised.
+ */
+function readLegacyEar(tracks: Record<string, unknown>): TrackProgress | null {
+	const legacy = Object.entries(tracks)
+		.filter(([key]) => key.startsWith('ear:'))
+		.flatMap(([, raw]) => {
+			const track = readTrack(raw);
+			return track ? [track] : [];
+		});
+	if (legacy.length === 0) return null;
+	const mean = legacy.reduce((sum, track) => sum + track.unlocked, 0) / legacy.length;
+	return { unlocked: clampLevel(Math.round(mean)), levels: {} };
 }
 
 /**
@@ -56,6 +87,8 @@ export function readProgress(value: unknown): ProgressState {
 			const parsed = readTrack(value.tracks[track]);
 			if (parsed) state.tracks[track] = parsed;
 		}
+		const legacyEar = state.tracks.ear ? null : readLegacyEar(value.tracks);
+		if (legacyEar) state.tracks.ear = legacyEar;
 	}
 	if (isRecord(value.achievements)) {
 		for (const id of ACHIEVEMENTS) {
