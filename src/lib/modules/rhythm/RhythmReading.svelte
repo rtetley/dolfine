@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { onDestroy } from 'svelte';
-	import { ensureAudio, playSchedule } from '#lib/audio/engine.ts';
+	import { AsyncStart } from '#lib/audio/asyncStart.svelte.ts';
+	import { ensureAudio, playSchedule, stopAll } from '#lib/audio/engine.ts';
 	import {
 		type MetronomeHandle,
 		type MetronomeTick,
@@ -23,6 +24,7 @@
 	let { exercise, prefs, onnext, onrepeat, onlevelup, onsetup }: Props = $props();
 
 	let handle: MetronomeHandle | null = null;
+	const starting = new AsyncStart();
 	let tick = $state<MetronomeTick | null>(null);
 	let running = $state(false);
 
@@ -34,7 +36,10 @@
 			stop();
 			return;
 		}
-		await ensureAudio();
+		await starting.run(ensureAudio, begin);
+	}
+
+	function begin(): void {
 		handle = startMetronome({
 			bpm: (exercise.tempo * exercise.meter.unit) / 4,
 			beatsPerBar: exercise.meter.beats,
@@ -54,17 +59,23 @@
 
 	async function listen(): Promise<void> {
 		await ensureAudio();
+		// Listening again starts over rather than playing on top of the last one.
+		stopAll();
 		playSchedule(listenSchedule(exercise));
 	}
 
 	function stop(): void {
+		starting.cancel();
 		handle?.stop();
 		handle = null;
 		running = false;
 		tick = null;
 	}
 
-	onDestroy(stop);
+	onDestroy(() => {
+		stop();
+		stopAll();
+	});
 </script>
 
 <div class="bar">
@@ -73,8 +84,10 @@
 		class="primary"
 		onclick={() => void toggleMetronome()}
 		aria-pressed={running}
+		aria-busy={starting.pending}
+		disabled={starting.pending}
 	>
-		{running ? m.action_stop() : m.start_with_count_in()}
+		{starting.pending ? m.audio_loading() : running ? m.action_stop() : m.start_with_count_in()}
 	</button>
 	<button type="button" onclick={() => void listen()}>{m.listen()}</button>
 	<MetronomePulse

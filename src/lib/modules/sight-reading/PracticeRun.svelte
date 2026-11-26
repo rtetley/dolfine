@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { onDestroy } from 'svelte';
+	import { AsyncStart } from '#lib/audio/asyncStart.svelte.ts';
 	import { ensureAudio } from '#lib/audio/engine.ts';
 	import {
 		type MetronomeHandle,
@@ -23,6 +24,7 @@
 	let { exercise, prefs, onperform, onnext, onsetup }: Props = $props();
 
 	let handle: MetronomeHandle | null = null;
+	const starting = new AsyncStart();
 	let running = $state(false);
 	let tick = $state<MetronomeTick | null>(null);
 	let tempoOverride = $state<number | null>(null);
@@ -36,8 +38,7 @@
 			stop();
 			return;
 		}
-		await ensureAudio();
-		play();
+		await starting.run(ensureAudio, play);
 	}
 
 	function play(): void {
@@ -66,6 +67,7 @@
 	}
 
 	function stop(): void {
+		starting.cancel();
 		handle?.stop();
 		handle = null;
 		running = false;
@@ -76,8 +78,14 @@
 </script>
 
 <div class="bar">
-	<button type="button" onclick={() => void toggle()} aria-pressed={running}>
-		{running ? m.metronome_stop() : m.metronome_start()}
+	<button
+		type="button"
+		onclick={() => void toggle()}
+		aria-pressed={running}
+		aria-busy={starting.pending}
+		disabled={starting.pending}
+	>
+		{starting.pending ? m.audio_loading() : running ? m.metronome_stop() : m.metronome_start()}
 	</button>
 	<label class="field inline">
 		<span class="label">{m.practice_tempo_label()} ♩ =</span>

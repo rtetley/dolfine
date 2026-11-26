@@ -7,7 +7,8 @@ vi.mock('#lib/audio/engine.ts', () => ({
 	ensureAudio: vi.fn(() => Promise.resolve()),
 	now: () => 0,
 	playNotes: vi.fn(),
-	playArpeggio: vi.fn(() => 0)
+	playArpeggio: vi.fn(() => 0),
+	stopAll: vi.fn()
 }));
 
 const { playNotes } = await import('#lib/audio/engine.ts');
