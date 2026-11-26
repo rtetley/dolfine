@@ -68,6 +68,7 @@ const PAIRS: [string, string, number][] = [
 	['--bad', '--paper', TEXT],
 	['--bad', '--bad-soft', TEXT],
 	['--late', '--paper', TEXT],
+	['--early', '--paper', TEXT],
 	['--focus', '--paper', CONTROL],
 	['--rule-strong', '--paper', CONTROL],
 	['--key-edge', '--key-white', CONTROL]

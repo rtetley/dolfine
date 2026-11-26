@@ -5,11 +5,14 @@ export type StaffChoice = 'treble' | 'bass' | 'grand';
 export type ReadingMode = 'performance' | 'practice';
 export type MetronomeChoice = 'on' | 'off' | 'random-mute';
 export type KeyModeChoice = 'major' | 'minor' | 'either';
+/** `voice`: the student says the note names aloud and the microphone checks name and timing. */
+export type AnswerInput = 'midi' | 'voice';
 
 export interface SightReadingPrefs extends Record<string, unknown> {
 	level: Level;
 	staff: StaffChoice;
 	mode: ReadingMode;
+	input: AnswerInput;
 	metronome: MetronomeChoice;
 	cursor: boolean;
 	referenceNotes: boolean;
@@ -25,6 +28,7 @@ export const SIGHT_READING_DEFAULTS: SightReadingPrefs = {
 	level: 3,
 	staff: 'treble',
 	mode: 'performance',
+	input: 'midi',
 	metronome: 'on',
 	cursor: true,
 	referenceNotes: true,

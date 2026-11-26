@@ -3,6 +3,7 @@ import {
 	type ExpectedNote,
 	resultsCommentary,
 	type ScoreSummary,
+	scoreInOrder,
 	scorePerformance
 } from './scoring';
 
@@ -12,6 +13,39 @@ const expected: ExpectedNote[] = [
 	{ id: 'c', midi: 64, time: 1000 },
 	{ id: 'd', midi: 65, time: 1500 }
 ];
+
+describe('scoreInOrder', () => {
+	const sameMidi = (target: ExpectedNote, note: { midi: number }) => note.midi === target.midi;
+
+	it('does not let a skipped note take its neighbour’s match', () => {
+		const line = expected.slice(0, 2).map((note) => ({ ...note, time: note.time / 2.5 }));
+		const played = [{ midi: 62, time: 200 }];
+		expect(scorePerformance(line, played, 80).notes.map((n) => n.outcome)).toEqual([
+			'wrong',
+			'missed'
+		]);
+		expect(scoreInOrder(line, played, 80, sameMidi).notes.map((n) => n.outcome)).toEqual([
+			'missed',
+			'correct'
+		]);
+	});
+
+	it('pairs a wrong note in place, keeps strays as extras, and reads played events in time order', () => {
+		const played = [
+			{ midi: 65, time: 1510 },
+			{ midi: 99, time: 760 },
+			{ midi: 60, time: 10 },
+			{ midi: 63, time: 520 },
+			{ midi: 64, time: 1100 }
+		];
+		const summary = scoreInOrder(expected, played, 80, sameMidi);
+		expect(summary.notes.map((n) => n.outcome)).toEqual(['correct', 'wrong', 'late', 'correct']);
+		expect(summary.notes[1].heard).toBe(3);
+		expect(summary.extras).toEqual([{ midi: 99, time: 760 }]);
+		expect(summary.pitchAccuracy).toBe(75);
+		expect(summary.rhythmAccuracy).toBe(50);
+	});
+});
 
 describe('scorePerformance', () => {
 	it('classifies each note against the tolerance', () => {
@@ -72,7 +106,7 @@ const summaryOf = (
 describe('resultsCommentary', () => {
 	it.each([
 		[summaryOf(['correct'], 100, 100), /Clean and steady/],
-		[summaryOf(['missed', 'wrong', 'late'], 33, 0), /pitches/],
+		[summaryOf(['missed', 'wrong', 'late'], 33, 0), /wrong notes/],
 		[summaryOf(['late', 'late', 'early'], 100, 0), /late/],
 		[summaryOf(['early', 'early', 'late'], 100, 0), /rush/]
 	])('picks the advice for %#', (summary, pattern) => {

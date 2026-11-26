@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
-	import { resultsCommentary, scorePerformance, type PlayedNote } from '#lib/music/scoring.ts';
+	import { resultsCommentary } from '#lib/music/scoring.ts';
 	import Score from '#lib/notation/Score.svelte';
+	import { settings } from '#lib/state/settings.svelte.ts';
 	import { exerciseScore, type SightReadingExercise } from './exercise';
+	import { heardLabels, type Performance, scoreRun } from './spoken';
 
 	interface Props {
 		exercise: SightReadingExercise;
-		played: PlayedNote[];
+		performance: Performance;
 		scored: boolean;
 		stopped?: boolean;
 		showReferences?: boolean;
@@ -20,7 +22,7 @@
 
 	let {
 		exercise,
-		played,
+		performance,
 		scored,
 		stopped = false,
 		showReferences = false,
@@ -32,13 +34,17 @@
 		onsetup
 	}: Props = $props();
 
-	const summary = $derived(
-		scored && !stopped ? scorePerformance(exercise.expected, played, exercise.toleranceMs) : null
+	const summary = $derived(scored && !stopped ? scoreRun(exercise, performance) : null);
+	const heard = $derived(
+		summary
+			? heardLabels(summary.notes, performance, settings.noteNames, exercise.key.fifths < 0)
+			: undefined
 	);
 	const score = $derived(
 		exerciseScore(exercise, {
 			showReferences: !summary && showReferences,
-			outcomes: summary?.notes
+			outcomes: summary?.notes,
+			heard
 		})
 	);
 	const counts = $derived(
@@ -54,7 +60,7 @@
 		<div class="stats">
 			<div class="stat">
 				<strong>{summary.pitchAccuracy}%</strong><span class="label">
-					{m.results_pitch_accuracy()}
+					{performance.input === 'voice' ? m.results_names_accuracy() : m.results_pitch_accuracy()}
 				</span>
 			</div>
 			<div class="stat">
@@ -69,9 +75,8 @@
 		<p class="result-line">{resultsCommentary(summary)}</p>
 		<p class="legend">
 			<span class="good">{m.results_correct({ count: counts.correct ?? 0 })}</span>
-			<span class="late">
-				{m.results_early_late({ early: counts.early ?? 0, late: counts.late ?? 0 })}
-			</span>
+			<span class="early">{m.results_early({ count: counts.early ?? 0 })}</span>
+			<span class="late">{m.results_late({ count: counts.late ?? 0 })}</span>
 			<span class="bad">
 				{m.results_wrong_missed({ wrong: counts.wrong ?? 0, missed: counts.missed ?? 0 })}
 			</span>
@@ -79,6 +84,7 @@
 					{m.results_extra_notes({ count: summary.extras.length })}
 				</span>{/if}
 		</p>
+		{#if heard && heard.size > 0}<p class="legend">{m.results_heard_hint()}</p>{/if}
 	{:else}
 		<p class="result-line">{stopped ? m.results_stopped() : m.results_unscored()}</p>
 	{/if}
@@ -92,6 +98,20 @@
 	</div>
 
 	<Score {score} label={m.results_score_label()} />
+
+	{#if summary && performance.input === 'voice' && performance.captureId}
+		{@const captureId = performance.captureId}
+		{@const heardNotes = performance.notes}
+		{#await import('./LabelPanel.svelte') then { default: LabelPanel }}
+			<LabelPanel
+				{captureId}
+				{exercise}
+				notes={summary.notes}
+				heard={heardNotes}
+				names={settings.noteNames}
+			/>
+		{/await}
+	{/if}
 </section>
 
 <style>
@@ -100,6 +120,10 @@
 		flex-wrap: wrap;
 		gap: var(--space-4);
 		font-size: var(--step--1);
+	}
+
+	.early {
+		color: var(--early);
 	}
 
 	.late {

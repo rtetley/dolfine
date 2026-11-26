@@ -134,6 +134,7 @@
 	--bad: var(--crimson-700);
 	--bad-soft: var(--crimson-100);
 	--late: var(--ochre-700);
+	--early: var(--slate-700);
 	--focus: var(--slate-700);
 	--key-white: var(--sepia-50);
 	--key-black: var(--sepia-900);
@@ -163,6 +164,7 @@
 		--bad: var(--crimson-400);
 		--bad-soft: var(--crimson-900);
 		--late: var(--ochre-300);
+		--early: var(--slate-300);
 		--focus: var(--slate-400);
 		--key-white: var(--sepia-200);
 		--key-black: var(--sepia-950);
@@ -192,6 +194,7 @@
 	--bad: var(--crimson-400);
 	--bad-soft: var(--crimson-900);
 	--late: var(--ochre-300);
+	--early: var(--slate-300);
 	--focus: var(--slate-400);
 	--key-white: var(--sepia-200);
 	--key-black: var(--sepia-950);

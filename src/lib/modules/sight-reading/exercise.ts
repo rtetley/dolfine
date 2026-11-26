@@ -12,13 +12,17 @@ import {
 	type MelodySettings,
 	vexKeySignature
 } from '#lib/music/melody.ts';
-import { type NoteNameSystem, toMidi } from '#lib/music/pitch.ts';
+import { type Letter, type NoteNameSystem, toMidi } from '#lib/music/pitch.ts';
 import { createRng, type Rng } from '#lib/music/random.ts';
 import { type Meter, measureTicks, TICKS_PER_QUARTER } from '#lib/music/rhythm.ts';
 import type { ExpectedNote, ScoredNote } from '#lib/music/scoring.ts';
 import type { NoteStyle, Score, ScoreNote, StaffClef, StaffPart } from '#lib/notation/model.ts';
 import type { SightReadingPrefs } from './prefs';
 import { STAFF_LABELS } from './prefs';
+
+export interface ReadingNote extends ExpectedNote {
+	letter: Letter;
+}
 
 export interface SightReadingExercise {
 	seed: number;
@@ -28,8 +32,10 @@ export interface SightReadingExercise {
 	tempo: number;
 	bars: number;
 	parts: { clef: StaffClef; measures: MelodyNote[][] }[];
-	expected: ExpectedNote[];
+	expected: ReadingNote[];
 	toleranceMs: number;
+	/** The level's tempo, when spoken reading had to slow down so every name can be said. */
+	slowedFrom: number | null;
 	referenceIds: Set<string>;
 	durationMs: number;
 }
@@ -54,12 +60,40 @@ function chooseKey(prefs: SightReadingPrefs, maxFifths: number, rng: Rng): KeySi
 
 export const msPerTick = (tempo: number): number => 60000 / tempo / TICKS_PER_QUARTER;
 
+/** Nobody says more than about five clear names a second. */
+export const MAX_SPOKEN_NAMES_PER_SECOND = 5;
+/** Spoken onsets spread more than key presses, so the window never gets tighter than this. */
+export const MIN_SPOKEN_TOLERANCE_MS = 80;
+
+/** The shortest gap, in ticks, between two notes that must each be named. */
+function shortestGap(measures: readonly MelodyNote[][], perMeasure: number): number {
+	const onsets: number[] = [];
+	measures.forEach((measure, m) => {
+		let position = m * perMeasure;
+		for (const note of measure) {
+			if (note.pitch && !note.rest) onsets.push(position);
+			position += note.ticks;
+		}
+	});
+	let gap = Infinity;
+	for (let i = 1; i < onsets.length; i++) gap = Math.min(gap, onsets[i] - onsets[i - 1]);
+	return gap;
+}
+
+export function spokenTempo(tempo: number, gapTicks: number): number {
+	const fastest = Math.floor(
+		(gapTicks * 60000) / TICKS_PER_QUARTER / (1000 / MAX_SPOKEN_NAMES_PER_SECOND)
+	);
+	return Number.isFinite(fastest) ? Math.min(tempo, Math.max(fastest, 1)) : tempo;
+}
+
 export function createExercise(prefs: SightReadingPrefs, seed: number): SightReadingExercise {
 	const rng = createRng(seed);
 	const level = SIGHT_READING_LEVELS[prefs.level];
 	const meter = parseMeter(prefs.meter) ?? rng.pick(level.meters);
 	const key = chooseKey(prefs, level.maxFifths, rng);
-	const tempo = prefs.tempo > 0 ? prefs.tempo : level.tempo;
+	const spoken = prefs.input === 'voice';
+	const chosenTempo = prefs.tempo > 0 ? prefs.tempo : level.tempo;
 	const bars = prefs.bars > 0 ? prefs.bars : level.bars;
 	const melodyClef: Clef = prefs.staff === 'bass' ? 'bass' : 'treble';
 	const settings: MelodySettings = {
@@ -75,11 +109,16 @@ export function createExercise(prefs: SightReadingPrefs, seed: number): SightRea
 	const parts: SightReadingExercise['parts'] = [
 		{ clef: melodyClef, measures: generateMelody(settings, rng) }
 	];
-	if (prefs.staff === 'grand') parts.push({ clef: 'bass', measures: bassLine(settings, rng) });
+	if (prefs.staff === 'grand' && !spoken) {
+		parts.push({ clef: 'bass', measures: bassLine(settings, rng) });
+	}
 
-	const tick = msPerTick(tempo);
 	const perMeasure = measureTicks(meter);
-	const expected: ExpectedNote[] = [];
+	const tempo = spoken
+		? spokenTempo(chosenTempo, shortestGap(parts[0].measures, perMeasure))
+		: chosenTempo;
+	const tick = msPerTick(tempo);
+	const expected: ReadingNote[] = [];
 	const referenceIds = new Set<string>();
 	parts.forEach((part, p) => {
 		part.measures.forEach((measure, m) => {
@@ -87,7 +126,12 @@ export function createExercise(prefs: SightReadingPrefs, seed: number): SightRea
 			measure.forEach((note, n) => {
 				const id = noteId(p, m, n);
 				if (note.pitch && !note.rest) {
-					expected.push({ id, midi: toMidi(note.pitch), time: position * tick });
+					expected.push({
+						id,
+						midi: toMidi(note.pitch),
+						letter: note.pitch.letter,
+						time: position * tick
+					});
 					const label = `${note.pitch.letter}${note.pitch.octave}`;
 					const clef = part.clef === 'bass' ? 'bass' : 'treble';
 					if (note.pitch.accidental === 0 && REFERENCE_PITCHES[clef].includes(label))
@@ -108,7 +152,8 @@ export function createExercise(prefs: SightReadingPrefs, seed: number): SightRea
 		bars,
 		parts: parts.map((part) => ({ clef: part.clef, measures: part.measures })),
 		expected,
-		toleranceMs: level.toleranceMs,
+		toleranceMs: spoken ? Math.max(level.toleranceMs, MIN_SPOKEN_TOLERANCE_MS) : level.toleranceMs,
+		slowedFrom: tempo < chosenTempo ? chosenTempo : null,
 		referenceIds,
 		durationMs: bars * perMeasure * tick
 	};
@@ -119,7 +164,12 @@ export const noteId = (part: number, measure: number, index: number): string =>
 
 export function exerciseScore(
 	exercise: SightReadingExercise,
-	options: { showReferences: boolean; outcomes?: readonly ScoredNote[] }
+	options: {
+		showReferences: boolean;
+		outcomes?: readonly ScoredNote[];
+		/** Labels of what was heard in place of wrong notes, by note id. */
+		heard?: ReadonlyMap<string, string>;
+	}
 ): Score {
 	const outcomeById = new Map(options.outcomes?.map((outcome) => [outcome.id, outcome.outcome]));
 	const parts: StaffPart[] = exercise.parts.map((part, p) => ({
@@ -140,7 +190,8 @@ export function exerciseScore(
 					pitches: note.pitch ? [note.pitch] : [],
 					tie: note.tie,
 					triplet: note.triplet,
-					style
+					style,
+					heard: options.heard?.get(id)
 				};
 			})
 		)

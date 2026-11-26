@@ -77,7 +77,7 @@ function styleColors(element: HTMLElement): Record<NoteStyle | 'ink', string> {
 		correct: cssValue(element, '--good', '#3e6b4a'),
 		wrong: cssValue(element, '--bad', '#a23b3b'),
 		missed: cssValue(element, '--bad', '#a23b3b'),
-		early: cssValue(element, '--late', '#a8752a'),
+		early: cssValue(element, '--early', '#3f5f86'),
 		late: cssValue(element, '--late', '#a8752a'),
 		reference: cssValue(element, '--accent', '#8a3b2e'),
 		current: cssValue(element, '--accent', '#8a3b2e')
@@ -88,7 +88,8 @@ function buildNote(
 	note: RenderableNote,
 	clef: StaffClef,
 	accidentals: (number | null)[] | undefined,
-	textFont: string
+	textFont: string,
+	heardColor: string
 ): StaveNote {
 	const keys =
 		note.rest || note.pitches.length === 0 ? [REST_KEYS[clef]] : note.pitches.map(vexKey);
@@ -118,6 +119,13 @@ function buildNote(
 				.setVerticalJustification('bottom'),
 			0
 		);
+	}
+	if (note.heard) {
+		const heard = new Annotation(note.heard)
+			.setFont(textFont, 13, 'bold')
+			.setVerticalJustification('bottom');
+		heard.setStyle({ fillStyle: heardColor, strokeStyle: heardColor });
+		staveNote.addModifier(heard, 0);
 	}
 	return staveNote;
 }
@@ -209,7 +217,8 @@ export function renderScore(
 						note,
 						part.clef,
 						note.id === note.sourceId ? accidentals.get(note.id) : undefined,
-						textFont
+						textFont,
+						colors.wrong
 					)
 				);
 				notes.forEach((staveNote, i) => {
