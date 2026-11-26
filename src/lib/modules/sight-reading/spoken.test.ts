@@ -15,15 +15,37 @@ const profile = result.profile;
 const voice = { ...SIGHT_READING_DEFAULTS, input: 'voice', level: 1, bars: 4 } as const;
 const exercise = createExercise(voice, 11);
 
-/** The student reads the exercise aloud; `misread` replaces the name at that note. */
-function reading(misread?: { index: number; vowel: keyof typeof NAME_VOWELS }) {
+interface Reading {
+	/** Replaces the name said at one note. */
+	misread?: { index: number; vowel: keyof typeof NAME_VOWELS };
+	/** Holds each name until the next and sings it at pitch, as a fluent reader does. */
+	legato?: boolean;
+}
+
+const onsetAt = (lead: number, time: number): number => lead + time / 1000 + LATENCY;
+
+/** The student reads the exercise aloud. */
+function reading({ misread, legato = false }: Reading = {}) {
 	const lead = 0.4;
-	const syllables = exercise.expected.map((note, index) => ({
+	const { expected } = exercise;
+	const end = exercise.durationMs;
+	const syllables = expected.map((note, index) => ({
 		vowel: NAME_VOWELS[index === misread?.index ? misread.vowel : note.letter],
-		at: lead + note.time / 1000 + LATENCY,
-		duration: 0.15
+		at: onsetAt(lead, note.time),
+		duration: legato ? ((expected[index + 1]?.time ?? end) - note.time) / 1000 + 0.02 : 0.15,
+		f0: legato ? 440 * 2 ** ((note.midi - 81) / 12) : 140
 	}));
 	const samples = speak(lead + exercise.durationMs / 1000 + 0.5, syllables);
+	if (legato) {
+		// Each name's consonant: a slight dip, deeper where a name repeats and the vowel can't change.
+		expected.forEach((note, index) => {
+			const repeated = expected[index - 1]?.letter === note.letter;
+			const start = Math.round((onsetAt(lead, note.time) - 0.025) * RATE);
+			for (let n = Math.max(0, start); n < start + 0.025 * RATE; n++) {
+				samples[n] *= repeated ? 0.3 : 0.7;
+			}
+		});
+	}
 	const recordingStart = 10;
 	return hearReading(
 		{ samples, sampleRate: RATE, startTime: recordingStart },
@@ -41,13 +63,19 @@ describe('spoken reading', () => {
 		expect(summary.extras).toHaveLength(0);
 	});
 
+	it('grades a fluent legato reading, sung at pitch, at 100%', () => {
+		const summary = scoreRun(exercise, { input: 'voice', notes: reading({ legato: true }) });
+		expect(summary.notes.filter((note) => note.outcome !== 'correct')).toEqual([]);
+		expect(summary.extras).toHaveLength(0);
+	});
+
 	it('marks a misread name as wrong', () => {
 		const index = 2;
 		const actual = exercise.expected[index].letter;
 		const other = actual === 'C' ? 'E' : 'C';
 		const summary = scoreRun(exercise, {
 			input: 'voice',
-			notes: reading({ index, vowel: other })
+			notes: reading({ misread: { index, vowel: other } })
 		});
 		expect(summary.notes[index].outcome).toBe('wrong');
 		expect(summary.notes.filter((note) => note.outcome === 'correct')).toHaveLength(

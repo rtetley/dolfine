@@ -12,8 +12,8 @@ import type { Syllable } from './syllables';
 export const CALIBRATION_ROUNDS = 3;
 export const CALIBRATION_BEAT_MS = 1000;
 const PAIRING_WINDOW_MS = CALIBRATION_BEAT_MS / 2;
-/** How far beyond the furthest same-name pair a sound can still count as a note name. */
-const REJECT_FACTOR = 2.5;
+const SAME_NAME_FACTOR = 2.5;
+const OTHER_NAME_FACTOR = 1.5;
 
 export const calibrationPrompts = (): Letter[] =>
 	Array.from({ length: CALIBRATION_ROUNDS }, () => [...LETTERS]).flat();
@@ -78,16 +78,28 @@ export function buildProfile(
 	};
 }
 
-/** The furthest any recording sits from its nearest same-name recording, widened. */
+const nearest = (take: number[][], candidates: readonly number[][][]): number =>
+	Math.min(...candidates.map((candidate) => dtwDistance(take, candidate)));
+
+/**
+ * How far a sound may sit from its nearest name and still count as one. A name sung at pitch,
+ * held, or run into the next sits well beyond the calibration takes' spread, so the bound is
+ * also measured against how far apart different names are.
+ */
 export function rejectDistance(templates: Record<Letter, number[][][]>): number {
-	let furthest = 0;
+	const sameName: number[] = [];
+	const otherName: number[] = [];
 	for (const letter of LETTERS) {
-		const takes = templates[letter];
-		takes.forEach((take, index) => {
-			const others = takes.filter((_, i) => i !== index);
-			if (others.length === 0) return;
-			furthest = Math.max(furthest, Math.min(...others.map((other) => dtwDistance(take, other))));
+		const others = LETTERS.filter((other) => other !== letter).flatMap((other) => templates[other]);
+		templates[letter].forEach((take, index) => {
+			const repeats = templates[letter].filter((_, i) => i !== index);
+			if (repeats.length > 0) sameName.push(nearest(take, repeats));
+			if (others.length > 0) otherName.push(nearest(take, others));
 		});
 	}
-	return furthest > 0 ? furthest * REJECT_FACTOR : Infinity;
+	const bound = Math.max(
+		Math.max(0, ...sameName) * SAME_NAME_FACTOR,
+		otherName.length > 0 ? median(otherName) * OTHER_NAME_FACTOR : 0
+	);
+	return bound > 0 ? bound : Infinity;
 }

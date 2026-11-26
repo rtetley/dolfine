@@ -63,8 +63,11 @@ But their word timestamps are accurate to ±50–100 ms at best, which is too co
 The audio is processed in the browser, frame by frame, through a Web Audio `AudioWorklet`:
 
 1. **Segment.** Detect voiced syllables: energy plus voicing (is there a vowel, not which pitch), which also rejects claps, coughs and metronome clicks. Each syllable gives a time (its vowel onset, §3) and a short window of audio.
+   - A fluent reader holds each name until the next, so the recording has almost no silence. The loudness threshold is therefore capped at 25 dB below the loudest frames, not only set above the quietest ones.
+   - Names said legato through a voiced consonant (_ré-mi_, _sol-la_) barely dip in loudness. A voiced stretch is also split where the spectrum changes four times faster than in its steady parts.
 2. **Classify** each syllable as one of the seven names (plus "noise").
    - **Phase 1: template matching, no model.** Compute MFCC features for the syllable, then use dynamic time warping (DTW) against the student's own calibration recordings of the seven names. For one known speaker and seven words, this classic approach is accurate and needs no training data. It is a few hundred lines of TypeScript.
+   - A sound counts as noise only if it is further from its nearest name than 1.5 times the typical gap between two different names (or 2.5 times the spread of a name's own calibration takes, if that is larger). Bounding on the calibration takes alone rejected names that were sung at pitch or held.
    - **Phase 2, only if Phase 1 falls short: a small trained classifier.** A CNN on log-mel features, trained offline on a corpus of children's and adults' voices, exported to ONNX and run with `onnxruntime-web`. The model would be under 500 KB and lazy-loaded like VexFlow. This works without calibration, but it needs the corpus.
 3. **Use the score as a prior.** Score each segment by how much more likely the expected name is than the best other name. That avoids failing a student for one mumbled consonant, while still catching real misreads, which are typically a third off (_mi_ for _sol_) or the wrong clef.
 

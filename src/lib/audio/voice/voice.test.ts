@@ -64,6 +64,31 @@ describe('syllables', () => {
 		expect(voicedRegions(energyDb, voicing)).toHaveLength(2);
 	});
 
+	it('finds every name in a fluent legato reading with almost no silence', () => {
+		const onsets = LETTERS.map((_, i) => 0.15 + i * 0.5);
+		const syllables = findSyllables(
+			speak(
+				3.8,
+				LETTERS.map((letter, i) => ({
+					vowel: NAME_VOWELS[letter],
+					at: onsets[i],
+					duration: 0.52,
+					f0: 140 + i * 5
+				}))
+			),
+			RATE
+		);
+		expect(syllables).toHaveLength(onsets.length);
+		syllables.forEach((syllable, i) =>
+			expect(Math.abs(syllable.time - onsets[i])).toBeLessThan(0.04)
+		);
+	});
+
+	it('keeps a long held name whole', () => {
+		const signal = speak(2, [{ vowel: 'a', at: 0.1, duration: 1.8 }]);
+		expect(findSyllables(signal, RATE)).toHaveLength(1);
+	});
+
 	it('ignores a metronome click between two names', () => {
 		const signal = speak(1.2, [
 			{ vowel: 'a', at: 0.2 },

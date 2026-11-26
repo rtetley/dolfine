@@ -4,11 +4,16 @@ import { analyseFrames, ANALYSIS_RATE, frameTime, resample } from './signal';
 
 const VOICED = 0.45;
 const ABOVE_FLOOR_DB = 12;
+/** A fluent reading is voiced almost throughout, so the quietest frames may still be speech. */
+const BELOW_LOUDEST_DB = 25;
 const ABSOLUTE_FLOOR_DB = -60;
 const BRIDGE_FRAMES = 3;
 /** Longer than a metronome click, which is short but periodic enough to look voiced. */
 const MIN_FRAMES = 8;
 const VALLEY_DB = 6;
+const CHANGE_SPAN = 2;
+/** How much faster the spectrum must change than in the stretch's steady parts to mark a new name. */
+const CHANGE_RATIO = 4;
 const ONSET_BELOW_PEAK_DB = 10;
 const CONSONANT_FRAMES = 8;
 const MAX_FEATURE_FRAMES = 40;
@@ -55,9 +60,45 @@ function splitAtValleys(energy: Float32Array, region: Region): Region[] {
 	];
 }
 
+/** How fast the spectrum changes around each frame. */
+export function spectralChange(mfcc: readonly Float32Array[]): Float32Array {
+	const change = new Float32Array(mfcc.length);
+	for (let i = CHANGE_SPAN; i + CHANGE_SPAN < mfcc.length; i++) {
+		const [before, after] = [mfcc[i - CHANGE_SPAN], mfcc[i + CHANGE_SPAN]];
+		change[i] = Math.hypot(...after.map((value, k) => value - before[k]));
+	}
+	return change;
+}
+
+/**
+ * Names said legato through a voiced consonant ("ré-mi", "sol-la") barely dip in loudness, but the
+ * spectrum jumps between their vowels. Splits at the sharpest jump, relative to the steady parts.
+ */
+function splitAtChanges(change: Float32Array, region: Region): Region[] {
+	const inner = change.slice(region.start + MIN_FRAMES, region.end - MIN_FRAMES);
+	if (inner.length === 0) return [region];
+	const steady = percentile(change.slice(region.start, region.end), 0.5);
+	const at = region.start + MIN_FRAMES + inner.indexOf(Math.max(...inner));
+	if (change[at] <= steady * CHANGE_RATIO) return [region];
+	return [
+		...splitAtChanges(change, { start: region.start, end: at }),
+		...splitAtChanges(change, { start: at, end: region.end })
+	];
+}
+
 /** Voiced, loud-enough stretches of frames, as half-open [start, end) ranges. */
-export function voicedRegions(energyDb: Float32Array, voicing: Float32Array): Region[] {
-	const threshold = Math.max(percentile(energyDb, 0.2) + ABOVE_FLOOR_DB, ABSOLUTE_FLOOR_DB);
+export function voicedRegions(
+	energyDb: Float32Array,
+	voicing: Float32Array,
+	change: Float32Array = new Float32Array(energyDb.length)
+): Region[] {
+	const threshold = Math.max(
+		Math.min(
+			percentile(energyDb, 0.2) + ABOVE_FLOOR_DB,
+			percentile(energyDb, 0.95) - BELOW_LOUDEST_DB
+		),
+		ABSOLUTE_FLOOR_DB
+	);
 	const regions: Region[] = [];
 	let current: Region | null = null;
 	for (let i = 0; i < energyDb.length; i++) {
@@ -70,6 +111,7 @@ export function voicedRegions(energyDb: Float32Array, voicing: Float32Array): Re
 	}
 	return regions
 		.flatMap((region) => splitAtValleys(energyDb, region))
+		.flatMap((region) => splitAtChanges(change, region))
 		.filter((region) => region.end - region.start >= MIN_FRAMES);
 }
 
@@ -88,7 +130,7 @@ export function vowelOnset(energyDb: Float32Array, region: Region): number {
 export function findSyllables(samples: Float32Array, sampleRate: number): Syllable[] {
 	const signal = resample(samples, sampleRate, ANALYSIS_RATE);
 	const { energyDb, voicing, mfcc } = analyseFrames(signal);
-	const regions = voicedRegions(energyDb, voicing);
+	const regions = voicedRegions(energyDb, voicing, spectralChange(mfcc));
 	return regions.map((region, index) => {
 		const previousEnd = index > 0 ? regions[index - 1].end : 0;
 		const start = Math.max(previousEnd, region.start - CONSONANT_FRAMES);

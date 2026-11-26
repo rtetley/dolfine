@@ -31,6 +31,8 @@
 
 	let { exercise, prefs, skipPreview = false, onfinish, onrestart, onstop }: Props = $props();
 
+	const RECORDING_TAIL_MS = 500;
+
 	type Phase = 'preview' | 'starting' | 'running' | 'analysing';
 	let phase = $state<Phase>('preview');
 	let remaining = $state(0);
@@ -132,21 +134,32 @@
 	}
 
 	function finish(): void {
-		const recording = recorder?.stop();
+		const active = recorder;
+		const heard = profile;
 		const readingStart = handle?.readingStartTime ?? 0;
-		teardown();
-		if (!recording || !profile) {
+		if (!active || !heard) {
+			teardown();
 			onfinish({ input: 'midi', notes: [...played] });
 			return;
 		}
+		handle?.stop();
+		cancelAnimationFrame(frame);
 		phase = 'analysing';
-		const heard = profile;
-		void import('./hear').then(({ hearReading }) => {
-			// Let the "listening back" state paint before the analysis blocks the main thread.
-			setTimeout(() => {
-				onfinish({ input: 'voice', notes: hearReading(recording, readingStart, exercise, heard) });
-			}, 30);
-		});
+		// The last name is still in flight through the microphone when the final bar ends.
+		setTimeout(() => {
+			if (recorder !== active) return;
+			const recording = active.stop();
+			teardown();
+			void import('./hear').then(({ hearReading }) => {
+				// Let the "listening back" state paint before the analysis blocks the main thread.
+				setTimeout(() => {
+					onfinish({
+						input: 'voice',
+						notes: hearReading(recording, readingStart, exercise, heard)
+					});
+				}, 30);
+			});
+		}, RECORDING_TAIL_MS);
 	}
 
 	function stop(): void {

@@ -1,3 +1,4 @@
+import { rejectDistance } from '#lib/audio/voice/calibration.ts';
 import type { Recording } from '#lib/audio/voice/microphone.ts';
 import { classify } from '#lib/audio/voice/names.ts';
 import type { VoiceProfile } from '#lib/audio/voice/profile.ts';
@@ -24,6 +25,8 @@ export function hearSyllables(
 	profile: VoiceProfile
 ): SpokenNote[] {
 	const shift = meanOffset(profile);
+	// Recomputed so profiles saved before the bound was widened get the current one.
+	const names = { ...profile, rejectDistance: rejectDistance(profile.templates) };
 	return syllables.flatMap((syllable) => {
 		const heardAt = recordingStartMs + syllable.time * 1000;
 		const due = exercise.expected.reduce<{ letter: Letter; gap: number } | null>((best, note) => {
@@ -32,7 +35,7 @@ export function hearSyllables(
 				? { letter: note.letter, gap }
 				: best;
 		}, null);
-		const heard = classify(syllable.features, profile, due?.letter);
+		const heard = classify(syllable.features, names, due?.letter);
 		return heard ? [{ letter: heard.letter, time: heardAt - profile.offsetMs[heard.letter] }] : [];
 	});
 }
