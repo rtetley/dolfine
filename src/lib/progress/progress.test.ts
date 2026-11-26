@@ -276,7 +276,7 @@ describe('achievements', () => {
 
 		let both = answer(state, [true], { track: 'ear', exercise: 'chords' }).state;
 		expect(both.achievements['theory-and-ear']).toBe(DAY);
-		for (const exercise of ['intervals', 'voicings', 'modes']) {
+		for (const exercise of ['intervals', 'voicings', 'modes', 'colours']) {
 			both = answer(both, [false], { track: 'ear', exercise }).state;
 		}
 		expect(both.achievements['all-ears']).toBeUndefined();

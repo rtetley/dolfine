@@ -3,11 +3,9 @@
 	import Logo from '#lib/components/Logo.svelte';
 	import { m } from '#lib/i18n.ts';
 	import LessonIntro from '#lib/modules/theory/lessons/LessonIntro.svelte';
-	import ScaleLesson from '#lib/modules/theory/lessons/ScaleLesson.svelte';
-	import VoicingsLesson from '#lib/modules/theory/lessons/VoicingsLesson.svelte';
 	import { isLessonOpen, LESSON_PLANS, lessonLevel } from '#lib/modules/theory/lessonPlan.ts';
 	import { LESSON_TEXT, SECTION_TITLES } from '#lib/modules/theory/lessonText.ts';
-	import { LESSON_PARENTS } from '#lib/modules/theory/lessons.ts';
+	import { isScaleLesson, LESSON_PARENTS } from '#lib/modules/theory/lessons.ts';
 	import { progress } from '#lib/state/progress.svelte.ts';
 	import type { PageProps } from './$types';
 
@@ -57,19 +55,28 @@
 					<section id="intro" aria-label={SECTION_TITLES.intro()}>
 						<LessonIntro paragraphs={text.paragraphs()} />
 					</section>
-				{:else if section === 'harmonization' && data.lesson !== 'voicings'}
-					<!-- Both scale sections share the key chosen above the harmonized scale. -->
-					<ScaleLesson
-						parent={LESSON_PARENTS[data.lesson]}
-						titles={{
-							harmonization: SECTION_TITLES.harmonization(),
-							modes: SECTION_TITLES.modes()
-						}}
-					/>
+				{:else if section === 'harmonization' && isScaleLesson(data.lesson)}
+					<!-- Each kind of lesson loads its own examples; both scale sections share one key. -->
+					{#await import('#lib/modules/theory/lessons/ScaleLesson.svelte') then { default: ScaleLesson }}
+						<ScaleLesson
+							parent={LESSON_PARENTS[data.lesson]}
+							titles={{
+								harmonization: SECTION_TITLES.harmonization(),
+								modes: SECTION_TITLES.modes()
+							}}
+						/>
+					{/await}
+				{:else if section === 'colours' && (data.lesson === 'chord-colours' || data.lesson === 'four-colours')}
+					{@const lesson = data.lesson}
+					{#await import('#lib/modules/theory/lessons/ColourLesson.svelte') then { default: ColourLesson }}
+						<ColourLesson {lesson} title={SECTION_TITLES.colours()} />
+					{/await}
 				{:else if section === 'voicings'}
 					<section id="voicings" aria-labelledby="voicings-title">
 						<h2 id="voicings-title">{SECTION_TITLES.voicings()}</h2>
-						<VoicingsLesson />
+						{#await import('#lib/modules/theory/lessons/VoicingsLesson.svelte') then { default: VoicingsLesson }}
+							<VoicingsLesson />
+						{/await}
 					</section>
 				{:else if section === 'further'}
 					<section id="further" class="further" aria-labelledby="further-title">

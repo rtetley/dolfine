@@ -1,3 +1,4 @@
+import { COLOURS, type ColourId, colourMidis } from '#lib/music/colours.ts';
 import { earChordById, voiceEarChord } from '#lib/music/earChords.ts';
 import { type ModeId, modeSemitones } from '#lib/music/scales.ts';
 import { defaultVoicing } from '#lib/music/voicings.ts';
@@ -16,12 +17,17 @@ export function questionSound(question: EarQuestion): AnswerSound | null {
 		case 'chords':
 		case 'voicings':
 			return { kind: 'chord', root: question.root, midis: question.midis };
+		case 'colours':
+			return { kind: 'chord', root: question.midis[0], midis: question.midis };
 		case 'modes':
 			return { kind: 'scale', root: question.root, scale: question.scale };
 		case 'progressions':
 			return null;
 	}
 }
+
+const isColour = (value: string): value is ColourId =>
+	(COLOURS as readonly string[]).includes(value);
 
 /**
  * What the question would have sounded like if the given answer were right: same first
@@ -66,6 +72,11 @@ export function answerSound(question: EarQuestion, answer: string): AnswerSound 
 				root: question.root,
 				scale: [...semitones.map((s) => question.root + s), question.root + 12]
 			};
+		}
+		case 'colours': {
+			if (!isColour(answer)) return null;
+			const midis = colourMidis(answer, question.root, question.voicing);
+			return { kind: 'chord', root: midis[0], midis };
 		}
 		case 'progressions':
 			return null;

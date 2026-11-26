@@ -9,8 +9,15 @@ import {
 	INTERVALS_BY_LEVEL,
 	voiceEarChord
 } from '#lib/music/earChords.ts';
+import {
+	CHORD_COLOURS,
+	type ColourId,
+	colourMidis,
+	COLOUR_SETS,
+	type ColourVoicingType
+} from '#lib/music/colours.ts';
 import { earScaleLevel, type Level } from '#lib/music/levels.ts';
-import { mod, toMidi } from '#lib/music/pitch.ts';
+import { ALL_ROOTS, mod, type PitchClassName, toMidi } from '#lib/music/pitch.ts';
 import {
 	buildProgression,
 	type Progression,
@@ -22,7 +29,14 @@ import { solveWithAlternation } from '#lib/music/voiceLeading.ts';
 import { defaultVoicing, type VoicingType } from '#lib/music/voicings.ts';
 import { pickParentRoot } from '#lib/modules/theory/questions.ts';
 
-export const EAR_SUBMODULES = ['intervals', 'chords', 'voicings', 'modes', 'progressions'] as const;
+export const EAR_SUBMODULES = [
+	'intervals',
+	'chords',
+	'voicings',
+	'modes',
+	'progressions',
+	'colours'
+] as const;
 export type EarSubmodule = (typeof EAR_SUBMODULES)[number];
 
 export const EAR_SUBMODULE_LABELS: Record<EarSubmodule, string> = {
@@ -40,6 +54,9 @@ export const EAR_SUBMODULE_LABELS: Record<EarSubmodule, string> = {
 	},
 	get progressions() {
 		return m.ear_submodule_progressions();
+	},
+	get colours() {
+		return m.ear_submodule_colours();
 	}
 };
 
@@ -111,12 +128,23 @@ export interface ProgressionEarQuestion {
 	options: string[];
 }
 
+/** Which of a few chord colours is played, in either two-hand voicing, in any key. */
+export interface ColourEarQuestion {
+	kind: 'colours';
+	root: PitchClassName;
+	voicing: ColourVoicingType;
+	midis: number[];
+	answer: ColourId;
+	options: Option[];
+}
+
 export type EarQuestion =
 	| IntervalQuestion
 	| ChordEarQuestion
 	| VoicingEarQuestion
 	| ModeEarQuestion
-	| ProgressionEarQuestion;
+	| ProgressionEarQuestion
+	| ColourEarQuestion;
 
 const topNoteNames = (): string[] => [
 	m.top_note_root(),
@@ -152,7 +180,27 @@ export function createEarQuestion(prefs: EarPrefs, seed: number): EarQuestion {
 			return modeQuestion(prefs.level, rng);
 		case 'progressions':
 			return progressionQuestion(prefs.level, rng);
+		case 'colours':
+			return colourQuestion(prefs.level, rng);
 	}
+}
+
+/** Chord colours are named by their symbol alone: the root is the same for every answer. */
+export const colourOption = (id: ColourId): Option => ({ id, label: CHORD_COLOURS[id].suffix });
+
+function colourQuestion(level: Level, rng: Rng): ColourEarQuestion {
+	const set = COLOUR_SETS[level];
+	const answer = rng.pick(set);
+	const root = rng.pick(ALL_ROOTS);
+	const voicing = rng.pick(['A', 'B'] as const);
+	return {
+		kind: 'colours',
+		root,
+		voicing,
+		midis: colourMidis(answer, root, voicing),
+		answer,
+		options: rng.shuffle(set.map(colourOption))
+	};
 }
 
 function intervalQuestion(level: Level, rng: Rng): IntervalQuestion {

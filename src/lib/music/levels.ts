@@ -84,7 +84,8 @@ const theoryLevel = (
 export const THEORY_LEVELS: Record<Level, TheoryLevel> = {
 	1: theoryLevel(['major'], 1, 'choice'),
 	2: theoryLevel(['major'], 3, 'choice'),
-	3: theoryLevel(['major'], 5, 'choice'),
+	// The end of the major scale's part: every mode named and written in all twelve keys.
+	3: theoryLevel(['major'], 6, 'choice'),
 	4: theoryLevel(['melodicMinor'], 1, 'choice'),
 	5: theoryLevel(['melodicMinor'], 3, 'choice'),
 	6: theoryLevel(['melodicMinor'], 5, 'naming'),

@@ -52,10 +52,15 @@ const WITH_VOICING = [
 	'write-mode'
 ] as const;
 
+/**
+ * The major scale's part follows the colours curriculum: the harmonized scale (Level 1), the
+ * association of chords and modes in twelve colours (Level 2), then the four colours that
+ * complete the modes (Level 3). The voicings lesson comes back with the melodic minor.
+ */
 export const THEORY_CURRICULUM: Curriculum<TheoryExercise> = {
 	1: stage(1, 'major', MODES_FIRST),
-	2: stage(2, 'voicings', WITH_CHORDS),
-	3: stage(3, 'voicings', WITH_VOICING),
+	2: stage(2, 'chord-colours', WITH_CHORDS),
+	3: stage(3, 'four-colours', WITH_VOICING),
 	4: stage(4, 'melodic-minor', MODES_FIRST),
 	5: stage(5, 'voicings', WITH_CHORDS),
 	6: stage(6, 'voicings', WITH_VOICING),
@@ -71,29 +76,33 @@ export const THEORY_CURRICULUM: Curriculum<TheoryExercise> = {
 	10: stage(10, undefined, ['voice-chord', 'name-chord', 'mode-in-context', 'voice-leading'])
 };
 
+/**
+ * Chord colours come in at every level, a few at a time (see `COLOUR_SETS`): a drill's
+ * difficulty is the step of that progression, from Δ9 against 6/9 to all sixteen colours.
+ */
 export const EAR_CURRICULUM: Curriculum<EarSubmodule> = {
-	1: stage(1, undefined, ['intervals', 'chords']),
-	2: stage(2, 'major', [['modes', 1], 'intervals', 'chords']),
-	3: stage(3, 'voicings', [['voicings', 1], 'intervals', 'chords']),
-	4: stage(4, 'major', [
-		['progressions', 2],
-		['modes', 2],
-		['voicings', 3]
+	1: stage(1, 'chord-colours', ['intervals', 'chords', 'colours']),
+	2: stage(2, 'major', [['modes', 1], 'intervals', 'chords', 'colours']),
+	3: stage(3, 'chord-colours', [['voicings', 1], 'intervals', 'chords', 'colours']),
+	4: stage(4, 'major', [['progressions', 2], ['modes', 2], ['voicings', 3], 'colours']),
+	5: stage(5, 'melodic-minor', [['modes', 3], ['chords', 4], 'intervals', 'colours']),
+	6: stage(6, 'voicings', [['voicings', 4], ['progressions', 4], ['chords', 5], 'colours']),
+	7: stage(7, 'chord-colours', [
+		['modes', 4],
+		['voicings', 6],
+		['chords', 6],
+		'intervals',
+		'colours'
 	]),
-	5: stage(5, 'melodic-minor', [['modes', 3], ['chords', 4], 'intervals']),
-	6: stage(6, 'voicings', [
-		['voicings', 4],
-		['progressions', 4],
-		['chords', 5]
+	8: stage(8, 'harmonic-minor', [['modes', 6], ['progressions', 6], ['chords', 7], 'colours']),
+	9: stage(9, 'four-colours', [
+		['voicings', 8],
+		['progressions', 8],
+		['chords', 8],
+		'intervals',
+		'colours'
 	]),
-	7: stage(7, undefined, [['modes', 4], ['voicings', 6], ['chords', 6], 'intervals']),
-	8: stage(8, 'harmonic-minor', [
-		['modes', 6],
-		['progressions', 6],
-		['chords', 7]
-	]),
-	9: stage(9, 'voicings', [['voicings', 8], ['progressions', 8], ['chords', 8], 'intervals']),
-	10: stage(10, undefined, ['modes', 'voicings', 'progressions', 'chords', 'intervals'])
+	10: stage(10, undefined, ['modes', 'voicings', 'progressions', 'chords', 'intervals', 'colours'])
 };
 
 /**
@@ -122,7 +131,8 @@ export const EAR_SUBMODULES_GRADED = [
 	'chords',
 	'voicings',
 	'modes',
-	'progressions'
+	'progressions',
+	'colours'
 ] as const satisfies readonly EarSubmodule[];
 
 export const CURRICULA: {

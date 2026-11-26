@@ -8,7 +8,7 @@ import type { TheoryExercise } from './questions';
  * to see and hear, a section to go further, and the exercises that practise it.
  */
 export type LessonSection =
-	'intro' | 'harmonization' | 'modes' | 'voicings' | 'further' | 'exercises';
+	'intro' | 'harmonization' | 'modes' | 'colours' | 'voicings' | 'further' | 'exercises';
 
 const SCALE_LESSON: readonly LessonSection[] = [
 	'intro',
@@ -18,8 +18,12 @@ const SCALE_LESSON: readonly LessonSection[] = [
 	'exercises'
 ];
 
+const COLOUR_LESSON: readonly LessonSection[] = ['intro', 'colours', 'further', 'exercises'];
+
 export const LESSON_PLANS: Record<LessonId, readonly LessonSection[]> = {
 	major: SCALE_LESSON,
+	'chord-colours': COLOUR_LESSON,
+	'four-colours': COLOUR_LESSON,
 	'melodic-minor': SCALE_LESSON,
 	'harmonic-minor': SCALE_LESSON,
 	voicings: ['intro', 'voicings', 'further', 'exercises']

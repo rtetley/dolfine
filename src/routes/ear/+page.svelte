@@ -24,6 +24,9 @@
 	} from '#lib/modules/ear/questions.ts';
 	import SoundQuestion from '#lib/modules/ear/SoundQuestion.svelte';
 	import { EAR_CURRICULUM, findDrill, openDrill } from '#lib/progress/curriculum.ts';
+	import { isLevel } from '#lib/progress/ladder.ts';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import {
 		continueStore,
 		loadModulePrefs,
@@ -84,6 +87,15 @@
 
 	// Opened from Continue on the dashboard: go straight back to an exercise.
 	onResume(() => next());
+
+	// Opened from a lesson: start that exercise, if its level is open.
+	onMount(() => {
+		const level = Number(page.url.searchParams.get('level'));
+		const exercise = page.url.searchParams.get('exercise');
+		if (!isLevel(level) || level > progress.unlocked('ear') || !exercise) return;
+		const drill = findDrill(EAR_CURRICULUM, level, exercise);
+		if (drill) pick(level, drill.exercise);
+	});
 </script>
 
 <svelte:head>
@@ -146,7 +158,7 @@
 				<ModeListening {question} {format} onnext={next} onresult={record} />
 			{:else if question.kind === 'progressions'}
 				<ProgressionListening {question} onnext={next} onresult={record} />
-			{:else if question.kind === 'intervals' || question.kind === 'chords' || question.kind === 'voicings'}
+			{:else}
 				<SoundQuestion {question} {format} onnext={next} onresult={record} />
 			{/if}
 		{/key}
