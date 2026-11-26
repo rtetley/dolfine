@@ -6,7 +6,6 @@
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import type { Level } from '#lib/music/levels.ts';
 	import { newSeed } from '#lib/music/random.ts';
-	import type { PlayedNote } from '#lib/music/scoring.ts';
 	import {
 		createExercise,
 		exerciseSummary,
@@ -20,6 +19,7 @@
 	} from '#lib/modules/sight-reading/prefs.ts';
 	import Results from '#lib/modules/sight-reading/Results.svelte';
 	import Setup from '#lib/modules/sight-reading/Setup.svelte';
+	import type { Performance } from '#lib/modules/sight-reading/spoken.ts';
 	import {
 		continueStore,
 		loadModulePrefs,
@@ -27,6 +27,7 @@
 	} from '#lib/state/modulePrefs.svelte.ts';
 	import { onResume } from '#lib/state/resume.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
+	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 
 	type View = 'setup' | 'performance' | 'practice' | 'results' | 'stopped';
 	type Run = 'performance' | 'practice';
@@ -34,7 +35,8 @@
 	let prefs = $state<SightReadingPrefs>(loadModulePrefs('sight-reading', SIGHT_READING_DEFAULTS));
 	let view = $state<View>('setup');
 	let exercise = $state<SightReadingExercise | null>(null);
-	let played = $state<PlayedNote[]>([]);
+	const NOTHING_PLAYED: Performance = { input: 'midi', notes: [] };
+	let performance = $state<Performance>(NOTHING_PLAYED);
 	let runKey = $state(0);
 	let skipPreview = $state(false);
 
@@ -43,7 +45,13 @@
 		saveModulePrefs('sight-reading', prefs);
 	}
 
+	const spoken = $derived(prefs.mode === 'performance' && prefs.input === 'voice');
+
 	function start(seed = newSeed()): void {
+		if (spoken && !voiceProfile.for(settings.noteNames)) {
+			view = 'setup';
+			return;
+		}
 		exercise = createExercise(prefs, seed);
 		continueStore.record({
 			module: 'sight-reading',
@@ -53,14 +61,14 @@
 	}
 
 	function run(next: Run, alreadyPreviewed = true): void {
-		played = [];
+		performance = NOTHING_PLAYED;
 		skipPreview = alreadyPreviewed;
 		runKey++;
 		view = next;
 	}
 
-	function finish(notes: PlayedNote[]): void {
-		played = notes;
+	function finish(result: Performance): void {
+		performance = result;
 		view = 'results';
 	}
 
@@ -118,8 +126,8 @@
 			{:else if view === 'results' || view === 'stopped'}
 				<Results
 					{exercise}
-					{played}
-					scored={midi.status === 'ready'}
+					{performance}
+					scored={performance.input === 'voice' || midi.status === 'ready'}
 					stopped={view === 'stopped'}
 					showReferences={prefs.referenceNotes}
 					canLevelUp={prefs.level < 10}

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
-	import { resultsCommentary, scorePerformance, type PlayedNote } from '#lib/music/scoring.ts';
+	import { resultsCommentary } from '#lib/music/scoring.ts';
 	import Score from '#lib/notation/Score.svelte';
 	import { exerciseScore, type SightReadingExercise } from './exercise';
+	import { type Performance, scoreRun } from './spoken';
 
 	interface Props {
 		exercise: SightReadingExercise;
-		played: PlayedNote[];
+		performance: Performance;
 		scored: boolean;
 		stopped?: boolean;
 		showReferences?: boolean;
@@ -20,7 +21,7 @@
 
 	let {
 		exercise,
-		played,
+		performance,
 		scored,
 		stopped = false,
 		showReferences = false,
@@ -32,9 +33,7 @@
 		onsetup
 	}: Props = $props();
 
-	const summary = $derived(
-		scored && !stopped ? scorePerformance(exercise.expected, played, exercise.toleranceMs) : null
-	);
+	const summary = $derived(scored && !stopped ? scoreRun(exercise, performance) : null);
 	const score = $derived(
 		exerciseScore(exercise, {
 			showReferences: !summary && showReferences,
@@ -54,7 +53,7 @@
 		<div class="stats">
 			<div class="stat">
 				<strong>{summary.pitchAccuracy}%</strong><span class="label">
-					{m.results_pitch_accuracy()}
+					{performance.input === 'voice' ? m.results_names_accuracy() : m.results_pitch_accuracy()}
 				</span>
 			</div>
 			<div class="stat">

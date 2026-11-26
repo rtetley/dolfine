@@ -72,6 +72,9 @@ export async function ensureAudio(): Promise<void> {
 
 export const now = (): number => instruments?.tone.now() ?? 0;
 
+/** The context the metronome is scheduled on, once `ensureAudio` has run. */
+export const audioContext = (): AudioContext | null => context;
+
 export function playNotes(
 	midis: readonly number[],
 	durationSeconds = 1.6,

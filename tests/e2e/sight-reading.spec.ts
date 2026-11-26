@@ -137,4 +137,41 @@ test.describe('sight reading', () => {
 		await expect(page.getByRole('button', { name: 'Restart', exact: true })).toBeVisible();
 		await expect(page.locator('.summary')).toHaveText(summary ?? '');
 	});
+
+	test('spoken reading asks for the microphone set-up before the first run', async ({ page }) => {
+		await page.goto('sight-reading');
+		const staffChoice = page.getByRole('combobox', { name: 'Staff' });
+		await staffChoice.selectOption('grand');
+		await page
+			.getByRole('combobox', { name: 'Answer with' })
+			.selectOption('Your voice: say the note names');
+
+		await expect(staffChoice.locator('option', { hasText: 'Grand staff' })).toHaveCount(0);
+		await expect(staffChoice).toHaveValue('treble');
+		const setup = page.getByRole('region', { name: 'Microphone set-up' });
+		await expect(setup).toContainText('not how high or low you say it');
+		await expect(setup.getByRole('button', { name: 'Set up the microphone' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Start' })).toBeDisabled();
+		await expect(page.getByRole('button', { name: 'Connect MIDI keyboard' })).toHaveCount(0);
+	});
+
+	test('a calibrated voice can start a spoken reading', async ({ page }) => {
+		const take = [[[0, 0]]];
+		const letters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+		await seedStorage(page, {
+			'prefs:sight-reading': { ...QUICK_RUN, input: 'voice' },
+			settings: { noteNames: 'letters' },
+			'voice-profile': {
+				names: 'letters',
+				rejectDistance: 1,
+				offsetMs: Object.fromEntries(letters.map((letter) => [letter, 0])),
+				templates: Object.fromEntries(letters.map((letter) => [letter, take]))
+			}
+		});
+		await page.goto('sight-reading');
+		await expect(page.getByText('Microphone set up for C D E F G A B.')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Set up again' })).toBeVisible();
+		await page.getByRole('button', { name: 'Start' }).click();
+		await expect(page.getByText(/Preview · \d+s/)).toBeVisible();
+	});
 });

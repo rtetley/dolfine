@@ -1,42 +1,54 @@
 <script lang="ts">
 	import { m } from '#lib/i18n.ts';
 	import { onDestroy, onMount } from 'svelte';
-	import { audioToPerformanceTime, ensureAudio } from '#lib/audio/engine.ts';
+	import { audioContext, audioToPerformanceTime, ensureAudio } from '#lib/audio/engine.ts';
 	import {
 		type MetronomeHandle,
 		type MetronomeTick,
 		startMetronome
 	} from '#lib/audio/metronome.ts';
 	import MetronomePulse from '#lib/components/MetronomePulse.svelte';
+	import {
+		type Microphone,
+		type MicrophoneError,
+		microphoneError,
+		openMicrophone,
+		type Recorder
+	} from '#lib/audio/voice/microphone.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import type { PlayedNote } from '#lib/music/scoring.ts';
+	import { settings } from '#lib/state/settings.svelte.ts';
+	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
 	import Score from '#lib/notation/Score.svelte';
 	import type { ScoreLayout } from '#lib/notation/render.ts';
 	import { buildTrack, cursorAt, type TrackPoint } from './cursorTrack';
 	import { exerciseScore, metronomeBeat, type SightReadingExercise } from './exercise';
 	import type { SightReadingPrefs } from './prefs';
+	import { hearReading, type Performance } from './spoken';
 
 	interface Props {
 		exercise: SightReadingExercise;
 		prefs: SightReadingPrefs;
 		skipPreview?: boolean;
-		onfinish: (played: PlayedNote[]) => void;
+		onfinish: (performance: Performance) => void;
 		onrestart: () => void;
 		onstop: () => void;
 	}
 
 	let { exercise, prefs, skipPreview = false, onfinish, onrestart, onstop }: Props = $props();
 
-	type Phase = 'preview' | 'starting' | 'running';
+	type Phase = 'preview' | 'starting' | 'running' | 'analysing';
 	let phase = $state<Phase>('preview');
 	let remaining = $state(0);
 	let tick = $state<MetronomeTick | null>(null);
 	let layout = $state<ScoreLayout | null>(null);
 	let cursor = $state<TrackPoint | null>(null);
 	let overlay = $state<HTMLDivElement>();
+	let micProblem = $state<MicrophoneError | null>(null);
 
 	const score = $derived(exerciseScore(exercise, { showReferences: prefs.referenceNotes }));
 	const beat = $derived(metronomeBeat(exercise.meter, exercise.tempo));
+	const profile = $derived(prefs.input === 'voice' ? voiceProfile.for(settings.noteNames) : null);
 
 	let handle: MetronomeHandle | null = null;
 	let frame = 0;
@@ -44,6 +56,8 @@
 	let stopListening: (() => void) | null = null;
 	let lastSystem = -1;
 	const played: PlayedNote[] = [];
+	let microphone: Microphone | null = null;
+	let recorder: Recorder | null = null;
 
 	onMount(() => {
 		remaining = skipPreview ? 0 : prefs.previewSeconds;
@@ -62,6 +76,17 @@
 		clearInterval(countdown);
 		phase = 'starting';
 		await ensureAudio();
+		const context = audioContext();
+		if (profile && context) {
+			try {
+				microphone = await openMicrophone(context);
+			} catch (error) {
+				micProblem = microphoneError(error);
+				phase = 'preview';
+				return;
+			}
+			recorder = microphone.record();
+		}
 		handle = startMetronome({
 			bpm: beat.bpm,
 			beatsPerBar: beat.beatsPerBar,
@@ -106,11 +131,25 @@
 		clearInterval(countdown);
 		stopListening?.();
 		stopListening = null;
+		recorder = null;
+		microphone?.close();
+		microphone = null;
 	}
 
 	function finish(): void {
+		const recording = recorder?.stop();
+		const readingStart = handle?.readingStartTime ?? 0;
 		teardown();
-		onfinish([...played]);
+		if (!recording || !profile) {
+			onfinish({ input: 'midi', notes: [...played] });
+			return;
+		}
+		phase = 'analysing';
+		const heard = profile;
+		// Let the "listening back" state paint before the analysis blocks the main thread.
+		setTimeout(() => {
+			onfinish({ input: 'voice', notes: hearReading(recording, readingStart, exercise, heard) });
+		}, 30);
 	}
 
 	function stop(): void {
@@ -130,9 +169,15 @@
 
 <div class="run">
 	<div class="bar">
-		{#if phase === 'preview'}
+		{#if phase === 'preview' && micProblem}
+			<p class="status" role="alert">
+				{micProblem === 'denied' ? m.voice_mic_denied() : m.voice_mic_unavailable()}
+			</p>
+		{:else if phase === 'preview'}
 			<p class="status">{m.preview_countdown({ seconds: remaining })}</p>
 			<button type="button" class="primary" onclick={() => void begin()}>{m.start_now()}</button>
+		{:else if phase === 'analysing'}
+			<p class="status" aria-live="polite">{m.voice_analysing()}</p>
 		{:else}
 			<MetronomePulse
 				beat={tick?.beat ?? 0}
@@ -143,12 +188,16 @@
 			/>
 		{/if}
 		<div class="controls">
-			{#if phase !== 'preview'}
+			{#if phase === 'starting' || phase === 'running'}
 				<button type="button" onclick={restart}>{m.action_restart()}</button>
 			{/if}
 			<button type="button" onclick={stop}>{m.action_stop()}</button>
 		</div>
 	</div>
+
+	{#if exercise.slowedFrom}
+		<p class="note">{m.voice_slowed({ from: exercise.slowedFrom, tempo: exercise.tempo })}</p>
+	{/if}
 
 	<div class="sheet" bind:this={overlay}>
 		<Score {score} bind:layout label={m.sight_reading_exercise_label()} />
@@ -186,6 +235,13 @@
 		margin: 0;
 		font-variant: small-caps;
 		letter-spacing: 0.06em;
+	}
+
+	.note {
+		margin: var(--space-3) 0 0;
+		font-size: var(--step--1);
+		font-style: italic;
+		color: var(--ink-soft);
 	}
 
 	.sheet {

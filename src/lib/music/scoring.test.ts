@@ -72,7 +72,7 @@ const summaryOf = (
 describe('resultsCommentary', () => {
 	it.each([
 		[summaryOf(['correct'], 100, 100), /Clean and steady/],
-		[summaryOf(['missed', 'wrong', 'late'], 33, 0), /pitches/],
+		[summaryOf(['missed', 'wrong', 'late'], 33, 0), /wrong notes/],
 		[summaryOf(['late', 'late', 'early'], 100, 0), /late/],
 		[summaryOf(['early', 'early', 'late'], 100, 0), /rush/]
 	])('picks the advice for %#', (summary, pattern) => {

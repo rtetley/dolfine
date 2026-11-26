@@ -3,9 +3,18 @@ import { render } from 'vitest-browser-svelte';
 import { createExercise } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
 import Results from './Results.svelte';
+import type { Performance } from './spoken';
 
 const exercise = createExercise({ ...SIGHT_READING_DEFAULTS, bars: 2 }, 5);
-const perfect = exercise.expected.map(({ midi, time }) => ({ midi, time }));
+const perfect = {
+	input: 'midi',
+	notes: exercise.expected.map(({ midi, time }) => ({ midi, time }))
+} as const satisfies Performance;
+const spokenPerfect = {
+	input: 'voice',
+	notes: exercise.expected.map(({ letter, time }) => ({ letter, time }))
+} as const satisfies Performance;
+const nothing = { input: 'midi', notes: [] } as const satisfies Performance;
 
 const handlers = () => ({
 	onrestart: vi.fn(),
@@ -21,23 +30,36 @@ describe('Results', () => {
 	it('scores a clean run and suggests moving on', async () => {
 		const screen = await render(Results, {
 			exercise,
-			played: perfect,
+			performance: perfect,
 			scored: true,
 			canLevelUp: true,
 			...handlers()
 		});
 		await expect.element(screen.getByText('100%').first()).toBeVisible();
 		await expect.element(screen.getByText(/Clean and steady/)).toBeVisible();
-		await expect.element(screen.getByText(`● correct ${perfect.length}`)).toBeVisible();
+		await expect.element(screen.getByText(`● correct ${perfect.notes.length}`)).toBeVisible();
 		await expect
 			.element(screen.getByRole('figure', { name: 'Exercise with results' }))
 			.toBeVisible();
 	});
 
+	it('grades a spoken reading on the note names', async () => {
+		const screen = await render(Results, {
+			exercise,
+			performance: spokenPerfect,
+			scored: true,
+			canLevelUp: true,
+			...handlers()
+		});
+		await expect.element(screen.getByText('right notes')).toBeVisible();
+		await expect.element(screen.getByText('pitch accuracy')).not.toBeInTheDocument();
+		await expect.element(screen.getByText(/Clean and steady/)).toBeVisible();
+	});
+
 	it('keeps the staff on screen after an unscored run', async () => {
 		const screen = await render(Results, {
 			exercise,
-			played: [],
+			performance: nothing,
 			scored: false,
 			canLevelUp: false,
 			...handlers()
@@ -53,7 +75,7 @@ describe('Results', () => {
 	it('does not score a stopped run, even with MIDI', async () => {
 		const screen = await render(Results, {
 			exercise,
-			played: perfect,
+			performance: perfect,
 			scored: true,
 			stopped: true,
 			canLevelUp: true,
@@ -70,7 +92,7 @@ describe('Results', () => {
 		const actions = handlers();
 		const screen = await render(Results, {
 			exercise,
-			played: [],
+			performance: nothing,
 			scored: false,
 			canLevelUp: true,
 			...actions

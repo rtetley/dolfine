@@ -1,6 +1,6 @@
 # Grading sight reading by speaking the note names
 
-_Design note, a variant of [Grading sight reading and inner rhythm](grading-sight-reading-and-rhythm.md). Status: proposal, for a later release. Nothing here is implemented._
+_Design note, a variant of [Grading sight reading and inner rhythm](grading-sight-reading-and-rhythm.md). Status: Phase 1 implemented (Sight reading → Answer with → Your voice). Not yet tuned on recordings of real students, and not yet wired to a grading ladder._
 
 The original idea for microphone grading was simple. The student reads the score aloud, saying each note's name in rhythm ("do, ré, mi, sol…" or "C, D, E, G…"). The app checks two things only: **the right note, at the right time**. This is the _lecture de notes rythmée_ of French formation musicale classes, and it is exactly the skill sight reading is meant to train: turning what is on the staff into names and rhythm without hesitating.
 
@@ -19,7 +19,7 @@ The hard part is not recognising seven words. It is deciding when a spoken sylla
 ## 2. What the student does
 
 1. **Choose the names.** The app uses the existing setting, `NoteNameSystem` (`letters` | `solfege`, defaulting from the language). The student says the natural name of each written note head, with no octave and no accidental.
-2. **Calibrate once per device.** The student says "do" (or "C") on four metronome clicks, then each of the seven names twice. This takes about 20 seconds. It measures input latency and gives the recogniser a sample of the student's voice (§4).
+2. **Calibrate once per device.** After a one-bar count-in, the student says each of the seven names on a click, three times round (one name a second, about 30 seconds). The recordings are the recogniser's samples of the student's voice (§4). The delay from each click to the vowel gives a per-name offset that covers both the device's latency and how that name is articulated.
 3. **Preview, then read.** The flow is the same as Performance mode today: a count-in, the cursor if the level allows it, and the metronome. The student speaks one name per note. Rests are silent. A tied or held note is said once, at its onset.
 4. **Results.** The existing per-note overlay (`correct` / `early` / `late` / `wrong` / `missed`) is reused unchanged, along with name % and rhythm %.
 
@@ -92,7 +92,13 @@ English letter names are acoustically the hardest case: five of the seven differ
 - **What is graded.** Two numbers: notes % (right name, whatever the timing) and rhythm % (right name within the tolerance). Octave and accidental are out of scope, which matches classroom _lecture de notes_.
 - **Ladder.** Use the original plan's run rule unchanged: a run passes at ≥ 85 % names and ≥ 85 % rhythm, and a level needs 4 passes among the last 5 counted runs. Since #34, a level is a set of exercises that each need their grade. So "spoken reading" is one exercise of each sight-reading level, next to "play (MIDI)", and either one can open the next level for students without a keyboard.
 - **Metronome bleed.** The microphone hears the click from the speakers. Request `echoCancellation: true` in `getUserMedia`, and recommend headphones on the setup screen. The voicing check in step 1 rejects clicks that get through. Check during calibration that echo cancellation doesn't shift the onsets: if it does, keep the timing measured with it turned off.
-- **New files** (each one under 400 lines): `src/lib/audio/mic.ts` (capture, permission, calibration storage), `src/lib/audio/syllables.worklet.ts` (segmentation), `src/lib/audio/spokenNames.ts` (MFCC, DTW, classifying with the prior: pure functions, unit-tested on fixture recordings).
+- **Files.** `src/lib/audio/voice/` holds the pure analysis, unit-tested on synthetic vowels:
+  - `signal.ts`: resampling to 16 kHz, FFT, and per-frame energy, voicing and MFCCs.
+  - `syllables.ts`: voiced stretches, splitting at dips, and vowel onsets.
+  - `names.ts`: DTW and classifying with the prior.
+  - `calibration.ts`: pairing clicks with syllables, templates and offsets.
+
+  `microphone.ts` and `capture.worklet.ts` record sample-accurately on the metronome's `AudioContext`. `modules/sight-reading/spoken.ts` places the names on the exercise's clock and scores them. Recordings are analysed after the run, not live.
 
 ## 6. Estimate
 

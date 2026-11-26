@@ -31,6 +31,8 @@ export default defineConfig({
 				'src/**/*.test.ts',
 				'src/app.d.ts',
 				'src/lib/state/testStorage.ts',
+				'src/lib/audio/voice/testSignals.ts',
+				'src/lib/audio/voice/capture.worklet.ts',
 				'src/lib/paraglide/**',
 				'src/routes/**'
 			],

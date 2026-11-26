@@ -4,7 +4,11 @@
 	import MidiStatus from '#lib/components/MidiStatus.svelte';
 	import type { Level } from '#lib/music/levels.ts';
 	import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
+	import { settings } from '#lib/state/settings.svelte.ts';
+	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
+	import VoiceCalibration from './VoiceCalibration.svelte';
 	import {
+		type AnswerInput,
 		type KeyModeChoice,
 		METER_OPTIONS,
 		type MetronomeChoice,
@@ -22,6 +26,9 @@
 	let { prefs, onchange, onstart }: Props = $props();
 
 	const level = $derived(SIGHT_READING_LEVELS[prefs.level]);
+	const timed = $derived(prefs.mode === 'performance');
+	const spoken = $derived(prefs.input === 'voice');
+	const canStart = $derived(!timed || !spoken || voiceProfile.for(settings.noteNames) !== null);
 	const keyOptions = Array.from({ length: 15 }, (_, i) => i - 7);
 	const fifthsLabel = (fifths: number): string =>
 		fifths === 0
@@ -45,7 +52,7 @@
 		>
 			<option value="treble">{m.staff_treble()}</option>
 			<option value="bass">{m.staff_bass()}</option>
-			<option value="grand">{m.staff_grand()}</option>
+			{#if !spoken}<option value="grand">{m.staff_grand()}</option>{/if}
 		</select>
 	</label>
 	<label class="field">
@@ -69,7 +76,22 @@
 			<option value="random-mute">{m.metronome_random_mute()}</option>
 		</select>
 	</label>
-	{#if prefs.mode === 'performance'}
+	<label class="field">
+		<span class="label">{m.answer_label()}</span>
+		<select
+			value={prefs.input}
+			onchange={(e) => {
+				const input = e.currentTarget.value as AnswerInput;
+				onchange(
+					input === 'voice' && prefs.staff === 'grand' ? { input, staff: 'treble' } : { input }
+				);
+			}}
+		>
+			<option value="midi">{m.answer_midi()}</option>
+			<option value="voice">{m.answer_voice()}</option>
+		</select>
+	</label>
+	{#if timed}
 		<label class="field inline">
 			<input
 				type="checkbox"
@@ -157,9 +179,13 @@
 	</div>
 </details>
 
+{#if spoken}<VoiceCalibration />{/if}
+
 <div class="actions">
-	<button type="button" class="primary" onclick={onstart}>{m.action_start()}</button>
-	{#if prefs.mode === 'performance'}<MidiStatus />{/if}
+	<button type="button" class="primary" disabled={!canStart} onclick={onstart}>
+		{m.action_start()}
+	</button>
+	{#if timed && !spoken}<MidiStatus />{/if}
 </div>
 
 <style>

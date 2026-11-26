@@ -11,6 +11,10 @@ export interface PlayedNote {
 	time: number;
 }
 
+export interface Timed {
+	time: number;
+}
+
 export type NoteOutcome = 'correct' | 'early' | 'late' | 'wrong' | 'missed';
 
 export interface ScoredNote {
@@ -19,22 +23,34 @@ export interface ScoredNote {
 	deltaMs?: number;
 }
 
-export interface ScoreSummary {
+export interface ScoreSummary<P extends Timed = PlayedNote> {
 	notes: ScoredNote[];
-	extras: PlayedNote[];
+	extras: P[];
 	pitchAccuracy: number;
 	rhythmAccuracy: number;
 }
 
-export function scorePerformance(
+export const scorePerformance = (
 	expected: readonly ExpectedNote[],
 	played: readonly PlayedNote[],
 	toleranceMs: number
-): ScoreSummary {
+): ScoreSummary =>
+	scoreTimed(expected, played, toleranceMs, (target, note) => note.midi === target.midi);
+
+/**
+ * Matches each expected note with the nearest event that `same` accepts. The comparison is a
+ * parameter so a MIDI keyboard is checked on exact pitch and spoken reading on the note name.
+ */
+export function scoreTimed<E extends ExpectedNote, P extends Timed>(
+	expected: readonly E[],
+	played: readonly P[],
+	toleranceMs: number,
+	same: (target: E, note: P) => boolean
+): ScoreSummary<P> {
 	const searchWindow = Math.max(toleranceMs * 3, 250);
 	const used = new Set<number>();
 
-	const nearest = (target: ExpectedNote, predicate: (note: PlayedNote) => boolean): number => {
+	const nearest = (target: E, predicate: (note: P) => boolean): number => {
 		let best = -1;
 		let bestDistance = Infinity;
 		played.forEach((note, index) => {
@@ -49,7 +65,7 @@ export function scorePerformance(
 	};
 
 	const notes = expected.map((target): ScoredNote => {
-		const match = nearest(target, (note) => note.midi === target.midi);
+		const match = nearest(target, (note) => same(target, note));
 		if (match >= 0) {
 			used.add(match);
 			const deltaMs = played[match].time - target.time;
@@ -79,7 +95,7 @@ export function scorePerformance(
 	};
 }
 
-export function resultsCommentary(summary: ScoreSummary): string {
+export function resultsCommentary(summary: ScoreSummary<Timed>): string {
 	const counts = summary.notes.reduce<Record<string, number>>((acc, note) => {
 		acc[note.outcome] = (acc[note.outcome] ?? 0) + 1;
 		return acc;
