@@ -3,7 +3,8 @@ import { buildProfile } from '#lib/audio/voice/calibration.ts';
 import { calibrationTake, NAME_VOWELS, RATE, speak } from '#lib/audio/voice/testSignals.ts';
 import { createExercise, MIN_SPOKEN_TOLERANCE_MS, spokenTempo } from './exercise';
 import { SIGHT_READING_DEFAULTS } from './prefs';
-import { hearReading, scoreRun } from './spoken';
+import { hearReading } from './hear';
+import { scoreRun } from './spoken';
 
 const LATENCY = 0.06;
 const calibration = calibrationTake(LATENCY);

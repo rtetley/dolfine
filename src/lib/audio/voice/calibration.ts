@@ -1,6 +1,6 @@
 import { type Letter, LETTERS, type NoteNameSystem } from '#lib/music/pitch.ts';
-import { isRecord } from '#lib/state/persisted.ts';
-import { byLetter, dtwDistance, type VoiceProfile } from './names';
+import { byLetter, dtwDistance } from './names';
+import type { VoiceProfile } from './profile';
 import type { Syllable } from './syllables';
 
 /**
@@ -90,27 +90,4 @@ export function rejectDistance(templates: Record<Letter, number[][][]>): number 
 		});
 	}
 	return furthest > 0 ? furthest * REJECT_FACTOR : Infinity;
-}
-
-const isNumberGrid = (value: unknown): value is number[][][] =>
-	Array.isArray(value) &&
-	value.every(
-		(take) =>
-			Array.isArray(take) &&
-			take.every((frame) => Array.isArray(frame) && frame.every((cell) => typeof cell === 'number'))
-	);
-
-export function isVoiceProfile(value: unknown): value is VoiceProfile {
-	if (!isRecord(value) || !isRecord(value.offsetMs) || !isRecord(value.templates)) return false;
-	const { offsetMs, templates } = value;
-	return (
-		(value.names === 'letters' || value.names === 'solfege') &&
-		typeof value.rejectDistance === 'number' &&
-		LETTERS.every(
-			(letter) =>
-				typeof offsetMs[letter] === 'number' &&
-				isNumberGrid(templates[letter]) &&
-				templates[letter].length > 0
-		)
-	);
 }

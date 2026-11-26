@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LETTERS } from '#lib/music/pitch.ts';
-import { buildProfile, isVoiceProfile, pairPrompts } from './calibration';
+import { buildProfile, pairPrompts } from './calibration';
+import { isVoiceProfile } from './profile';
 import { classify, dtwDistance } from './names';
 import { analyseFrames, fft, resample } from './signal';
 import { findSyllables, voicedRegions } from './syllables';

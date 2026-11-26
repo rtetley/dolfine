@@ -8,13 +8,7 @@
 		startMetronome
 	} from '#lib/audio/metronome.ts';
 	import MetronomePulse from '#lib/components/MetronomePulse.svelte';
-	import {
-		type Microphone,
-		type MicrophoneError,
-		microphoneError,
-		openMicrophone,
-		type Recorder
-	} from '#lib/audio/voice/microphone.ts';
+	import type { Microphone, MicrophoneError, Recorder } from '#lib/audio/voice/microphone.ts';
 	import { midi } from '#lib/midi/midi.svelte.ts';
 	import type { PlayedNote } from '#lib/music/scoring.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
@@ -24,7 +18,7 @@
 	import { buildTrack, cursorAt, type TrackPoint } from './cursorTrack';
 	import { exerciseScore, metronomeBeat, type SightReadingExercise } from './exercise';
 	import type { SightReadingPrefs } from './prefs';
-	import { hearReading, type Performance } from './spoken';
+	import type { Performance } from './spoken';
 
 	interface Props {
 		exercise: SightReadingExercise;
@@ -78,6 +72,7 @@
 		await ensureAudio();
 		const context = audioContext();
 		if (profile && context) {
+			const { microphoneError, openMicrophone } = await import('#lib/audio/voice/microphone.ts');
 			try {
 				microphone = await openMicrophone(context);
 			} catch (error) {
@@ -146,10 +141,12 @@
 		}
 		phase = 'analysing';
 		const heard = profile;
-		// Let the "listening back" state paint before the analysis blocks the main thread.
-		setTimeout(() => {
-			onfinish({ input: 'voice', notes: hearReading(recording, readingStart, exercise, heard) });
-		}, 30);
+		void import('./hear').then(({ hearReading }) => {
+			// Let the "listening back" state paint before the analysis blocks the main thread.
+			setTimeout(() => {
+				onfinish({ input: 'voice', notes: hearReading(recording, readingStart, exercise, heard) });
+			}, 30);
+		});
 	}
 
 	function stop(): void {

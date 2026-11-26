@@ -6,7 +6,6 @@
 	import { SIGHT_READING_LEVELS } from '#lib/music/sightReadingLevels.ts';
 	import { settings } from '#lib/state/settings.svelte.ts';
 	import { voiceProfile } from '#lib/state/voiceProfile.svelte.ts';
-	import VoiceCalibration from './VoiceCalibration.svelte';
 	import {
 		type AnswerInput,
 		type KeyModeChoice,
@@ -179,7 +178,11 @@
 	</div>
 </details>
 
-{#if spoken}<VoiceCalibration />{/if}
+{#if spoken}
+	{#await import('./VoiceCalibration.svelte') then { default: VoiceCalibration }}
+		<VoiceCalibration />
+	{/await}
+{/if}
 
 <div class="actions">
 	<button type="button" class="primary" disabled={!canStart} onclick={onstart}>

@@ -1,5 +1,5 @@
 import { type Letter, LETTERS } from '#lib/music/pitch.ts';
-import type { NoteNameSystem } from '#lib/music/pitch.ts';
+import type { VoiceProfile } from './profile';
 
 /**
  * Tells which of the seven note names a syllable is, by comparing it with the student's own
@@ -8,15 +8,6 @@ import type { NoteNameSystem } from '#lib/music/pitch.ts';
  */
 
 export type Features = readonly ArrayLike<number>[];
-
-export interface VoiceProfile {
-	names: NoteNameSystem;
-	/** Delay from a click to the student's vowel for each name: device latency plus articulation. */
-	offsetMs: Record<Letter, number>;
-	templates: Record<Letter, number[][][]>;
-	/** Above this distance a sound is not a note name at all (a cough, a click, a word). */
-	rejectDistance: number;
-}
 
 const PRIOR_MARGIN = 1.15;
 

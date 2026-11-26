@@ -1,5 +1,4 @@
-import { isVoiceProfile } from '#lib/audio/voice/calibration.ts';
-import type { VoiceProfile } from '#lib/audio/voice/names.ts';
+import { isVoiceProfile, type VoiceProfile } from '#lib/audio/voice/profile.ts';
 import type { NoteNameSystem } from '#lib/music/pitch.ts';
 import { readStored, writeStored } from './persisted';
 
